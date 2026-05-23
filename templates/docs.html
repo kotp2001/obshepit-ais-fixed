@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Регламенты АИС Общепит{% endblock %}
+{% block content %}
+<div class="fade-in">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Регламенты АИС "Общепит"</h4>
+            <small>Приложения Б и В к курсовому проекту</small>
+        </div>
+        <div class="card-body">
+            <!-- Регламент технического обслуживания -->
+            <h3 style="color: #ffd700; text-align: center; margin-bottom: 20px;">Регламент технического обслуживания АИС "Общепит"</h3>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <img src="/static/images/maintenance.png" alt="Техническое обслуживание" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
+                <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;">Рисунок 1 - Схема технического обслуживания</p>
+            </div>
+            
+            <p>Для поддержания работоспособности аппаратных средств и программного обеспечения, на которых развёрнута автоматизированная информационная система, необходимо проводить регулярное техническое обслуживание.</p>
+            
+            <h4 style="color: #ffd700; margin-top: 25px;">1. Обслуживание аппаратных средств</h4>
+            <p><strong>Регулярность выполнения:</strong> не реже 1 раза в месяц.</p>
+            <p><strong>Состав работ:</strong></p>
+            <ul>
+                <li>Проверка состояния серверного оборудования: визуальный осмотр на предмет повреждений, загрязнений, корректности работы индикаторов и вентиляторов</li>
+                <li>Очистка серверов и коммутационного оборудования от пыли: продувка или чистка внутренних компонентов для предотвращения перегрева</li>
+                <li>Мониторинг температурного режима в серверной: контроль работы систем кондиционирования и вентиляции</li>
+                <li>Архивация и удаление устаревших данных с дисковых массивов: освобождение места, оптимизация работы хранилищ</li>
+            </ul>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <img src="/static/images/hardware.png" alt="Обслуживание оборудования" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
+                <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;">Рисунок 2 - Обслуживание серверного оборудования</p>
+            </div>
+            
+            <h4 style="color: #ffd700; margin-top: 25px;">2. Обслуживание программного обеспечения</h4>
+            <p><strong>Регулярность выполнения:</strong> еженедельно.</p>
+            <p><strong>Состав работ:</strong></p>
+            <ul>
+                <li>Проверка доступности АИС "Общепит" со всех рабочих мест (касса, кухня, офис управляющего)</li>
+                <li>Анализ журналов ошибок системы</li>
+                <li>Проверка целостности базы данных</li>
+                <li>Обновление антивирусных баз на сервере и клиентских машинах</li>
+                <li>Контроль свободного места на дисках (требуется не менее 20% свободного пространства)</li>
+            </ul>
+            
+            <h4 style="color: #ffd700; margin-top: 25px;">3. Ответственность</h4>
+            <p>Техническое обслуживание выполняет системный администратор или ответственный сотрудник, назначенный приказом руководителя.</p>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <img src="/static/images/software.png" alt="Обслуживание ПО" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
+                <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;">Рисунок 3 - Обслуживание программного обеспечения</p>
+            </div>
+            
+            <hr style="border-color: rgba(255,255,255,0.2); margin: 30px 0;">
+            
+            <!-- Регламент резервного копирования -->
+            <h3 style="color: #ffd700; text-align: center; margin-bottom: 20px;">Регламент резервного копирования</h3>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <img src="/static/images/backup.png" alt="Резервное копирование" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
+                <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;">Рисунок 4 - Схема резервного копирования</p>
+            </div>
+            
+            <p>Во избежание потери данных о заказах, блюдах и отчётах необходимо выполнять резервное копирование базы данных по установленному графику.</p>
+            
+            <h4 style="color: #ffd700; margin-top: 25px;">Периодичность резервного копирования</h4>
+            <ul>
+                <li>Полная резервная копия — 1 раз в неделю (в воскресенье в 02:00)</li>
+            </ul>
+            
+            <h4 style="color: #ffd700; margin-top: 25px;">Порядок создания резервной копии</h4>
+            <ol>
+                <li>Остановить Django-сервер или убедиться в отсутствии активных транзакций</li>
+                <li>Скопировать файл db.sqlite3 в резервное хранилище командой:<br>
+                    <code style="background: #333; padding: 5px 10px; display: inline-block; margin: 5px 0;">cp db.sqlite3 /backup/db_$(date +%Y%m%d_%H%M%S).sqlite3</code>
+                </li>
+                <li>Убедиться в целостности копии: сравнить размер файла с исходным</li>
+                <li>Сделать запись в журнале резервного копирования</li>
+            </ol>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <img src="/static/images/backup_process.png" alt="Процесс резервного копирования" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
+                <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;">Рисунок 5 - Порядок создания резервной копии</p>
+            </div>
+            
+            <h4 style="color: #ffd700; margin-top: 25px;">Требования к хранению копий</h4>
+            <ul>
+                <li>Не менее трёх актуальных копий базы данных</li>
+                <li>Хранение на отдельном физическом носителе, не входящем в основной контур системы</li>
+                <li>Ротация копий: удаление экземпляров старше 30 дней</li>
+            </ul>
+            
+            <hr style="border-color: rgba(255,255,255,0.2); margin: 30px 0;">
+            
+            <!-- Регламент восстановления -->
+            <h3 style="color: #ffd700; text-align: center; margin-bottom: 20px;">Регламент восстановления из резервной копии</h3>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <img src="/static/images/restore.png" alt="Восстановление данных" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
+                <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;">Рисунок 6 - Восстановление из резервной копии</p>
+            </div>
+            
+            <p>Восстановление из резервной копии выполняется в следующих случаях:</p>
+            <ul>
+                <li>Сбой серверного оборудования</li>
+                <li>Повреждение или удаление базы данных</li>
+                <li>Ошибочное изменение данных</li>
+                <li>Вирусная атака или несанкционированный доступ</li>
+            </ul>
+            
+            <h4 style="color: #ffd700; margin-top: 25px;">Порядок восстановления</h4>
+            <ol>
+                <li>Остановить Django-сервер командой Ctrl+C или через диспетчер процессов</li>
+                <li>Перейти в директорию проекта: <code style="background: #333; padding: 2px 5px;">cd /path/to/ais_project</code></li>
+                <li>Создать резервную копию текущей (повреждённой) базы для возможного анализа:<br>
+                    <code style="background: #333; padding: 2px 5px;">cp db.sqlite3 db_damaged.sqlite3</code>
+                </li>
+                <li>Скопировать нужную резервную копию на место основной базы:<br>
+                    <code style="background: #333; padding: 2px 5px;">cp /backup/db_YYYYMMDD_HHMMSS.sqlite3 db.sqlite3</code>
+                </li>
+                <li>Запустить Django-сервер: <code style="background: #333; padding: 2px 5px;">python manage.py runserver</code></li>
+                <li>Выполнить проверку работоспособности: открыть интерфейс, создать тестовый заказ, проверить отчёты</li>
+                <li>Сделать запись о восстановлении в журнале</li>
+            </ol>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <img src="/static/images/restore_process.png" alt="Процесс восстановления" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
+                <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px;">Рисунок 7 - Алгоритм восстановления данных</p>
+            </div>
+            
+            <div class="alert alert-warning mt-4" style="background: rgba(255,215,0,0.2); border: 1px solid #ffd700; color: #ffd700;">
+                <strong>Внимание!</strong> При невозможности восстановления из копии необходимо обратиться к разработчику системы для диагностики и повторного развёртывания.
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .alert-warning {
+        background: rgba(255,215,0,0.2);
+        border: 1px solid #ffd700;
+        color: #ffd700;
+    }
+    code {
+        background: #1a1a4a;
+        padding: 2px 6px;
+        border-radius: 5px;
+        color: #ffd700;
+    }
+</style>
+{% endblock %}

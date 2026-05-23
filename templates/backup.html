@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Резервное копирование{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+    <div class="d-flex align-items-center mb-4 gap-3">
+        <a href="/admin-panel/" class="btn btn-secondary" style="border-radius:20px; padding:6px 18px; font-size:14px;">
+            <i class="fas fa-arrow-left me-1"></i> Назад
+        </a>
+        <h2 style="color:#ffd700; margin:0; font-size:1.6rem;">
+            <i class="fas fa-database me-2"></i>Резервное копирование
+        </h2>
+    </div>
+
+    <!-- Создание резервной копии -->
+    <div class="card mb-4" style="border:1px solid rgba(255,215,0,0.3);">
+        <div class="card-header" style="background:rgba(255,215,0,0.08); border-bottom:1px solid rgba(255,215,0,0.2);">
+            <h5 style="color:#ffd700; margin:0;"><i class="fas fa-plus-circle me-2"></i>Создать резервную копию</h5>
+        </div>
+        <div class="card-body" style="padding:24px;">
+            <p style="color:rgba(255,255,255,0.75); margin-bottom:20px;">
+                Создайте резервную копию базы данных SQLite. Копия сохранится на сервере.
+            </p>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning" style="padding:10px 30px; font-weight:600; letter-spacing:.5px;">
+                    <i class="fas fa-save me-2"></i>Создать резервную копию
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Список резервных копий -->
+    <div class="card" style="border:1px solid rgba(255,215,0,0.3);">
+        <div class="card-header" style="background:rgba(255,215,0,0.08); border-bottom:1px solid rgba(255,215,0,0.2);">
+            <h5 style="color:#ffd700; margin:0;"><i class="fas fa-list me-2"></i>Список резервных копий</h5>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div class="table-responsive">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:rgba(26,26,74,0.7);">
+                            <th style="padding:14px 18px; color:#ffd700; font-weight:600; text-align:left;">Имя файла</th>
+                            <th style="padding:14px 18px; color:#ffd700; font-weight:600; text-align:left;">Дата создания</th>
+                            <th style="padding:14px 18px; color:#ffd700; font-weight:600; text-align:left;">Размер</th>
+                            <th style="padding:14px 18px; color:#ffd700; font-weight:600; text-align:left;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for backup in backups %}
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.07);" class="backup-row">
+                            <td style="padding:12px 18px; color:white;">
+                                <i class="fas fa-file-archive me-2" style="color:#ffd700; opacity:.7;"></i>
+                                {{ backup.name }}
+                            </td>
+                            <td style="padding:12px 18px; color:rgba(255,255,255,0.8);">{{ backup.date }}</td>
+                            <td style="padding:12px 18px; color:rgba(255,255,255,0.8);">{{ backup.size }} KB</td>
+                            <td style="padding:12px 18px;">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a href="/admin/backup/download/{{ backup.name }}/"
+                                       class="btn btn-sm btn-warning" style="padding:5px 14px; font-size:13px; border-radius:15px;">
+                                        <i class="fas fa-download me-1"></i>Скачать
+                                    </a>
+                                    <a href="/admin/backup/restore/{{ backup.name }}/"
+                                       class="btn btn-sm" style="background:#17a2b8; color:white; padding:5px 14px; font-size:13px; border-radius:15px;"
+                                       onclick="return confirm('Восстановить базу из этой копии? Текущие данные будут заменены.')">
+                                        <i class="fas fa-undo me-1"></i>Восстановить
+                                    </a>
+                                    <a href="/admin/backup/delete/{{ backup.name }}/"
+                                       class="btn btn-sm btn-danger" style="padding:5px 14px; font-size:13px; border-radius:15px;"
+                                       onclick="return confirm('Удалить эту копию? Действие необратимо.')">
+                                        <i class="fas fa-trash me-1"></i>Удалить
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" style="padding:40px; text-align:center; color:rgba(255,255,255,0.5);">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                Резервных копий пока нет. Создайте первую!
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .backup-row:hover { background: rgba(50,50,100,0.35); }
+</style>
+{% endblock %}
