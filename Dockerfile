@@ -16,7 +16,7 @@ COPY . .
 RUN mkdir -p backups staticfiles
 
 # Собираем статику (эта команда не требует подключения к БД)
-RUN python manage.py collectstatic --noinput
+RUN python manage.py migrate --fake-initial --noinput
 
 # Запускаем: применяем миграции (с флагом --fake-initial),
 # создаём пользователей, заполняем начальными данными и запускаем сервер
