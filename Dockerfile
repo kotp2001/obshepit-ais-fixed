@@ -15,9 +15,10 @@ COPY . .
 RUN mkdir -p backups staticfiles
 RUN python manage.py collectstatic --noinput
 
-# !!! ИСПРАВЛЕННАЯ СТРОКА НИЖЕ !!!
-RUN python manage.py migrate --fake-initial --noinput && \
-    python manage.py create_users && \
-    python create_migrations.py
+# Миграции не выполняем здесь! Переносим в CMD.
 
-CMD gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
+CMD python manage.py migrate --fake-initial --noinput && \
+    python manage.py migrate --noinput && \
+    python manage.py create_users && \
+    python create_migrations.py && \
+    gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
