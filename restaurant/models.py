@@ -79,7 +79,6 @@ class Order(models.Model):
     ready_at = models.DateTimeField(null=True, blank=True, verbose_name='Время готовности')
     
     class Meta:
-        db_table = 'restaurant_order'
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
         ordering = ['-created_at']
@@ -103,7 +102,6 @@ class OrderItem(models.Model):
     comment = models.CharField(max_length=200, blank=True, verbose_name='Комментарий')
     
     class Meta:
-        db_table = 'restaurant_orderitem'
         verbose_name = 'Позиция заказа'
         verbose_name_plural = 'Позиции заказа'
     
@@ -131,9 +129,15 @@ class Profile(models.Model):
         ('waiter', 'Официант'),
         ('chef', 'Повар'),
     ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='waiter')
-    pin_code = models.CharField(max_length=4, blank=True, null=True)
-
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='waiter', verbose_name="Роль")
+    pin_code = models.CharField(max_length=4, blank=True, null=True, verbose_name="Пин-код")
+    
+    class Meta:
+        verbose_name = 'Профиль'
+        verbose_name_plural = 'Профили'
+        db_table = 'restaurant_profile'  # явно указываем имя таблицы
+    
     def __str__(self):
         return f"{self.user.username} - {self.get_role_display()}"
