@@ -17,7 +17,6 @@ RUN python manage.py collectstatic --noinput
 
 RUN python manage.py migrate --fake-initial --noinput
 
-# Создаём пользователей (таблица restaurant_profile должна быть создана вручную или через миграции)
-RUN python manage.py create_users
+# RUN python manage.py create_users   # временно отключено
 
 CMD gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
