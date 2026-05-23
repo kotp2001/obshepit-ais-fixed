@@ -15,10 +15,9 @@ COPY . .
 RUN mkdir -p backups staticfiles
 RUN python manage.py collectstatic --noinput
 
-# Применяем миграции (только недостающие таблицы)
 RUN python manage.py migrate --fake-initial --noinput
 
-# Создаём пользователей (если их нет)
-RUN python manage.py create_users
+# Временно отключаем создание пользователей
+# RUN python manage.py create_users
 
 CMD gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
