@@ -12,15 +12,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Создаём папки для бэкапов и статических файлов
 RUN mkdir -p backups staticfiles
+RUN python manage.py collectstatic --noinput
 
-# Собираем статику (эта команда не требует подключения к БД)
-RUN python manage.py migrate --fake-initial --noinput
-
-# Запускаем: применяем миграции (с флагом --fake-initial),
-# создаём пользователей, заполняем начальными данными и запускаем сервер
-CMD python manage.py migrate --fake-initial --noinput && \
+# !!! ИСПРАВЛЕННАЯ СТРОКА НИЖЕ !!!
+RUN python manage.py migrate --fake-initial --noinput && \
     python manage.py create_users && \
-    python create_migrations.py && \
-    gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
+    python create_migrations.py
+
+CMD gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
