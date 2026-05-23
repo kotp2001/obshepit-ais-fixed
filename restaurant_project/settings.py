@@ -98,3 +98,6 @@ ADMIN_INDEX_TITLE = "Управление системой ресторана"
 LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/admin-panel/'
 LOGOUT_REDIRECT_URL = '/'
+# Отключаем хранение сессий в базе данных (избавляемся от ошибки с django_session)
+SESSION_ENGINE = 'django.contrib.sessions.backends.file'
+SESSION_FILE_PATH = '/tmp/django_sessions'
