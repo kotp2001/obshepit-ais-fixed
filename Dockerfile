@@ -15,6 +15,7 @@ COPY . .
 RUN mkdir -p backups staticfiles
 RUN python manage.py collectstatic --noinput
 
-# Теперь миграции выполняются при запуске контейнера с флагом --fake-initial
-CMD python manage.py migrate --fake-initial --noinput && \
-    gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
+# Применяем миграции с флагом --fake-initial
+RUN python manage.py migrate --fake-initial --noinput
+
+CMD gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
