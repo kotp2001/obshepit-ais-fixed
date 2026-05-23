@@ -15,8 +15,6 @@ COPY . .
 RUN mkdir -p backups staticfiles
 RUN python manage.py collectstatic --noinput
 
-# Миграции и создание суперпользователя будут выполняться при каждом запуске
-CMD python manage.py migrate --noinput && \
-    python manage.py create_users && \
-    python create_migrations.py && \
+# Применяем миграции с флагом --fake-initial, чтобы обойти уже существующие таблицы
+CMD python manage.py migrate --fake-initial --noinput && \
     gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
