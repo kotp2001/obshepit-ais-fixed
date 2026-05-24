@@ -64,16 +64,16 @@
                         <td style="padding:12px 18px;color:rgba(255,255,255,0.7);">{{ backup.size }} KB</td>
                         <td style="padding:12px 18px;">
                             <div class="d-flex gap-2">
-                                <a href="/admin/backup/download/{{ backup.name }}/"
+                                <a href="/backup/download/{{ backup.name }}/"
                                    class="btn btn-sm btn-warning" style="border-radius:15px;font-size:13px;">
                                     <i class="fas fa-download me-1"></i>Скачать
                                 </a>
-                                <a href="/admin/backup/restore/{{ backup.name }}/"
+                                <a href="/backup/restore/{{ backup.name }}/"
                                    class="btn btn-sm" style="background:#17a2b8;color:white;border-radius:15px;font-size:13px;"
                                    onclick="return confirm('Восстановить БД из этой копии?')">
                                     <i class="fas fa-undo me-1"></i>Восстановить
                                 </a>
-                                <a href="/admin/backup/delete/{{ backup.name }}/"
+                                <a href="/backup/delete/{{ backup.name }}/"
                                    class="btn btn-sm btn-danger" style="border-radius:15px;font-size:13px;"
                                    onclick="return confirm('Удалить эту копию?')">
                                     <i class="fas fa-trash me-1"></i>Удалить

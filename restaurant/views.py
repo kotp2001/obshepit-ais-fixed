@@ -369,7 +369,7 @@ def admin_backup(request):
         except Exception as e:
             error = f'Ошибка: {str(e)}'
 
-        return redirect('/admin/backup/')
+        return redirect('/backup/')
 
     # Список копий
     backups = []
@@ -404,7 +404,7 @@ def admin_backup_delete(request, filename):
     file_path  = os.path.join(backup_dir, safe_name)
     if os.path.exists(file_path):
         os.remove(file_path)
-    return redirect('/admin/backup/')
+    return redirect('/backup/')
 
 @login_required(login_url="/")
 def admin_backup_restore(request, filename):
@@ -437,4 +437,4 @@ def admin_backup_restore(request, filename):
     except Exception as e:
         return HttpResponse(f'Ошибка: {str(e)}', status=500)
 
-    return redirect('/admin/backup/')
+    return redirect('/backup/')
