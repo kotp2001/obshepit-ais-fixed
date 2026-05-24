@@ -1,12 +1,13 @@
 from django.db import migrations, models
 import django.db.models.deletion
+from django.conf import settings
 
 class Migration(migrations.Migration):
 
     initial = True
 
     dependencies = [
-        migrations.swappable_dependency('auth.User'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
@@ -18,11 +19,7 @@ class Migration(migrations.Migration):
                 ('icon', models.CharField(blank=True, max_length=50, verbose_name='Иконка')),
                 ('order', models.IntegerField(default=0, verbose_name='Порядок')),
             ],
-            options={
-                'verbose_name': 'Категория',
-                'verbose_name_plural': 'Категории',
-                'ordering': ['order'],
-            },
+            options={'verbose_name': 'Категория', 'verbose_name_plural': 'Категории', 'ordering': ['order']},
         ),
         migrations.CreateModel(
             name='Dish',
@@ -37,10 +34,7 @@ class Migration(migrations.Migration):
                 ('calories', models.IntegerField(default=0, verbose_name='Калории')),
                 ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dishes', to='restaurant.category', verbose_name='Категория')),
             ],
-            options={
-                'verbose_name': 'Блюдо',
-                'verbose_name_plural': 'Блюда',
-            },
+            options={'verbose_name': 'Блюдо', 'verbose_name_plural': 'Блюда'},
         ),
         migrations.CreateModel(
             name='Table',
@@ -52,10 +46,7 @@ class Migration(migrations.Migration):
                 ('x_position', models.IntegerField(default=0, verbose_name='X позиция')),
                 ('y_position', models.IntegerField(default=0, verbose_name='Y позиция')),
             ],
-            options={
-                'verbose_name': 'Стол',
-                'verbose_name_plural': 'Столы',
-            },
+            options={'verbose_name': 'Стол', 'verbose_name_plural': 'Столы'},
         ),
         migrations.CreateModel(
             name='Order',
@@ -68,14 +59,11 @@ class Migration(migrations.Migration):
                 ('payment_method', models.CharField(blank=True, choices=[('cash', 'Наличные'), ('card', 'Карта'), ('qr', 'QR-код')], max_length=20, null=True, verbose_name='Оплата')),
                 ('guest_count', models.IntegerField(default=1, verbose_name='Количество гостей')),
                 ('comment', models.TextField(blank=True, verbose_name='Комментарий')),
+                ('ready_at', models.DateTimeField(blank=True, null=True, verbose_name='Время готовности')),
                 ('table', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='restaurant.table', verbose_name='Стол')),
-                ('waiter', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='auth.User', verbose_name='Официант')),
+                ('waiter', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL, verbose_name='Официант')),
             ],
-            options={
-                'verbose_name': 'Заказ',
-                'verbose_name_plural': 'Заказы',
-                'ordering': ['-created_at'],
-            },
+            options={'verbose_name': 'Заказ', 'verbose_name_plural': 'Заказы', 'ordering': ['-created_at'], 'db_table': 'restaurant_order'},
         ),
         migrations.CreateModel(
             name='OrderItem',
@@ -88,30 +76,28 @@ class Migration(migrations.Migration):
                 ('dish', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='restaurant.dish', verbose_name='Блюдо')),
                 ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='restaurant.order', verbose_name='Заказ')),
             ],
-            options={
-                'verbose_name': 'Позиция заказа',
-                'verbose_name_plural': 'Позиции заказа',
-            },
+            options={'verbose_name': 'Позиция заказа', 'verbose_name_plural': 'Позиции заказа', 'db_table': 'restaurant_orderitem'},
         ),
         migrations.CreateModel(
-            name='Booking',
+            name='MaintenanceLog',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guest_name', models.CharField(max_length=100, verbose_name='Имя гостя')),
-                ('guest_phone', models.CharField(max_length=20, verbose_name='Телефон')),
-                ('guest_email', models.CharField(blank=True, max_length=100, verbose_name='Email')),
-                ('guests_count', models.IntegerField(default=2, verbose_name='Количество гостей')),
-                ('booking_date', models.DateField(verbose_name='Дата брони')),
-                ('booking_time', models.TimeField(verbose_name='Время брони')),
-                ('comment', models.TextField(blank=True, verbose_name='Комментарий')),
-                ('status', models.CharField(choices=[('pending', 'Ожидает'), ('confirmed', 'Подтверждена'), ('cancelled', 'Отменена'), ('completed', 'Завершена')], default='pending', max_length=20, verbose_name='Статус')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Создана')),
-                ('table', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='bookings', to='restaurant.table', verbose_name='Стол')),
+                ('date', models.DateField(verbose_name='Дата')),
+                ('work_performed', models.TextField(verbose_name='Проведенная работа')),
+                ('performed_by', models.CharField(max_length=100, verbose_name='Выполнил')),
+                ('signature', models.CharField(blank=True, max_length=100, verbose_name='Подпись')),
+                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')),
             ],
-            options={
-                'verbose_name': 'Бронь',
-                'verbose_name_plural': 'Брони',
-                'ordering': ['booking_date', 'booking_time'],
-            },
+            options={'verbose_name': 'Журнал ТО', 'verbose_name_plural': 'Журналы ТО', 'ordering': ['-date']},
+        ),
+        migrations.CreateModel(
+            name='Profile',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('role', models.CharField(choices=[('admin', 'Администратор'), ('waiter', 'Официант'), ('chef', 'Повар')], default='waiter', max_length=20, verbose_name='Роль')),
+                ('pin_code', models.CharField(blank=True, max_length=4, null=True, verbose_name='Пин-код')),
+                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='profile', to=settings.AUTH_USER_MODEL)),
+            ],
+            options={'verbose_name': 'Профиль', 'verbose_name_plural': 'Профили'},
         ),
     ]
