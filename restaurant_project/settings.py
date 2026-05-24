@@ -50,18 +50,23 @@ WSGI_APPLICATION = 'restaurant_project.wsgi.application'
 
 import dj_database_url
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
 
 if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
-else:
-    # Локальная разработка - SQLite
+    try:
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=DATABASE_URL,
+                conn_max_age=600,
+                conn_health_checks=True,
+                ssl_require=False,
+            )
+        }
+    except Exception:
+        DATABASE_URL = ''
+
+if not DATABASE_URL:
+    # Локальная разработка или билд без БД — SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -84,7 +89,7 @@ USE_TZ = False
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# whitenoise раздаёт статику напрямую из STATICFILES_DIRS без collectstatic
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
