@@ -363,6 +363,13 @@ def admin_backup(request):
             ], env=env, capture_output=True, text=True, timeout=60)
 
             if result.returncode == 0:
+                # Убираем psql-специфичные команды (\unrestrict, \connect и др.)
+                # чтобы файл можно было вставить в DBeaver без ошибок
+                with open(backup_file, 'r', encoding='utf-8', errors='replace') as f:
+                    lines = f.readlines()
+                clean_lines = [l for l in lines if not l.startswith('\\')]
+                with open(backup_file, 'w', encoding='utf-8') as f:
+                    f.writelines(clean_lines)
                 message = f'Резервная копия создана: backup_{timestamp}.sql'
             else:
                 error = f'Ошибка pg_dump: {result.stderr[:300]}'
