@@ -12,11 +12,24 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p backups staticfiles
-RUN python manage.py collectstatic --noinput
+# Создаём нужные папки
+RUN mkdir -p backups staticfiles media
 
-# Применяем миграции и создаём суперпользователя (всё в одну строку)
-RUN python manage.py migrate --noinput && \
-    python -c "import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'restaurant_project.settings'); django.setup(); from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@example.com', 'admin123')"
+# Собираем статику БЕЗ подключения к БД
+# Используем простое хранилище чтобы не падать на билде
+RUN DJANGO_SECRET_KEY=build-only-temp-key \
+    DATABASE_URL="" \
+    python manage.py collectstatic --noinput --settings=restaurant_project.settings
 
-CMD gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
+EXPOSE 8000
+
+# При запуске: миграции → пользователи → начальные данные → сервер
+CMD sh -c "\
+    python manage.py migrate --noinput && \
+    python manage.py create_users && \
+    python create_migrations.py && \
+    gunicorn restaurant_project.wsgi:application \
+        --bind 0.0.0.0:8000 \
+        --workers 2 \
+        --timeout 120 \
+        --log-level info"

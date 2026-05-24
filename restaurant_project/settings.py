@@ -50,13 +50,16 @@ WSGI_APPLICATION = 'restaurant_project.wsgi.application'
 
 import dj_database_url
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///db.sqlite3',
-        conn_max_age=600,
-        ssl_require=True   # обязательно для Render PostgreSQL
-    )
-}
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
 else:
     # Локальная разработка - SQLite
     DATABASES = {
@@ -81,7 +84,7 @@ USE_TZ = False
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -95,6 +98,3 @@ ADMIN_INDEX_TITLE = "Управление системой ресторана"
 LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/admin-panel/'
 LOGOUT_REDIRECT_URL = '/'
-# Отключаем хранение сессий в базе данных (избавляемся от ошибки с django_session)
-#SESSION_ENGINE = 'django.contrib.sessions.backends.file'
-#SESSION_FILE_PATH = '/tmp/django_sessions'

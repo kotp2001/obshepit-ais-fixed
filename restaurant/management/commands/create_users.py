@@ -4,14 +4,14 @@ from restaurant.models import Profile
 
 class Command(BaseCommand):
     help = 'Создание пользователей с ролями'
-
+    
     def handle(self, *args, **options):
         users_data = [
             {'username': 'admin', 'password': 'admin123', 'role': 'admin', 'is_superuser': True, 'is_staff': True},
             {'username': 'waiter', 'password': 'waiter123', 'role': 'waiter', 'pin_code': '1234'},
             {'username': 'chef', 'password': 'chef123', 'role': 'chef'},
         ]
-
+        
         for data in users_data:
             user, created = User.objects.get_or_create(username=data['username'])
             if created:
@@ -20,6 +20,7 @@ class Command(BaseCommand):
                     user.is_superuser = True
                     user.is_staff = True
                 user.save()
+                
                 Profile.objects.create(
                     user=user,
                     role=data['role'],
