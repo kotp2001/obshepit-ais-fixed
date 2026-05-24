@@ -12,8 +12,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p backups staticfiles media
+RUN mkdir -p backups staticfiles
+RUN python manage.py collectstatic --noinput
 
-EXPOSE 8000
+# Миграции
+RUN python manage.py migrate --noinput
 
-CMD sh -c "python manage.py migrate --noinput && python manage.py create_users && python create_migrations.py && gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120"
+# Создание суперпользователя через shell (без синтаксических ошибок)
+RUN echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@example.com', 'admin123')" | python manage.py shell
+
+CMD gunicorn restaurant_project.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
