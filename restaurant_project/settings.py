@@ -50,16 +50,13 @@ WSGI_APPLICATION = 'restaurant_project.wsgi.application'
 
 import dj_database_url
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
+DATABASES = {
+    'default': dj_database_url.config(
+        default='sqlite:///db.sqlite3',
+        conn_max_age=600,
+        ssl_require=True   # обязательно для Render PostgreSQL
+    )
+}
 else:
     # Локальная разработка - SQLite
     DATABASES = {
