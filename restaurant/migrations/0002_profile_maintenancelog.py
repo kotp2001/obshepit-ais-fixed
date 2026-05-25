@@ -2,31 +2,21 @@ from django.db import migrations, models
 import django.db.models.deletion
 from django.conf import settings
 
+
 class Migration(migrations.Migration):
     """
-    Добавляет Profile, MaintenanceLog и поле ready_at.
-    Использует SeparateDatabaseAndState чтобы не падать
+    Добавляет Profile, MaintenanceLog, поле ready_at и делает created_at редактируемым.
+    Использует SeparateDatabaseAndState + IF NOT EXISTS чтобы не падать
     если таблицы уже существуют в БД.
     """
 
     dependencies = [
         ('restaurant', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-
-        # --- Изменяем created_at: убираем auto_now_add чтобы можно было редактировать ---
-        migrations.SeparateDatabaseAndState(
-            database_operations=[],  # В PostgreSQL поле уже существует, менять не нужно
-            state_operations=[
-                migrations.AlterField(
-                    model_name='order',
-                    name='created_at',
-                    field=models.DateTimeField(verbose_name='Создан', blank=True, null=True),
-                ),
-            ],
-        ),
     ]
 
     operations = [
+
         # --- Profile ---
         migrations.SeparateDatabaseAndState(
             database_operations=[
@@ -49,7 +39,7 @@ class Migration(migrations.Migration):
                     fields=[
                         ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                         ('role', models.CharField(
-                            choices=[('admin','Администратор'),('waiter','Официант'),('chef','Повар')],
+                            choices=[('admin', 'Администратор'), ('waiter', 'Официант'), ('chef', 'Повар')],
                             default='waiter', max_length=20, verbose_name='Роль',
                         )),
                         ('pin_code', models.CharField(blank=True, max_length=4, null=True, verbose_name='Пин-код')),
@@ -110,6 +100,18 @@ class Migration(migrations.Migration):
                     model_name='order',
                     name='ready_at',
                     field=models.DateTimeField(blank=True, null=True, verbose_name='Время готовности'),
+                ),
+            ],
+        ),
+
+        # --- created_at: убираем auto_now_add чтобы поле редактировалось в Admin ---
+        migrations.SeparateDatabaseAndState(
+            database_operations=[],
+            state_operations=[
+                migrations.AlterField(
+                    model_name='order',
+                    name='created_at',
+                    field=models.DateTimeField(blank=True, null=True, verbose_name='Создан'),
                 ),
             ],
         ),
