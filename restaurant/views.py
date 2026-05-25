@@ -111,10 +111,10 @@ def api_create_order(request):
         order = Order.objects.create(
             table=table, status='new',
             guest_count=guest_count,
-            created_at=current_time, updated_at=current_time
         )
-        # auto_now_add игнорирует значение при create — обновляем явно
+        # Устанавливаем время явно через update (обходит auto_now_add)
         Order.objects.filter(pk=order.pk).update(created_at=current_time)
+        order.refresh_from_db()
 
         total = Decimal('0')
         for item in items:

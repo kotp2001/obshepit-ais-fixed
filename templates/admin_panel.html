@@ -172,8 +172,8 @@
             <div class="stat-label">Активных заказов</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value" id="stat-tables">8</div>
-            <div class="stat-label">Столов в зале</div>
+            <div class="stat-value" id="stat-tables">—</div>
+            <div class="stat-label">Свободных столов</div>
         </div>
         <div class="stat-card">
             <div class="stat-value" id="stat-dishes">—</div>
@@ -323,6 +323,14 @@
             const d3 = await r3.json();
             document.getElementById('stat-users').textContent = d3.success ? d3.count : '—';
         } catch { document.getElementById('stat-users').textContent = '—'; }
+        try {
+            const r4 = await fetch('/api/tables/');
+            const d4 = await r4.json();
+            if (d4.success) {
+                const free = d4.data.filter(t => t.status === 'free').length;
+                document.getElementById('stat-tables').textContent = free;
+            }
+        } catch { document.getElementById('stat-tables').textContent = '—'; }
     }
     loadStats();
 </script>

@@ -12,6 +12,18 @@ class Migration(migrations.Migration):
     dependencies = [
         ('restaurant', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+
+        # --- Изменяем created_at: убираем auto_now_add чтобы можно было редактировать ---
+        migrations.SeparateDatabaseAndState(
+            database_operations=[],  # В PostgreSQL поле уже существует, менять не нужно
+            state_operations=[
+                migrations.AlterField(
+                    model_name='order',
+                    name='created_at',
+                    field=models.DateTimeField(verbose_name='Создан', blank=True, null=True),
+                ),
+            ],
+        ),
     ]
 
     operations = [
