@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/login/', views.api_login, name='api_login'),
 
     # API данные
+    path('api/staff/',       views.api_staff,       name='api_staff'),
     path('api/dishes/',      views.api_dishes,      name='api_dishes'),
     path('api/categories/',  views.api_categories,  name='api_categories'),
     path('api/tables/',      views.api_tables,       name='api_tables'),

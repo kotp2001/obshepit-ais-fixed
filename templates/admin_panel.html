@@ -157,38 +157,12 @@
         letter-spacing: 1px;
     }
 
-    /* Быстрый доступ - badge */
-    .tile-badge {
-        position: absolute;
-        top: 14px; right: 14px;
-        background: rgba(255,215,0,0.2);
-        color: #ffd700;
-        font-size: 10px;
-        padding: 2px 8px;
-        border-radius: 20px;
-        font-weight: 600;
-        letter-spacing: .5px;
-    }
+
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="fade-in">
-
-    <!-- Hero заголовок -->
-    <div class="admin-hero">
-        <div class="admin-hero-icon">
-            <i class="fas fa-crown" style="color:#1a1a4a; font-size:26px;"></i>
-        </div>
-        <div>
-            <h1>Панель администратора</h1>
-            <p>Управление рестораном — меню, персонал, отчёты и резервные копии</p>
-        </div>
-        <div style="margin-left:auto; text-align:right; display:none;" id="admin-greeting">
-            <p style="color:rgba(255,255,255,0.4); font-size:12px; margin:0;">Вы вошли как</p>
-            <p style="color:#ffd700; font-weight:600; margin:0;" id="admin-name">—</p>
-        </div>
-    </div>
 
     <!-- Статистика -->
     <p class="section-title">Статистика сегодня</p>
@@ -277,7 +251,6 @@
 
         <a href="/backup/" class="admin-tile">
             <div class="tile-icon ic-red"><i class="fas fa-database"></i></div>
-            <span class="tile-badge">Важно</span>
             <div>
                 <p class="tile-name">Резервное копирование</p>
                 <p class="tile-desc">Создание и восстановление БД</p>
@@ -338,17 +311,18 @@
         try {
             const r = await fetch('/api/orders/active/');
             const d = await r.json();
-            if (d.success) {
-                document.getElementById('stat-orders').textContent = d.data.length;
-            }
-        } catch {}
+            document.getElementById('stat-orders').textContent = d.success ? d.data.length : '0';
+        } catch { document.getElementById('stat-orders').textContent = '0'; }
         try {
             const r2 = await fetch('/api/dishes/');
             const d2 = await r2.json();
-            if (d2.success) {
-                document.getElementById('stat-dishes').textContent = d2.data.length;
-            }
-        } catch {}
+            document.getElementById('stat-dishes').textContent = d2.success ? d2.data.length : '0';
+        } catch { document.getElementById('stat-dishes').textContent = '0'; }
+        try {
+            const r3 = await fetch('/api/staff/');
+            const d3 = await r3.json();
+            document.getElementById('stat-users').textContent = d3.success ? d3.count : '—';
+        } catch { document.getElementById('stat-users').textContent = '—'; }
     }
     loadStats();
 </script>

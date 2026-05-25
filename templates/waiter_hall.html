@@ -23,6 +23,13 @@
 </div>
 
 <script>
+    function addHours(timeStr, hours) {
+        if (!timeStr || !timeStr.includes(':')) return timeStr;
+        const [h, m] = timeStr.split(':').map(Number);
+        const newH = (h + hours) % 24;
+        return String(newH).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+    }
+
     let currentTableId = null;
     let currentCart = [];
     let ordersRefreshInterval = null;
@@ -51,6 +58,7 @@
                                  style="background: ${bgColor}; cursor: ${clickable ? 'pointer' : 'not-allowed'}; ${clickable ? 'transition: transform 0.1s ease;' : 'opacity: 0.6;'}"
                                  data-table-id="${table.id}"
                                  data-table-number="${table.number}"
+                                 data-table-seats="${table.seats}"
                                  data-table-status="${table.status}">
                                 <div class="card-body">
                                     <i class="fas fa-chair fa-2x mb-2" style="color: #ffd700;"></i>
@@ -70,7 +78,8 @@
                         card.addEventListener('click', (e) => {
                             const tableId = parseInt(card.getAttribute('data-table-id'));
                             const tableNumber = parseInt(card.getAttribute('data-table-number'));
-                            openOrderModal(tableId, tableNumber);
+                            const tableSeats = parseInt(card.getAttribute('data-table-seats')) || 8;
+                            openOrderModal(tableId, tableNumber, tableSeats);
                         });
                     }
                 });
@@ -98,7 +107,7 @@
                             <div class="card ready-order-card" style="background: rgba(40,100,40,0.7); cursor: pointer;" data-order-id="${order.id}" data-order-table="${order.table_number}">
                                 <div class="card-body">
                                     <h5 style="color: #ffd700;">Заказ для стола ${order.table_number}</h5>
-                                    <p style="color: white;">Создан: ${order.created_at}</p>
+                                    <p style="color: white;">Создан: ${addHours(order.created_at, 2)}</p>
                                     <span class="badge bg-success">Готов</span>
                                 </div>
                             </div>
@@ -203,7 +212,7 @@
                         <div class="modal-content" style="background: white; color: black; font-family: monospace; width: 350px; margin: 0 auto;">
                             <div class="modal-body" id="receiptContent" style="text-align: center; padding: 20px;">
                                 <h3>АИС "ОБЩЕПИТ"</h3>
-                                <p>${order.created_at}</p>
+                                <p>${addHours(order.created_at, 2)}</p>
                                 <p>Стол ${order.table_number} | Заказ #${order.order_id}</p>
                                 <hr>
                                 <div style="text-align: left;">
@@ -250,7 +259,8 @@
         }
     }
 
-    function openOrderModal(tableId, tableNumber) {
+    function openOrderModal(tableId, tableNumber, tableSeats) {
+        tableSeats = tableSeats || 8;
         currentTableId = tableId;
         currentCart = [];
         const modalHtml = `
@@ -278,7 +288,8 @@
                                         </div>
                                         <div class="mt-3">
                                             <label style="color: white;">Количество гостей</label>
-                                            <input type="number" id="guest-count" class="form-control" value="2" min="1">
+                                            <input type="number" id="guest-count" class="form-control" value="2" min="1" max="${tableSeats}">
+                                        <small style="color:rgba(255,215,0,0.7); font-size:11px;">Макс. ${tableSeats} гостей (вместимость стола)</small>
                                         </div>
                                         <div class="mt-3 d-grid gap-2">
                                             <button class="btn btn-warning" id="submit-order-btn">Оформить заказ</button>

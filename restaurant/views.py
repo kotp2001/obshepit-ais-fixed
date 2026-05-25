@@ -151,7 +151,7 @@ def api_active_orders(request):
         data.append({
             'id': order.id,
             'table_number': order.table.number,
-            'created_at': order.created_at.strftime('%H:%M') if order.created_at else '',
+            'created_at': (order.created_at + timedelta(hours=2)).strftime('%H:%M') if order.created_at else '',
             'status': order.status,
             'items': items,
         })
@@ -321,6 +321,13 @@ def api_maintenance_logs_add(request):
         return JsonResponse({'success': True, 'id': log.id})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
+@require_http_methods(["GET"])
+def api_staff(request):
+    from django.contrib.auth.models import User
+    count = User.objects.filter(is_active=True).count()
+    return JsonResponse({'success': True, 'count': count})
 
 # ==================== РЕЗЕРВНОЕ КОПИРОВАНИЕ (PostgreSQL) ====================
 

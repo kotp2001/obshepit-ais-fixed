@@ -272,7 +272,10 @@
             <a class="navbar-brand" href="/">
                 <i class="fas fa-utensils"></i> АИС Общепит
             </a>
-            <div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span id="nav-username" style="color:rgba(255,215,0,0.8); font-size:13px; display:none;">
+                    <i class="fas fa-user-circle me-1"></i><span id="nav-username-text"></span>
+                </span>
                 <button class="btn-logout" onclick="logout()" id="logout-btn" style="display: none;">Выйти</button>
             </div>
         </div>
@@ -284,7 +287,7 @@
 
     <div class="footer">
         <div class="container">
-            <p class="mb-0">АИС "Общепит", курсовой проект, Дубровин К.С., гр. ИС-61</p>
+            <p class="mb-0">АИС «Общепит» — Автоматизированная информационная система управления рестораном</p>
             <p class="mb-0 mt-1" style="font-size: 11px;">
                 <a href="/help/">Руководство пользователя</a> | 
                 <a href="/docs/">Регламенты</a> | 
@@ -315,8 +318,12 @@
         function checkAuth() {
             const role = localStorage.getItem('user_role');
             const logoutBtn = document.getElementById('logout-btn');
+            const navUser = document.getElementById('nav-username');
+            const navUserText = document.getElementById('nav-username-text');
+            const uname = localStorage.getItem('user_name');
             if (role) {
                 logoutBtn.style.display = 'block';
+                if (uname && navUser) { navUser.style.display='flex'; navUserText.textContent='Вы вошли как ' + uname; }
             }
         }
         
