@@ -100,7 +100,7 @@ class OrderAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     inlines        = [OrderItemInline]
     readonly_fields = []
-    fields         = ['table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method', 'guest_count', 'comment', 'ready_at']
+    fields         = ['table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method', 'guest_count', 'ready_at']
 
 
 # ===== ПОЗИЦИИ ЗАКАЗА (отдельно) =====

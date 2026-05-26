@@ -48,8 +48,8 @@ class Table(models.Model):
 
 class Order(models.Model):
     STATUS_CHOICES = [
-        ('new','Новый'),('cooking','Готовится'),('ready','Готов'),
-        ('served','Подано'),('paid','Оплачен'),('cancelled','Отменён'),
+        ('new','Новый'),('cooking','Готовится'),
+        ('ready','Готов'),('paid','Оплачен'),
     ]
     PAYMENT_CHOICES = [('cash','Наличные'),('card','Карта'),('qr','QR-код')]
 

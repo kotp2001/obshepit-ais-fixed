@@ -127,35 +127,7 @@
     .ic-orange  { background: rgba(250,150,30,0.15); color: #fbb060; }
     .ic-pink    { background: rgba(240,80,180,0.15); color: #f472b6; }
 
-    /* Статистика */
-    .stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 14px;
-        margin-bottom: 32px;
-    }
-    .stat-card {
-        background: rgba(20,20,55,0.6);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 16px;
-        padding: 20px;
-        text-align: center;
-        transition: border-color 0.2s;
-    }
-    .stat-card:hover { border-color: rgba(255,215,0,0.3); }
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #ffd700;
-        line-height: 1;
-        margin-bottom: 6px;
-    }
-    .stat-label {
-        font-size: 12px;
-        color: rgba(255,255,255,0.5);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
+
 
 
 </style>
@@ -164,26 +136,6 @@
 {% block content %}
 <div class="fade-in">
 
-    <!-- Статистика -->
-    <p class="section-title">Статистика сегодня</p>
-    <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-value" id="stat-orders">—</div>
-            <div class="stat-label">Активных заказов</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stat-tables">—</div>
-            <div class="stat-label">Свободных столов</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stat-dishes">—</div>
-            <div class="stat-label">Блюд в меню</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stat-users">—</div>
-            <div class="stat-label">Сотрудников</div>
-        </div>
-    </div>
 
     <!-- Управление рестораном -->
     <p class="section-title">Управление рестораном</p>
@@ -300,38 +252,7 @@
         window.location.href = '/';
     }
 
-    // Показать имя
-    const uname = localStorage.getItem('user_name');
-    if (uname) {
-        document.getElementById('admin-name').textContent = uname;
-        document.getElementById('admin-greeting').style.display = 'block';
-    }
 
-    async function loadStats() {
-        try {
-            const r = await fetch('/api/orders/active/');
-            const d = await r.json();
-            document.getElementById('stat-orders').textContent = d.success ? d.data.length : '0';
-        } catch { document.getElementById('stat-orders').textContent = '0'; }
-        try {
-            const r2 = await fetch('/api/dishes/');
-            const d2 = await r2.json();
-            document.getElementById('stat-dishes').textContent = d2.success ? d2.data.length : '0';
-        } catch { document.getElementById('stat-dishes').textContent = '0'; }
-        try {
-            const r3 = await fetch('/api/staff/');
-            const d3 = await r3.json();
-            document.getElementById('stat-users').textContent = d3.success ? d3.count : '—';
-        } catch { document.getElementById('stat-users').textContent = '—'; }
-        try {
-            const r4 = await fetch('/api/tables/');
-            const d4 = await r4.json();
-            if (d4.success) {
-                const free = d4.data.filter(t => t.status === 'free').length;
-                document.getElementById('stat-tables').textContent = free;
-            }
-        } catch { document.getElementById('stat-tables').textContent = '—'; }
-    }
-    loadStats();
+
 </script>
 {% endblock %}

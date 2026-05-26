@@ -108,13 +108,12 @@ def api_create_order(request):
         else:
             current_time = datetime.now()
 
-        order = Order.objects.create(
+        order = Order(
             table=table, status='new',
             guest_count=guest_count,
+            created_at=current_time,
         )
-        # Устанавливаем время явно через update (обходит auto_now_add)
-        Order.objects.filter(pk=order.pk).update(created_at=current_time)
-        order.refresh_from_db()
+        order.save()
 
         total = Decimal('0')
         for item in items:
@@ -193,10 +192,12 @@ def api_mark_order_ready(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_take_order(request):
+    """Официант забирает готовый заказ — переводим в ready (уже готов, ожидает оплаты)"""
     try:
         body  = json.loads(request.body)
         order = Order.objects.get(id=body.get('order_id'))
-        order.status = 'served'
+        # Оставляем ready — официант видит что нужно подать и принять оплату
+        order.status = 'ready'
         order.save()
         return JsonResponse({'success': True})
     except Exception as e:
