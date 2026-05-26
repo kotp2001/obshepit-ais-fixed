@@ -1,172 +1,326 @@
 {% extends "admin/base.html" %}
 {% load i18n %}
 
-{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | АИС Общепит - Панель администратора{% endblock %}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | АИС Общепит{% endblock %}
 
 {% block extrastyle %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-    body {
-        background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    #container {
-        background: transparent;
-        margin: 20px;
-        color: white;
-    }
-    #header {
-        background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 100%);
-        border-bottom: 3px solid #ffd700;
-        border-radius: 15px 15px 0 0;
-        padding: 15px 20px;
-        position: relative;
-    }
-    #branding h1 {
-        color: #ffd700;
-        font-weight: 600;
-        font-size: 24px;
-        margin: 0;
-    }
-    #branding h1 a {
-        color: #ffd700;
-        text-decoration: none;
-    }
-    #user-tools {
-        color: #ffd700;
-        position: absolute;
-        top: 15px;
-        right: 20px;
-    }
-    .main-menu-btn {
-        display: inline-flex;
-        align-items: center;
-        background: #ffd700;
-        color: #1a1a4a;
-        padding: 5px 14px;
-        border-radius: 20px;
-        text-decoration: none;
-        font-weight: bold;
-        font-size: 13px;
-        vertical-align: middle;
-        margin-left: 16px;
-    }
-    #nav-sidebar {
-        float: left;
-        width: 280px;
-        margin-right: 20px;
-        background: rgba(20,20,50,0.7);
-        border-radius: 15px;
-        padding: 15px;
-    }
-    #nav-sidebar .module h2 {
-        background: rgba(26,26,74,0.9);
-        color: #ffd700;
-        border-radius: 10px;
-        padding: 10px 15px;
-    }
-    #nav-sidebar .module li {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: rgba(40,40,90,0.4);
-        border-radius: 10px;
-        padding: 5px 10px;
-        margin-bottom: 8px;
-    }
-    #nav-sidebar .module li a {
-        color: white;
-        flex: 1;
-    }
-    #nav-sidebar .module li .addlink {
-        background: #28a745;
-        color: white;
-        padding: 5px 12px;
-        border-radius: 15px;
-        font-size: 11px;
-    }
-    #content {
-        margin-left: 10px;
-        padding: 20px;
-        background: transparent;
-    }
-    #content-main { padding: 0; }
-    .results {
-        background: rgba(30,30,70,0.3) !important;
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .results th {
-        background: rgba(26,26,74,0.9);
-        color: #ffd700;
-    }
-    .results td {
-        background: rgba(40,40,90,0.4);
-        color: white;
-    }
-    .button, input[type=submit], .submit-row input {
-        background: #ffd700;
-        color: #1a1a4a;
-        border-radius: 20px;
-        padding: 8px 20px;
-        border: none;
-        cursor: pointer;
-    }
-    .button:hover, input[type=submit]:hover {
-        background: #e6c200;
-        transform: translateY(-1px);
-    }
-    input, textarea, select {
-        background: rgba(50,50,100,0.8);
-        border: 1px solid rgba(255,255,255,0.2);
-        color: white;
-        border-radius: 10px;
-        padding: 8px 12px;
-    }
-    div.breadcrumbs { display: none !important; }
-    #footer {
-        background: rgba(10,10,42,0.9);
-        color: #ffd700;
-        text-align: center;
-        padding: 15px;
-        margin-top: 20px;
-        border-radius: 15px;
-    }
-    .module, .results, #changelist, #changelist-form {
-        background: transparent !important;
-    }
-    .results tbody tr:hover td {
-        background: rgba(60,60,110,0.6);
-    }
-    .object-tools a {
-        background: #ffd700;
-        color: #1a1a4a;
-        border-radius: 20px;
-    }
-    #color-theme-toggle,
-    button.theme-toggle,
-    [data-theme-toggle],
-    .theme-selector { display: none !important; }
+/* ===== ФУНДАМЕНТ ===== */
+:root {
+    --gold:   #ffd700;
+    --dark:   #0a0a2a;
+    --panel:  rgba(20,20,55,0.85);
+    --card:   rgba(30,30,75,0.6);
+    --border: rgba(255,215,0,0.25);
+    --text:   #ffffff;
+    --muted:  rgba(255,255,255,0.6);
+}
+body {
+    background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%) fixed;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+}
+
+/* ===== HEADER ===== */
+#header {
+    background: linear-gradient(90deg, #0a0a2a 0%, #1a1a4a 100%);
+    border-bottom: 3px solid var(--gold);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+#branding h1 { margin: 0; }
+#branding h1 a {
+    color: var(--gold) !important;
+    text-decoration: none;
+    font-size: 20px;
+    font-weight: 700;
+}
+.main-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--gold);
+    color: #1a1a4a !important;
+    padding: 6px 16px;
+    border-radius: 20px;
+    text-decoration: none !important;
+    font-weight: 700;
+    font-size: 13px;
+    margin-left: 16px;
+    transition: background 0.2s;
+}
+.main-menu-btn:hover { background: #e6c200; }
+#user-tools {
+    color: var(--gold);
+    font-size: 13px;
+}
+#user-tools a { color: var(--gold); }
+
+/* ===== BREADCRUMBS ===== */
+div.breadcrumbs { display: none !important; }
+
+/* ===== SIDEBAR ===== */
+#nav-sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    border-radius: 0;
+    padding: 16px 12px;
+}
+#nav-sidebar .module h2 {
+    background: rgba(255,215,0,0.1);
+    color: var(--gold);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+}
+#nav-sidebar .module li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(40,40,90,0.5);
+    border-radius: 10px;
+    padding: 7px 12px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: background 0.15s;
+}
+#nav-sidebar .module li:hover {
+    background: rgba(60,60,110,0.7);
+}
+#nav-sidebar .module li a {
+    color: white !important;
+    font-size: 14px;
+    flex: 1;
+    text-decoration: none;
+}
+#nav-sidebar .module li a.viewlink::before { content: ''; }
+#nav-sidebar .module li .addlink {
+    background: rgba(40,180,80,0.3);
+    color: #5de8a0 !important;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    border: 1px solid rgba(40,180,80,0.4);
+    text-decoration: none;
+}
+#nav-sidebar .module li .addlink:hover { background: rgba(40,180,80,0.5); }
+
+/* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+#content {
+    background: transparent;
+    padding: 20px 24px;
+    color: white;
+}
+#content h1 { color: var(--gold); font-size: 22px; margin-bottom: 20px; }
+#content-main { padding: 0; }
+
+/* ===== ТАБЛИЦЫ СПИСКОВ ===== */
+.results {
+    background: var(--card) !important;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    width: 100%;
+}
+.results thead th {
+    background: rgba(26,26,74,0.9) !important;
+    color: var(--gold) !important;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid var(--border);
+}
+.results thead th a, .results thead th a:visited {
+    color: var(--gold) !important;
+}
+.results tbody tr td {
+    background: rgba(30,30,75,0.4) !important;
+    color: white !important;
+    padding: 11px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 14px;
+}
+.results tbody tr:hover td {
+    background: rgba(60,60,110,0.6) !important;
+}
+.results tbody tr td a {
+    color: var(--gold) !important;
+    font-weight: 600;
+    text-decoration: none;
+}
+.results tbody tr td a:hover { text-decoration: underline; }
+
+/* Чекбокс в таблице */
+.action-checkbox-column { width: 30px; }
+input[type="checkbox"] { accent-color: var(--gold); }
+
+/* ===== CHANGELIST CONTROLS ===== */
+#changelist-search input, #searchbar {
+    background: rgba(50,50,100,0.8) !important;
+    border: 1px solid rgba(255,215,0,0.3) !important;
+    color: white !important;
+    border-radius: 10px;
+    padding: 7px 12px;
+}
+#changelist-search input::placeholder { color: rgba(255,255,255,0.4); }
+#changelist-filter {
+    background: var(--panel) !important;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 14px;
+    min-width: 180px;
+}
+#changelist-filter h2 {
+    color: var(--gold) !important;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+#changelist-filter h3 { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
+#changelist-filter ul { padding: 0; list-style: none; }
+#changelist-filter li a { color: white !important; font-size: 13px; }
+#changelist-filter li.selected a { color: var(--gold) !important; font-weight: 600; }
+
+/* ===== ФОРМЫ РЕДАКТИРОВАНИЯ ===== */
+.form-row, .field-box {
+    background: rgba(30,30,75,0.4);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+label { color: rgba(255,255,255,0.8) !important; font-size: 13px; font-weight: 600; }
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="datetime-local"],
+input[type="date"],
+input[type="time"],
+input[type="url"],
+textarea,
+select {
+    background: rgba(50,50,100,0.85) !important;
+    border: 1px solid rgba(255,215,0,0.25) !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    padding: 8px 12px !important;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+    border-color: rgba(255,215,0,0.6) !important;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255,215,0,0.15);
+}
+select option { background: #1a1a4a; color: white; }
+.help { color: rgba(255,255,255,0.45) !important; font-size: 12px; }
+.errorlist { color: #f87171; }
+.errornote { background: rgba(220,60,60,0.2); border: 1px solid rgba(220,60,60,0.4); border-radius: 8px; padding: 8px 12px; color: #f87171; }
+
+/* ===== КНОПКИ ===== */
+.button, input[type=submit], .submit-row input, .submit-row a.closelink {
+    background: var(--gold) !important;
+    color: #1a1a4a !important;
+    border-radius: 20px !important;
+    padding: 8px 22px !important;
+    border: none !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    text-decoration: none !important;
+}
+.button:hover, input[type=submit]:hover { background: #e6c200 !important; transform: translateY(-1px); }
+.submit-row input[name="_continue"] { background: rgba(50,130,250,0.8) !important; color: white !important; }
+.submit-row input[name="_addanother"] { background: rgba(40,180,80,0.8) !important; color: white !important; }
+.deletelink, a.deletelink { background: rgba(220,60,60,0.8) !important; color: white !important; }
+
+/* ===== OBJECT TOOLS ===== */
+.object-tools { margin-bottom: 14px; }
+.object-tools a, .object-tools li a {
+    background: rgba(255,215,0,0.15) !important;
+    color: var(--gold) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 20px !important;
+    padding: 5px 14px !important;
+    font-size: 13px;
+    text-decoration: none !important;
+    transition: background 0.15s;
+}
+.object-tools a:hover { background: rgba(255,215,0,0.3) !important; }
+
+/* ===== INLINE ADMIN ===== */
+.inline-group { background: var(--panel); border-radius: 14px; padding: 16px; margin-top: 16px; border: 1px solid var(--border); }
+.inline-group h2 { color: var(--gold); font-size: 15px; margin-bottom: 12px; }
+
+/* ===== PAGINATION ===== */
+.paginator { color: rgba(255,255,255,0.7); }
+.paginator a { color: var(--gold) !important; }
+
+/* ===== DATE HIERARCHY ===== */
+.xfull { color: white; }
+#changelist .xfull a { color: var(--gold) !important; }
+
+/* ===== INDEX (главная admin/) ===== */
+#content-related { background: transparent; }
+.app-restaurant .model-order .changelink,
+.app-restaurant .model-order .addlink { border-radius: 15px; padding: 4px 12px; font-size: 12px; }
+.dashboard #content { padding: 20px; }
+.app-auth, .app-restaurant {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin-bottom: 20px;
+}
+.app-auth caption, .app-restaurant caption {
+    background: rgba(255,215,0,0.08);
+    border-radius: 10px 10px 0 0;
+    padding: 10px 16px;
+    color: var(--gold) !important;
+    font-weight: 700;
+    font-size: 14px;
+    caption-side: top;
+}
+.model-row th { background: transparent !important; color: rgba(255,255,255,0.8) !important; font-size: 14px; padding: 8px 12px; }
+.model-row td { background: rgba(40,40,90,0.4); border-radius: 8px; padding: 6px 10px; }
+
+/* ===== СКРЫТЬ ТЕМУ ===== */
+#color-theme-toggle, button.theme-toggle, [data-theme-toggle], .theme-selector { display: none !important; }
+
+/* ===== FOOTER ===== */
+#footer { display: none; }
 </style>
 {% endblock %}
 
 {% block branding %}
-<h1 id="site-name" style="display:flex;align-items:center;">
-    <i class="fas fa-utensils" style="color: #ffd700; margin-right: 8px;"></i>
-    <a href="{% url 'admin:index' %}" style="color: #ffd700;">АИС «Общепит»</a>
-    <a href="/admin-panel/" class="main-menu-btn"><i class="fas fa-arrow-left" style="margin-right:5px;"></i>Главное меню</a>
+<h1 id="site-name" style="display:flex;align-items:center;gap:8px;margin:0;">
+    <i class="fas fa-utensils" style="color:#ffd700;font-size:20px;"></i>
+    <a href="{% url 'admin:index' %}" style="color:#ffd700;text-decoration:none;font-size:18px;font-weight:700;">АИС «Общепит»</a>
+    <a href="/admin-panel/" class="main-menu-btn">
+        <i class="fas fa-arrow-left"></i> Главное меню
+    </a>
 </h1>
 {% endblock %}
 
 {% block nav-global %}{% endblock %}
 
 {% block footer %}
-<div style="background: rgba(10,10,42,0.9); color: #ffd700; text-align: center; padding: 15px; margin-top: 20px; border-radius: 15px;">
-    <p>АИС «Общепит» — Автоматизированная информационная система</p>
-    <p>
-        <a href="/help/" style="color: #ffd700;">Руководство</a> |
-        <a href="/docs/" style="color: #ffd700;">Регламенты</a> |
-        <a href="/maintenance-log/" style="color: #ffd700;">Журнал ТО</a> |
-        <a href="https://forms.yandex.ru/u/69f11c7990fa7b3c1459172e" target="_blank" style="color: #ffd700;">Обратная связь</a>
-    </p>
+<div style="text-align:center;padding:12px;color:rgba(255,215,0,0.5);font-size:12px;margin-top:20px;">
+    АИС «Общепит» — Автоматизированная информационная система управления рестораном
 </div>
 {% endblock %}

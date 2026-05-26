@@ -53,26 +53,45 @@
                         statusText = 'Забронирован';
                     }
                     html += `
-                        <div class="col-md-3 mb-3">
-                            <div class="card text-center table-card" 
-                                 style="background: ${bgColor}; cursor: ${clickable ? 'pointer' : 'not-allowed'}; ${clickable ? 'transition: transform 0.1s ease;' : 'opacity: 0.6;'}"
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="table-card-box text-center"
+                                 style="
+                                    background: ${bgColor};
+                                    border-radius: 16px;
+                                    border: 2px solid ${table.status === 'free' ? 'rgba(40,200,80,0.5)' : (table.status === 'occupied' ? 'rgba(220,60,60,0.5)' : 'rgba(220,160,30,0.5)')};
+                                    padding: 18px 10px;
+                                    cursor: ${clickable ? 'pointer' : 'not-allowed'};
+                                    opacity: ${clickable ? '1' : '0.65'};
+                                    transition: transform 0.15s ease, box-shadow 0.15s ease;
+                                    min-height: 140px;
+                                    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+                                 "
                                  data-table-id="${table.id}"
                                  data-table-number="${table.number}"
                                  data-table-seats="${table.seats}"
-                                 data-table-status="${table.status}">
-                                <div class="card-body">
-                                    <i class="fas fa-chair fa-2x mb-2" style="color: #ffd700;"></i>
-                                    <h3 style="color: white;">Стол ${table.number}</h3>
-                                    <p style="color: rgba(255,255,255,0.8);">${table.seats} мест</p>
-                                    <span class="badge ${table.status === 'free' ? 'bg-success' : (table.status === 'occupied' ? 'bg-danger' : 'bg-warning')}" style="color: white;">${statusText}</span>
-                                </div>
+                                 data-table-status="${table.status}"
+                                 onmouseover="${clickable ? 'this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.4)\'':''}"
+                                 onmouseout="${clickable ? 'this.style.transform=\'\';this.style.boxShadow=\'\'' : ''}">
+                                <i class="fas fa-utensils fa-lg" style="color: #ffd700;"></i>
+                                <div style="color:white; font-size:18px; font-weight:700; line-height:1;">Стол ${table.number}</div>
+                                <div style="color:rgba(255,255,255,0.75); font-size:13px;">${table.seats} мест</div>
+                                <div style="
+                                    background: ${table.status === 'free' ? 'rgba(40,180,80,0.35)' : (table.status === 'occupied' ? 'rgba(210,50,50,0.35)' : 'rgba(200,140,20,0.35)')};
+                                    color: white;
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    padding: 3px 12px;
+                                    border-radius: 20px;
+                                    white-space: nowrap;
+                                    border: 1px solid ${table.status === 'free' ? 'rgba(40,200,80,0.6)' : (table.status === 'occupied' ? 'rgba(220,60,60,0.6)' : 'rgba(220,160,30,0.6)')};
+                                ">${statusText}</div>
                             </div>
                         </div>
                     `;
                 }
                 html += '</div>';
                 document.getElementById('hall-container').innerHTML = html;
-                document.querySelectorAll('.table-card').forEach(card => {
+                document.querySelectorAll('.table-card-box').forEach(card => {
                     const status = card.getAttribute('data-table-status');
                     if (status === 'free') {
                         card.addEventListener('click', (e) => {
