@@ -18,17 +18,7 @@
 
 <script>
 
-    // Кнопка "Назад" только для администратора
-    const role = localStorage.getItem('user_role');
-    if (role === 'admin') {
-        const header = document.getElementById('kitchen-header');
-        const backBtn = document.createElement('a');
-        backBtn.href = '/admin-panel/';
-        backBtn.className = 'btn btn-secondary btn-sm';
-        backBtn.style.borderRadius = '15px';
-        backBtn.innerHTML = '<i class="fas fa-arrow-left me-1"></i>Назад';
-        header.insertBefore(backBtn, header.firstChild);
-    }
+
 
     function addHours(timeStr, hours) {
         if (!timeStr || !timeStr.includes(':')) return timeStr;

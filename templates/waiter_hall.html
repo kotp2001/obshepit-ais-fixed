@@ -4,7 +4,7 @@
 <div class="card">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
-<div id="waiter-nav"></div><h4 class="mb-0">Зал ресторана</h4>
+<h4 class="mb-0">Зал ресторана</h4>
             <button class="btn btn-warning btn-sm" id="refresh-tables">Обновить</button>
         </div>
     </div>
@@ -492,14 +492,7 @@
         loadReadyOrders();
     }, 10000);
 
-    // Кнопка "Назад" только для администратора
-    (function() {
-        const role = localStorage.getItem('user_role');
-        const nav = document.getElementById('waiter-nav');
-        if (role === 'admin' && nav) {
-            nav.innerHTML = '<a href="/admin-panel/" class="btn btn-secondary btn-sm me-2" style="border-radius:15px;"><i class="fas fa-arrow-left me-1"></i>Назад</a>';
-        }
-    })();
+
 
 </script>
 {% endblock %}

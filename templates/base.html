@@ -269,7 +269,7 @@
     
     <nav class="navbar">
         <div class="container">
-            <a class="navbar-brand" href="/" style="background:#ffd700;color:#1a1a4a!important;padding:6px 16px;border-radius:20px;font-weight:700;font-size:14px;">
+            <a class="navbar-brand" href="/admin-panel/" id="main-menu-btn" style="background:#ffd700;color:#1a1a4a!important;padding:6px 16px;border-radius:20px;font-weight:700;font-size:14px;display:none;">
                 <i class="fas fa-home me-1"></i> Главное меню
             </a>
             <div style="display:flex; align-items:center; gap:12px;">
@@ -320,10 +320,13 @@
             const logoutBtn = document.getElementById('logout-btn');
             const navUser = document.getElementById('nav-username');
             const navUserText = document.getElementById('nav-username-text');
+            const mainMenuBtn = document.getElementById('main-menu-btn');
             const uname = localStorage.getItem('user_name');
             if (role) {
                 logoutBtn.style.display = 'block';
                 if (uname && navUser) { navUser.style.display='flex'; navUserText.textContent='Вы вошли как ' + uname; }
+                // Кнопка "Главное меню" только для admin
+                if (role === 'admin' && mainMenuBtn) mainMenuBtn.style.display = 'inline-flex';
             }
         }
         
