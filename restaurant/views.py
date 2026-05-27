@@ -80,9 +80,12 @@ def api_categories(request):
 
 @require_http_methods(["GET"])
 def api_tables(request):
-    tables = Table.objects.all().order_by('number')
-    data = [{'id': t.id, 'number': t.number, 'seats': t.seats, 'status': t.status} for t in tables]
-    return JsonResponse({'success': True, 'data': data})
+    try:
+        tables = Table.objects.all().order_by('number')
+        data = [{'id': t.id, 'number': t.number, 'seats': t.seats, 'status': t.status} for t in tables]
+        return JsonResponse({'success': True, 'data': data})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 # ==================== API ЗАКАЗЫ ====================
 

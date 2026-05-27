@@ -6,301 +6,302 @@
 {% block extrastyle %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-/* ===== ЗВЁЗДНОЕ НЕБО — ФУНДАМЕНТ ===== */
-:root {
-    --gold:    #ffd700;
-    --dark:    #0a0a2a;
-    --panel:   rgba(20,20,55,0.92);
-    --card:    rgba(30,30,75,0.65);
-    --border:  rgba(255,215,0,0.22);
-    --radius:  14px;
-    --text:    #ffffff;
-}
+/* ========== БАЗОВЫЙ ФОН — звёздное небо как в главном меню ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Звёздный фон через CSS */
-html, body {
-    min-height: 100%;
-}
+html { height: 100%; }
+
 body {
-    background:
-        radial-gradient(ellipse at 20% 50%, rgba(26,26,74,0.8) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 20%, rgba(10,10,50,0.9) 0%, transparent 50%),
-        linear-gradient(135deg, #050518 0%, #0a0a2a 40%, #0d0d35 70%, #080820 100%);
-    background-attachment: fixed;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: var(--text);
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%) fixed;
+    color: #ffffff;
     position: relative;
     overflow-x: hidden;
 }
 
-/* Звёзды через псевдоэлемент */
+/* Звёзды */
 body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background-image:
-        radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.9) 0%, transparent 100%),
-        radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.7) 0%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 40% 10%, rgba(255,255,255,0.8) 0%, transparent 100%),
-        radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,0.6) 0%, transparent 100%),
-        radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.9) 0%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 85% 60%, rgba(255,255,255,0.7) 0%, transparent 100%),
-        radial-gradient(1px 1px at 15% 70%, rgba(255,255,255,0.8) 0%, transparent 100%),
-        radial-gradient(1px 1px at 30% 80%, rgba(255,255,255,0.6) 0%, transparent 100%),
-        radial-gradient(1px 1px at 50% 90%, rgba(255,255,255,0.7) 0%, transparent 100%),
-        radial-gradient(1px 1px at 65% 75%, rgba(255,255,255,0.8) 0%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 80% 85%, rgba(255,255,255,0.6) 0%, transparent 100%),
-        radial-gradient(1px 1px at 92% 40%, rgba(255,255,255,0.9) 0%, transparent 100%),
-        radial-gradient(1px 1px at 5% 50%, rgba(255,255,255,0.7) 0%, transparent 100%),
-        radial-gradient(1px 1px at 45% 60%, rgba(255,255,255,0.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 75% 5%,  rgba(255,255,255,0.8) 0%, transparent 100%),
-        radial-gradient(1px 1px at 20% 25%, rgba(255,255,255,0.6) 0%, transparent 100%),
-        radial-gradient(1px 1px at 60% 30%, rgba(255,255,255,0.7) 0%, transparent 100%),
-        radial-gradient(1px 1px at 35% 55%, rgba(255,255,255,0.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 88% 15%, rgba(255,255,255,0.8) 0%, transparent 100%),
-        radial-gradient(1px 1px at 3%  85%, rgba(255,255,255,0.6) 0%, transparent 100%);
     pointer-events: none;
     z-index: 0;
-    animation: twinkle 4s ease-in-out infinite alternate;
-}
-body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
     background-image:
-        radial-gradient(1px 1px at 18% 42%, rgba(255,255,255,0.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 38% 68%, rgba(255,255,255,0.6) 0%, transparent 100%),
-        radial-gradient(1px 1px at 58% 18%, rgba(255,255,255,0.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 78% 52%, rgba(255,255,255,0.7) 0%, transparent 100%),
-        radial-gradient(1px 1px at 95% 72%, rgba(255,255,255,0.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 12% 92%, rgba(255,255,255,0.6) 0%, transparent 100%),
-        radial-gradient(1px 1px at 48% 38%, rgba(255,255,255,0.4) 0%, transparent 100%),
-        radial-gradient(1px 1px at 67% 88%, rgba(255,255,255,0.6) 0%, transparent 100%);
-    pointer-events: none;
-    z-index: 0;
-    animation: twinkle 6s ease-in-out infinite alternate-reverse;
+        radial-gradient(1px 1px at 5%   8%,  rgba(255,255,255,.9) 0%, transparent 100%),
+        radial-gradient(1px 1px at 12%  22%, rgba(255,255,255,.7) 0%, transparent 100%),
+        radial-gradient(2px 2px at 18%  55%, rgba(255,255,255,.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 25%  38%, rgba(255,255,255,.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 31%  72%, rgba(255,255,255,.9) 0%, transparent 100%),
+        radial-gradient(2px 2px at 37%  15%, rgba(255,255,255,.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 43%  88%, rgba(255,255,255,.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 49%  44%, rgba(255,255,255,.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 55%  62%, rgba(255,255,255,.9) 0%, transparent 100%),
+        radial-gradient(2px 2px at 61%  28%, rgba(255,255,255,.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 67%  79%, rgba(255,255,255,.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 73%  11%, rgba(255,255,255,.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 79%  51%, rgba(255,255,255,.9) 0%, transparent 100%),
+        radial-gradient(2px 2px at 85%  35%, rgba(255,255,255,.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 91%  68%, rgba(255,255,255,.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 96%  20%, rgba(255,255,255,.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 8%   82%, rgba(255,255,255,.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 22%  95%, rgba(255,255,255,.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 58%  5%,  rgba(255,255,255,.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 77%  93%, rgba(255,255,255,.6) 0%, transparent 100%);
+    animation: twinkle 5s ease-in-out infinite alternate;
 }
 @keyframes twinkle {
-    0%   { opacity: 0.4; }
-    50%  { opacity: 1;   }
-    100% { opacity: 0.6; }
+    0%   { opacity: .5; }
+    100% { opacity: 1;  }
 }
 
-/* Всё содержимое поверх звёзд */
-#header, #nav-sidebar, #main, #content,
-.main, .content-wrapper, [role="main"] {
-    position: relative;
-    z-index: 1;
-}
+/* Все блоки поверх фона */
+#header, #nav-sidebar, #main, .main,
+#content, #content-main, .module,
+#changelist, #changelist-form { position: relative; z-index: 1; }
 
-/* ===== ШАПКА ===== */
+/* ========== ШАПКА ========== */
 #header {
     background: rgba(10,10,42,0.95) !important;
     backdrop-filter: blur(12px);
-    border-bottom: 2px solid var(--gold);
-    padding: 14px 24px;
+    border-bottom: 2px solid #ffd700;
+    padding: 12px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: relative;
+    z-index: 10;
 }
-#branding h1 { margin: 0; }
+#branding h1 { margin: 0; font-size: 0; line-height: 1; }
 #branding h1 a, #branding h1 a:visited {
-    color: var(--gold) !important;
-    text-decoration: none;
-    font-size: 20px;
+    color: #ffd700 !important;
+    font-size: 18px;
     font-weight: 700;
-    letter-spacing: 0.3px;
+    text-decoration: none;
 }
 .main-menu-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: var(--gold);
+    background: #ffd700;
     color: #1a1a4a !important;
     padding: 6px 16px;
     border-radius: 20px;
     text-decoration: none !important;
     font-weight: 700;
     font-size: 13px;
-    margin-left: 16px;
-    transition: background 0.2s, transform 0.1s;
+    margin-left: 14px;
+    transition: background .15s, transform .1s;
 }
 .main-menu-btn:hover { background: #e6c200; transform: translateY(-1px); }
-#user-tools { color: rgba(255,255,255,0.7); font-size: 13px; }
-#user-tools a, #user-tools a:visited { color: var(--gold) !important; }
+#user-tools { font-size: 13px; color: rgba(255,255,255,.7); }
+#user-tools a, #user-tools a:visited { color: #ffd700 !important; text-decoration: none; }
+#user-tools a:hover { text-decoration: underline; }
 
-/* ===== ХЛЕБНЫЕ КРОШКИ — СКРЫТЬ ===== */
+/* ========== ХЛЕБНЫЕ КРОШКИ — СКРЫТЬ ========== */
 div.breadcrumbs { display: none !important; }
 
-/* ===== SIDEBAR ===== */
+/* ========== SIDEBAR ========== */
 #nav-sidebar {
-    background: rgba(10,10,40,0.88) !important;
-    backdrop-filter: blur(8px);
-    border-right: 1px solid var(--border);
+    background: rgba(10,10,40,0.90) !important;
+    backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(255,215,0,0.2);
     padding: 16px 10px;
-    z-index: 1;
+    z-index: 2;
 }
+#nav-sidebar .module { margin-bottom: 16px; }
 #nav-sidebar .module h2 {
     background: rgba(255,215,0,0.1);
-    color: var(--gold) !important;
+    color: #ffd700 !important;
     border-radius: 10px;
     padding: 7px 12px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.8px;
-    border: 1px solid var(--border);
-    margin-bottom: 6px;
+    letter-spacing: 1px;
     text-transform: uppercase;
+    border: 1px solid rgba(255,215,0,0.2);
+    margin-bottom: 6px;
 }
+#nav-sidebar .module ul { list-style: none; padding: 0; }
 #nav-sidebar .module li {
     background: rgba(30,30,80,0.6);
     border-radius: 10px;
-    padding: 6px 10px;
+    padding: 6px 12px;
     margin-bottom: 4px;
     border: 1px solid rgba(255,255,255,0.05);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: background 0.15s;
+    transition: background .15s, border-color .15s;
 }
-#nav-sidebar .module li:hover { background: rgba(50,50,110,0.8); border-color: var(--border); }
-#nav-sidebar .module li a { color: rgba(255,255,255,0.9) !important; font-size: 13px; text-decoration: none; flex: 1; }
+#nav-sidebar .module li:hover {
+    background: rgba(50,50,110,0.8);
+    border-color: rgba(255,215,0,0.25);
+}
+#nav-sidebar .module li a {
+    color: rgba(255,255,255,0.9) !important;
+    font-size: 13px;
+    text-decoration: none;
+    flex: 1;
+}
 #nav-sidebar .module li a.addlink {
+    flex: unset;
     color: #5de8a0 !important;
     background: rgba(40,180,80,0.2);
-    padding: 2px 8px;
+    padding: 2px 9px;
     border-radius: 10px;
     font-size: 11px;
     border: 1px solid rgba(40,180,80,0.3);
-    flex: unset;
 }
+#nav-sidebar .module li a.addlink:hover { background: rgba(40,180,80,0.4); }
 
-/* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+/* ========== ОСНОВНОЙ КОНТЕНТ ========== */
 #content {
     background: transparent !important;
     padding: 20px 24px;
-    z-index: 1;
 }
-#content h1 { color: var(--gold); font-size: 22px; font-weight: 700; margin-bottom: 20px; }
+#content h1 {
+    color: #ffd700;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
 #content-main { padding: 0; }
 
-/* ===== ТАБЛИЦЫ СПИСКОВ ===== */
+/* ========== ТАБЛИЦЫ СПИСКОВ ========== */
 #result_list, .results {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     background: rgba(15,15,50,0.85) !important;
     backdrop-filter: blur(8px);
-    border-radius: var(--radius);
+    border-radius: 14px;
     overflow: hidden;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,215,0,0.2);
 }
 #result_list thead th, .results thead th {
-    background: rgba(20,20,60,0.95) !important;
-    color: var(--gold) !important;
+    background: rgba(20,20,65,0.95) !important;
+    color: #ffd700 !important;
     padding: 12px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    border-bottom: 2px solid var(--border);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    border-bottom: 2px solid rgba(255,215,0,0.2);
     white-space: nowrap;
 }
-#result_list thead th a, .results thead th a { color: var(--gold) !important; text-decoration: none; }
-#result_list thead th.sorted { background: rgba(30,30,80,0.95) !important; }
+#result_list thead th a, .results thead th a,
+#result_list thead th a:visited { color: #ffd700 !important; text-decoration: none; }
 #result_list tbody tr td, .results tbody tr td {
     background: rgba(20,20,65,0.5) !important;
-    color: white !important;
+    color: #fff !important;
     padding: 10px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
     font-size: 13px;
     vertical-align: middle;
 }
 #result_list tbody tr:hover td, .results tbody tr:hover td {
     background: rgba(50,50,110,0.7) !important;
 }
-#result_list tbody tr td a, .results tbody tr td a { color: var(--gold) !important; font-weight: 600; text-decoration: none; }
+#result_list tbody tr td a, .results tbody tr td a {
+    color: #ffd700 !important;
+    font-weight: 600;
+    text-decoration: none;
+}
 #result_list tbody tr td a:hover { text-decoration: underline; }
-input[type="checkbox"] { accent-color: var(--gold); }
+input[type="checkbox"] { accent-color: #ffd700; }
 
-/* ===== ФИЛЬТРЫ ===== */
+/* ========== ФИЛЬТР ========== */
 #changelist-filter {
-    background: rgba(15,15,50,0.88) !important;
+    background: rgba(15,15,50,0.9) !important;
     backdrop-filter: blur(8px);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
+    border-radius: 14px;
+    border: 1px solid rgba(255,215,0,0.2);
     padding: 14px;
     min-width: 190px;
 }
-#changelist-filter h2 { color: var(--gold) !important; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
-#changelist-filter h3 { color: rgba(255,255,255,0.6); font-size: 12px; margin: 10px 0 4px; }
+#changelist-filter h2 {
+    color: #ffd700 !important;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+#changelist-filter h3 { color: rgba(255,255,255,0.55); font-size: 12px; margin: 10px 0 4px; }
 #changelist-filter ul { padding: 0; list-style: none; }
 #changelist-filter li a { color: rgba(255,255,255,0.8) !important; font-size: 13px; text-decoration: none; }
-#changelist-filter li.selected a { color: var(--gold) !important; font-weight: 600; }
+#changelist-filter li.selected a { color: #ffd700 !important; font-weight: 600; }
 
-/* ===== ПОИСК ===== */
-#searchbar, #changelist-search input[type="text"] {
+/* ========== ПОИСК ========== */
+#changelist-search input[type="text"], #searchbar {
     background: rgba(30,30,80,0.9) !important;
-    border: 1px solid var(--border) !important;
-    color: white !important;
+    border: 1px solid rgba(255,215,0,0.3) !important;
+    color: #fff !important;
     border-radius: 10px !important;
     padding: 7px 12px !important;
+    font-size: 13px;
 }
-#changelist-search input::placeholder { color: rgba(255,255,255,0.35); }
+#changelist-search input[type="text"]::placeholder { color: rgba(255,255,255,0.35); }
 #changelist-search input[type="submit"] {
-    background: var(--gold) !important;
+    background: #ffd700 !important;
     color: #1a1a4a !important;
     border: none !important;
     border-radius: 10px !important;
     padding: 7px 16px !important;
     font-weight: 700 !important;
+    cursor: pointer;
 }
 
-/* ===== ACTIONS (кнопка Выполнить) ===== */
+/* ========== ACTIONS (Выполнить — на одном уровне) ========== */
 .actions {
     display: flex !important;
     align-items: center !important;
     gap: 10px;
     padding: 10px 14px;
     background: rgba(15,15,50,0.8);
-    border-radius: 10px;
-    border: 1px solid var(--border);
+    border-radius: 12px;
+    border: 1px solid rgba(255,215,0,0.2);
     margin-bottom: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
-.actions label { color: rgba(255,255,255,0.7) !important; font-size: 13px; margin: 0; white-space: nowrap; }
+.actions label { color: rgba(255,255,255,0.7) !important; font-size: 13px; margin: 0; white-space: nowrap; flex-shrink: 0; }
 .actions select {
     background: rgba(30,30,80,0.9) !important;
-    border: 1px solid var(--border) !important;
-    color: white !important;
+    border: 1px solid rgba(255,215,0,0.25) !important;
+    color: #fff !important;
     border-radius: 10px !important;
     padding: 6px 10px !important;
-    min-width: 180px;
-    width: auto !important;
+    min-width: 160px;
     flex: 1;
+    height: 34px;
 }
+.actions select option { background: #0d0d35; color: #fff; }
 .actions button, .actions input[type="submit"] {
-    background: var(--gold) !important;
+    background: #ffd700 !important;
     color: #1a1a4a !important;
     border: none !important;
     border-radius: 10px !important;
-    padding: 6px 18px !important;
+    padding: 0 18px !important;
     font-weight: 700 !important;
     font-size: 13px !important;
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
+    height: 34px;
+    line-height: 34px;
 }
 
-/* ===== ФОРМЫ РЕДАКТИРОВАНИЯ ===== */
+/* ========== ФОРМЫ РЕДАКТИРОВАНИЯ ========== */
 .form-row, .field-box {
-    background: rgba(20,20,60,0.5);
+    background: rgba(20,20,60,0.55);
     border-radius: 10px;
     padding: 12px 16px;
     margin-bottom: 8px;
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
 }
 label { color: rgba(255,255,255,0.85) !important; font-size: 13px; font-weight: 600; }
 
-/* Поля ввода — белый фон, ЧЁРНЫЙ текст */
+/* ПОЛЯ — белый фон, ЧЁРНЫЙ текст */
 input[type="text"],
 input[type="number"],
 input[type="email"],
@@ -315,46 +316,49 @@ textarea {
     color: #0a0a2a !important;
     border-radius: 10px !important;
     padding: 8px 12px !important;
+    font-size: 14px;
     width: 100%;
     box-sizing: border-box;
-    font-size: 14px;
 }
-input[type="text"]:focus, textarea:focus {
-    border-color: var(--gold) !important;
+input:focus, textarea:focus {
+    border-color: #ffd700 !important;
     box-shadow: 0 0 0 2px rgba(255,215,0,0.2) !important;
     outline: none;
 }
-input[type="text"]::placeholder, textarea::placeholder { color: rgba(0,0,50,0.35); }
+input::placeholder, textarea::placeholder { color: rgba(0,0,50,.4); }
 
-/* Select — тёмный */
+/* SELECT тёмный */
 select {
     background: rgba(30,30,80,0.9) !important;
-    border: 1px solid var(--border) !important;
-    color: white !important;
+    border: 1px solid rgba(255,215,0,0.25) !important;
+    color: #fff !important;
     border-radius: 10px !important;
     padding: 8px 12px !important;
+    font-size: 14px;
     width: 100%;
     box-sizing: border-box;
 }
-select option { background: #0d0d35; color: white; }
+select option { background: #0d0d35; color: #fff; }
 
-.help { color: rgba(255,255,255,0.4) !important; font-size: 12px; }
-.errorlist { color: #f87171; list-style: none; padding: 0; }
-.errornote { background: rgba(220,60,60,0.2); border: 1px solid rgba(220,60,60,0.4); border-radius: 8px; padding: 8px 14px; color: #f87171; margin-bottom: 12px; }
+.help { color: rgba(255,255,255,.4) !important; font-size: 12px; }
+.errornote { background: rgba(220,60,60,.2); border:1px solid rgba(220,60,60,.4); border-radius:8px; padding:8px 14px; color:#f87171; margin-bottom:12px; }
+.errorlist { color: #f87171; list-style: none; padding: 0; margin: 4px 0 0; }
 
-/* ===== КНОПКИ ===== */
+/* ========== КНОПКИ SUBMIT ========== */
 .submit-row {
-    background: rgba(15,15,50,0.8) !important;
-    border-radius: var(--radius);
+    background: rgba(15,15,50,0.85) !important;
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
     padding: 14px 18px;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,215,0,0.2);
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
     align-items: center;
+    margin-top: 16px;
 }
 .button, input[type="submit"] {
-    background: var(--gold) !important;
+    background: #ffd700 !important;
     color: #1a1a4a !important;
     border-radius: 20px !important;
     padding: 8px 22px !important;
@@ -362,66 +366,67 @@ select option { background: #0d0d35; color: white; }
     font-weight: 700 !important;
     font-size: 14px !important;
     cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
+    transition: background .15s, transform .1s;
     text-decoration: none !important;
+    display: inline-block;
 }
 .button:hover, input[type="submit"]:hover { background: #e6c200 !important; transform: translateY(-1px); }
-.submit-row input[name="_continue"] { background: rgba(50,130,250,0.85) !important; color: white !important; }
-.submit-row input[name="_addanother"] { background: rgba(40,180,80,0.85) !important; color: white !important; }
+.submit-row input[name="_continue"] { background: rgba(50,130,250,0.85) !important; color: #fff !important; }
+.submit-row input[name="_addanother"] { background: rgba(40,180,80,0.85) !important; color: #fff !important; }
 .deletelink, a.deletelink {
     background: rgba(220,60,60,0.85) !important;
-    color: white !important;
+    color: #fff !important;
     border-radius: 20px !important;
     padding: 8px 18px !important;
     text-decoration: none !important;
     font-weight: 700 !important;
     font-size: 13px !important;
+    display: inline-block;
 }
 
-/* ===== OBJECT TOOLS ===== */
+/* ========== OBJECT TOOLS ========== */
 .object-tools { margin-bottom: 14px; }
 .object-tools a, .object-tools li a {
-    background: rgba(255,215,0,0.12) !important;
-    color: var(--gold) !important;
-    border: 1px solid var(--border) !important;
+    background: rgba(255,215,0,.12) !important;
+    color: #ffd700 !important;
+    border: 1px solid rgba(255,215,0,.25) !important;
     border-radius: 20px !important;
     padding: 5px 14px !important;
     font-size: 13px;
     text-decoration: none !important;
-    transition: background 0.15s;
 }
-.object-tools a:hover { background: rgba(255,215,0,0.25) !important; }
+.object-tools a:hover { background: rgba(255,215,0,.25) !important; }
 
-/* ===== INLINE ===== */
+/* ========== INLINE ========== */
 .inline-group {
     background: rgba(15,15,50,0.8);
     backdrop-filter: blur(6px);
-    border-radius: var(--radius);
+    border-radius: 14px;
     padding: 16px;
     margin-top: 16px;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,215,0,0.2);
 }
-.inline-group h2 { color: var(--gold); font-size: 15px; margin-bottom: 12px; }
+.inline-group h2 { color: #ffd700; font-size: 15px; margin-bottom: 12px; }
 .inline-group table thead th {
     background: rgba(20,20,60,0.9) !important;
-    color: var(--gold) !important;
-    padding: 8px 12px;
-    font-size: 12px;
+    color: #ffd700 !important;
+    padding: 8px 12px; font-size: 12px;
+    border-bottom: 1px solid rgba(255,215,0,0.2);
 }
 .inline-group table tbody tr td {
     background: rgba(25,25,70,0.6) !important;
-    color: white !important;
+    color: #fff !important;
     padding: 8px 12px;
     border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 
-/* ===== DASHBOARD (главная) ===== */
+/* ========== DASHBOARD ========== */
 .dashboard #content { padding: 20px; }
 .app-auth, .app-restaurant {
     background: rgba(15,15,50,0.85);
     backdrop-filter: blur(8px);
     border-radius: 16px;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,215,0,0.2);
     padding: 16px;
     margin-bottom: 20px;
 }
@@ -429,20 +434,28 @@ select option { background: #0d0d35; color: white; }
     background: rgba(255,215,0,0.08);
     border-radius: 10px 10px 0 0;
     padding: 10px 16px;
-    color: var(--gold) !important;
+    color: #ffd700 !important;
     font-weight: 700;
     font-size: 14px;
     text-align: left;
+    display: block;
 }
-.model-row th { background: transparent !important; color: rgba(255,255,255,0.75) !important; font-size: 14px; padding: 8px 12px; }
+.model-row th {
+    background: transparent !important;
+    color: rgba(255,255,255,0.75) !important;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+.model-row td { padding: 6px 12px; }
 
-/* ===== ПАГИНАЦИЯ ===== */
-.paginator { color: rgba(255,255,255,0.6); }
-.paginator a { color: var(--gold) !important; }
-.paginator .this-page { color: white; font-weight: 700; }
+/* ========== ПАГИНАЦИЯ ========== */
+.paginator { color: rgba(255,255,255,.6); font-size: 13px; }
+.paginator a { color: #ffd700 !important; }
+.paginator .this-page { color: #fff; font-weight: 700; }
 
-/* ===== СКРЫТЬ ТЕМУ И FOOTER ===== */
-#color-theme-toggle, button.theme-toggle, [data-theme-toggle], .theme-selector { display: none !important; }
+/* ========== СКРЫТЬ ЛИШНЕЕ ========== */
+#color-theme-toggle, button.theme-toggle,
+[data-theme-toggle], .theme-selector { display: none !important; }
 #footer { display: none !important; }
 </style>
 {% endblock %}
@@ -450,7 +463,9 @@ select option { background: #0d0d35; color: white; }
 {% block branding %}
 <h1 id="site-name" style="display:flex;align-items:center;gap:8px;margin:0;">
     <i class="fas fa-utensils" style="color:#ffd700;font-size:18px;"></i>
-    <a href="{% url 'admin:index' %}" style="color:#ffd700;text-decoration:none;font-size:18px;font-weight:700;">АИС «Общепит»</a>
+    <a href="{% url 'admin:index' %}" style="color:#ffd700;text-decoration:none;font-size:18px;font-weight:700;">
+        АИС «Общепит»
+    </a>
     <a href="/admin-panel/" class="main-menu-btn">
         <i class="fas fa-arrow-left"></i> Главное меню
     </a>
@@ -460,7 +475,26 @@ select option { background: #0d0d35; color: white; }
 {% block nav-global %}{% endblock %}
 
 {% block footer %}
-<div style="text-align:center;padding:10px;color:rgba(255,215,0,0.4);font-size:11px;position:relative;z-index:1;">
-    АИС «Общепит» — Автоматизированная информационная система управления рестораном
+<div style="
+    position:relative; z-index:1;
+    background: rgba(20,20,50,0.85);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 14px;
+    text-align: center;
+    color: #ffd700;
+    font-size: 13px;
+    margin-top: 40px;
+">
+    <p style="margin:0 0 6px;">АИС «Общепит» — Автоматизированная информационная система управления рестораном</p>
+    <p style="margin:0; font-size:11px;">
+        <a href="/help/" style="color:#ffd700;text-decoration:none;">Руководство пользователя</a>
+        <span style="opacity:.5;margin:0 6px;">|</span>
+        <a href="/docs/" style="color:#ffd700;text-decoration:none;">Регламенты</a>
+        <span style="opacity:.5;margin:0 6px;">|</span>
+        <a href="/maintenance-log/" style="color:#ffd700;text-decoration:none;">Журнал ТО</a>
+        <span style="opacity:.5;margin:0 6px;">|</span>
+        <a href="https://forms.yandex.ru/u/69f11c7990fa7b3c1459172e" target="_blank" style="color:#ffd700;text-decoration:none;">Обратная связь</a>
+    </p>
 </div>
 {% endblock %}

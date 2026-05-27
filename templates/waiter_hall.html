@@ -36,7 +36,10 @@
 
     async function loadTables() {
         try {
-            const response = await fetch('/api/tables/');
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000);
+            const response = await fetch('/api/tables/', { signal: controller.signal });
+            clearTimeout(timeout);
             const data = await response.json();
             if (data.success && data.data) {
                 let html = '<div class="row">';
@@ -105,7 +108,10 @@
             }
             await loadReadyOrders();
         } catch (error) {
-            document.getElementById('hall-container').innerHTML = '<p class="text-center text-danger">Ошибка загрузки столов</p>';
+            console.error('loadTables error:', error);
+            document.getElementById('hall-container').innerHTML = 
+                '<div class="text-center p-4"><p style="color:#f87171;">Ошибка загрузки: ' + error.message + '</p>' +
+                '<button onclick="loadTables()" class="btn btn-warning mt-2">Повторить</button></div>';
         }
     }
 
