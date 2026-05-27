@@ -50,6 +50,7 @@ class Order(models.Model):
     STATUS_CHOICES = [
         ('new','Новый'),('cooking','Готовится'),
         ('ready','Готов'),('paid','Оплачен'),
+        ('served','Подано'),('cancelled','Отменён'),
     ]
     PAYMENT_CHOICES = [('cash','Наличные'),('card','Карта'),('qr','QR-код')]
 
