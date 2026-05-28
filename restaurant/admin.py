@@ -7,16 +7,16 @@ from .models import Category, Dish, Table, Order, OrderItem, MaintenanceLog, Pro
 class BaseAdmin(admin.ModelAdmin):
     change_form_template = 'admin/change_form.html'
 
-# ===== КАТЕГОРИИ =====
+# ===== КАТЕГОРИИ (с кастомным списком) =====
 class CategoryAdmin(BaseAdmin):
     list_display = ['id', 'name', 'icon', 'order']
     list_editable = ['name', 'icon', 'order']
     search_fields = ['name']
     ordering = ['order']
-    change_list_template = 'admin/restaurant/category/change_list.html'
+    change_list_template = 'admin/restaurant/category/change_list.html'  # кастомный для категорий
     class Media:
         css = {}
-        js = []
+        js = {}
 
 # ===== ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ =====
 class ProfileInline(admin.StackedInline):
@@ -107,7 +107,7 @@ class MaintenanceLogAdmin(BaseAdmin):
     fields = ['date', 'work_performed', 'performed_by', 'signature']
     readonly_fields = []
 
-# ===== РЕГИСТРАЦИЯ =====
+# ===== РЕГИСТРАЦИЯ (без дублирования) =====
 admin.site.register(Category, CategoryAdmin)
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
