@@ -1,0 +1,117 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    /* Общие стили для всех страниц списка (категории, блюда, столы и т.д.) */
+    body {
+        background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    #container {
+        background: transparent;
+        margin: 20px;
+        color: white;
+    }
+    #content {
+        background: rgba(30,30,70,0.4);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 0;
+    }
+    .results {
+        background: rgba(30,30,70,0.3) !important;
+        border-radius: 15px;
+        border: 1px solid rgba(255,215,0,0.1) !important;
+        overflow: hidden;
+    }
+    .results th {
+        background: rgba(26,26,74,0.9);
+        color: #ffd700;
+        padding: 12px 15px;
+        font-weight: 600;
+        border: none;
+    }
+    .results td {
+        background: rgba(40,40,90,0.4);
+        color: white;
+        padding: 10px 15px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .results tr:hover td {
+        background: rgba(60,60,110,0.6);
+    }
+    /* Убираем подпись "Date:" */
+    .datetime:before {
+        content: none !important;
+    }
+    .field-created_at .datetime,
+    .field-updated_at .datetime,
+    .field-date .datetime {
+        font-weight: normal;
+    }
+    /* Ссылки */
+    .results a {
+        color: #ffd700 !important;
+        text-decoration: none;
+    }
+    .results a:hover {
+        color: #e6c200 !important;
+        text-decoration: underline;
+    }
+    /* Кнопки */
+    .button, input[type=submit], input[type=button], .submit-row input, a.button {
+        background: #ffd700;
+        color: #1a1a4a;
+        border-radius: 20px;
+        font-weight: 600;
+        padding: 8px 20px;
+        transition: all 0.1s ease;
+    }
+    .button:hover, input[type=submit]:hover, input[type=button]:hover, .submit-row input:hover, a.button:hover {
+        background: #e6c200;
+        transform: translateY(-1px);
+    }
+    /* Пагинация */
+    .paginator {
+        background: rgba(40,40,90,0.6);
+        color: white;
+        border-radius: 10px;
+        padding: 10px;
+        margin-top: 15px;
+    }
+    .paginator a {
+        color: #ffd700;
+    }
+    /* Форма поиска */
+    #searchbar {
+        background: rgba(50,50,100,0.8);
+        border: 1px solid #ffd700;
+        border-radius: 20px;
+        padding: 8px 15px;
+        color: white;
+    }
+    /* Фильтры */
+    #changelist-filter {
+        background: rgba(20,20,50,0.7);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 15px;
+        border: 1px solid rgba(255,215,0,0.2);
+    }
+    #changelist-filter h2, #changelist-filter h3 {
+        color: #ffd700;
+    }
+    #changelist-filter a {
+        color: white;
+    }
+    #changelist-filter a:hover {
+        color: #ffd700;
+    }
+  </style>
+{% endblock %}
+
+{% block coltype %}flex{% endblock %}
+{% block bodyclass %}{{ block.super }} change-list{% endblock %}
