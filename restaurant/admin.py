@@ -123,3 +123,9 @@ class MaintenanceLogAdmin(admin.ModelAdmin):
     search_fields = ['work_performed', 'performed_by']
     fields        = ['date', 'work_performed', 'performed_by', 'signature']
     readonly_fields = []
+
+
+# ===== КАСТОМИЗАЦИЯ DJANGO ADMIN =====
+admin.site.site_header  = 'АИС «Общепит»'
+admin.site.site_title   = 'АИС Общепит'
+admin.site.index_title  = 'Панель управления'
