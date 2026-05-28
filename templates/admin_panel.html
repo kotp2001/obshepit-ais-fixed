@@ -137,6 +137,11 @@
 <div class="fade-in">
 
 
+    <!-- Дата -->
+    <div style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;">
+        <div id="admin-date" style="color:rgba(255,215,0,0.7);font-size:15px;font-weight:600;"></div>
+    </div>
+
     <!-- Управление рестораном -->
     <p class="section-title">Управление рестораном</p>
     <div class="admin-grid">
@@ -252,7 +257,18 @@
         window.location.href = '/';
     }
 
-
-
+    // Показываем дату: число, месяц, год
+    (function() {
+        const now = new Date();
+        const months = ['января','февраля','марта','апреля','мая','июня',
+                        'июля','августа','сентября','октября','ноября','декабря'];
+        const days = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+        const d = now.getDate();
+        const m = months[now.getMonth()];
+        const y = now.getFullYear();
+        const day = days[now.getDay()];
+        const el = document.getElementById('admin-date');
+        if (el) el.textContent = d + ' ' + m + ' ' + y + ' г. — ' + day;
+    })();
 </script>
 {% endblock %}
