@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load i18n admin_urls %}
+
+{% block title %}{% if add %}Добавление{% else %}Редактирование{% endif %} {{ opts.verbose_name }} | АИС Общепит{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">{% if add %}Новая запись{% else %}Редактирование: {{ original }}{% endif %}</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <a href="{% url opts|admin_urlname:'changelist' %}" class="btn btn-secondary">Отмена</a>
+                    {% if not add %}
+                        <a href="{% url opts|admin_urlname:'delete' original.pk %}" class="btn btn-danger" onclick="return confirm('Удалить?')">Удалить</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
