@@ -3,8 +3,12 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from .models import Category, Dish, Table, Order, OrderItem, MaintenanceLog, Profile
 
-# ===== КАТЕГОРИИ (с кастомным шаблоном) =====
-class CategoryAdmin(admin.ModelAdmin):
+# Базовый класс для единого шаблона форм
+class BaseAdmin(admin.ModelAdmin):
+    change_form_template = 'admin/change_form.html'
+
+# ===== КАТЕГОРИИ =====
+class CategoryAdmin(BaseAdmin):
     list_display = ['id', 'name', 'icon', 'order']
     list_editable = ['name', 'icon', 'order']
     search_fields = ['name']
@@ -22,13 +26,12 @@ class ProfileInline(admin.StackedInline):
     fields = ('role', 'pin_code')
     extra = 0
 
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(UserAdmin, BaseAdmin):
     inlines = [ProfileInline]
     list_display = ['username', 'first_name', 'last_name', 'email', 'get_role', 'is_staff', 'is_active']
     list_filter = ['is_staff', 'is_superuser', 'is_active', 'profile__role']
     search_fields = ['username', 'email', 'first_name', 'last_name']
     list_editable = ['is_staff', 'is_active']
-
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Личные данные', {'fields': ('first_name', 'last_name', 'email')}),
@@ -41,7 +44,6 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('username', 'password1', 'password2', 'first_name', 'last_name', 'email', 'is_staff'),
         }),
     )
-
     def get_role(self, obj):
         try:
             return obj.profile.get_role_display()
@@ -52,7 +54,7 @@ class CustomUserAdmin(UserAdmin):
 
 # ===== БЛЮДА =====
 @admin.register(Dish)
-class DishAdmin(admin.ModelAdmin):
+class DishAdmin(BaseAdmin):
     list_display = ['id', 'name', 'category', 'price', 'is_available', 'weight']
     list_filter = ['category', 'is_available']
     list_editable = ['price', 'is_available']
@@ -61,7 +63,7 @@ class DishAdmin(admin.ModelAdmin):
 
 # ===== СТОЛЫ =====
 @admin.register(Table)
-class TableAdmin(admin.ModelAdmin):
+class TableAdmin(BaseAdmin):
     list_display = ['number', 'seats', 'status']
     list_filter = ['status']
     list_editable = ['status', 'seats']
@@ -77,7 +79,7 @@ class OrderItemInline(admin.TabularInline):
 
 # ===== ЗАКАЗЫ =====
 @admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
+class OrderAdmin(BaseAdmin):
     list_display = ['id', 'table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method']
     list_filter = ['status', 'payment_method', 'created_at']
     list_editable = ['status']
@@ -89,7 +91,7 @@ class OrderAdmin(admin.ModelAdmin):
 
 # ===== ПОЗИЦИИ ЗАКАЗА (отдельно) =====
 @admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
+class OrderItemAdmin(BaseAdmin):
     list_display = ['id', 'order', 'dish', 'quantity', 'price', 'status']
     list_filter = ['status']
     list_editable = ['quantity', 'price', 'status']
@@ -98,14 +100,14 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 # ===== ЖУРНАЛ ТО =====
 @admin.register(MaintenanceLog)
-class MaintenanceLogAdmin(admin.ModelAdmin):
+class MaintenanceLogAdmin(BaseAdmin):
     list_display = ['id', 'date', 'work_performed', 'performed_by', 'created_at']
     list_filter = ['date']
     search_fields = ['work_performed', 'performed_by']
     fields = ['date', 'work_performed', 'performed_by', 'signature']
     readonly_fields = []
 
-# ===== РЕГИСТРАЦИЯ (без дублирования) =====
+# ===== РЕГИСТРАЦИЯ =====
 admin.site.register(Category, CategoryAdmin)
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
