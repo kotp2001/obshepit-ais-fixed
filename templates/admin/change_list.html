@@ -124,21 +124,36 @@
         color: #ffd700;
         margin-top: 0;
     }
+    /* Стили для сворачиваемого фильтра (стандартный блок Django) */
     #changelist-filter {
         background: rgba(20,20,50,0.7);
         backdrop-filter: blur(10px);
         border-radius: 15px;
         padding: 15px;
         margin-top: 20px;
+        border: 1px solid rgba(255,215,0,0.2);
     }
     #changelist-filter h3 {
-        color: #ffd700;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 20px;
     }
-    #changelist-filter a {
-        color: white;
+    #changelist-filter h3::after {
+        content: '▼';
+        font-size: 12px;
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        transition: transform 0.2s;
     }
-    #changelist-filter a:hover {
-        color: #ffd700;
+    #changelist-filter.collapsed h3::after {
+        transform: translateY(-50%) rotate(-90deg);
+    }
+    #changelist-filter.collapsed ul,
+    #changelist-filter.collapsed .filter-group {
+        display: none;
     }
 </style>
 {% endblock %}
@@ -154,8 +169,9 @@
                 <a href="{% url cl.opts|admin_urlname:'add' %}" class="btn-add">+ Добавить {{ cl.opts.verbose_name }}</a>
             </div>
 
+            <!-- Блок фильтров (родной от Django, но с возможностью сворачивания) -->
             {% if cl.has_filters %}
-            <div class="filter-sidebar">
+            <div id="changelist-filter" class="collapsed">
                 <h3>Фильтр</h3>
                 {% for spec in cl.filter_specs %}
                     {% admin_list_filter cl spec %}
@@ -163,6 +179,7 @@
             </div>
             {% endif %}
 
+            <!-- Поиск -->
             <div class="filter-sidebar">
                 <h3>Поиск</h3>
                 <form method="get" action="">
@@ -171,6 +188,7 @@
                 </form>
             </div>
 
+            <!-- Форма с чекбоксами для массовых действий -->
             <form method="post" action="">
                 {% csrf_token %}
                 <div class="admin-table-container">
@@ -244,6 +262,21 @@
     document.getElementById('action-toggle').addEventListener('click', function(e) {
         const checkboxes = document.querySelectorAll('input[name="_selected_action"]');
         for (let cb of checkboxes) cb.checked = this.checked;
+    });
+
+    // Сворачивание фильтра при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterBlock = document.getElementById('changelist-filter');
+        if (filterBlock) {
+            // Убеждаемся, что блок свёрнут (класс уже добавлен в разметку, но на всякий случай)
+            filterBlock.classList.add('collapsed');
+            const header = filterBlock.querySelector('h3');
+            if (header) {
+                header.addEventListener('click', function(e) {
+                    filterBlock.classList.toggle('collapsed');
+                });
+            }
+        }
     });
 </script>
 {% endblock %}
