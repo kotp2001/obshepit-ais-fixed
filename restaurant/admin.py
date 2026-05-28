@@ -2,6 +2,20 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from .models import Category, Dish, Table, Order, OrderItem, MaintenanceLog, Profile
+from .models import Category
+
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name', 'icon', 'order']
+    list_editable = ['name', 'icon', 'order']
+    search_fields = ['name']
+    ordering = ['order']
+    change_list_template = 'admin/restaurant/category/change_list.html'  # кастомный шаблон
+    # Отключаем стандартные media-файлы админки (необязательно, но для чистоты)
+    class Media:
+        css = {}
+        js = []
+
+admin.site.register(Category, CategoryAdmin)
 
 
 # ===== ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ =====
