@@ -3,6 +3,90 @@
 
 {% block title %}{% if add %}Добавление{% else %}Редактирование{% endif %} {{ opts.verbose_name }} | АИС Общепит{% endblock %}
 
+{% block extra_css %}
+<style>
+    .form-container {
+        background: rgba(30,30,70,0.4);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    .form-container label {
+        color: #ffd700;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 5px;
+    }
+    .form-container input, 
+    .form-container textarea, 
+    .form-container select {
+        background: rgba(50,50,100,0.8);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: white;
+        border-radius: 10px;
+        padding: 8px 12px;
+        width: 100%;
+        max-width: 500px;
+        margin-bottom: 15px;
+    }
+    .form-container input:focus, 
+    .form-container textarea:focus, 
+    .form-container select:focus {
+        border-color: #ffd700;
+        outline: none;
+    }
+    .form-actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+    }
+    .btn-save {
+        background: #ffd700;
+        color: #1a1a4a;
+        border: none;
+        border-radius: 25px;
+        padding: 8px 25px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .btn-save:hover {
+        background: #e6c200;
+        transform: translateY(-1px);
+    }
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 8px 25px;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-cancel:hover {
+        background: #5a6268;
+    }
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 8px 25px;
+        text-decoration: none;
+        display: inline-block;
+        margin-left: auto;
+    }
+    .btn-delete:hover {
+        background: #c82333;
+    }
+    .errorlist {
+        color: #ff6b6b;
+        list-style: none;
+        padding-left: 0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="fade-in">
     <div class="card">
@@ -10,17 +94,19 @@
             <h4 class="mb-0">{% if add %}Новая запись{% else %}Редактирование: {{ original }}{% endif %}</h4>
         </div>
         <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <div class="mt-3">
-                    <button type="submit" class="btn btn-primary">Сохранить</button>
-                    <a href="{% url opts|admin_urlname:'changelist' %}" class="btn btn-secondary">Отмена</a>
-                    {% if not add %}
-                        <a href="{% url opts|admin_urlname:'delete' original.pk %}" class="btn btn-danger" onclick="return confirm('Удалить?')">Удалить</a>
-                    {% endif %}
-                </div>
-            </form>
+            <div class="form-container">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="form-actions">
+                        <button type="submit" class="btn-save">Сохранить</button>
+                        <a href="{% url opts|admin_urlname:'changelist' %}" class="btn-cancel">Отмена</a>
+                        {% if not add %}
+                            <a href="{% url opts|admin_urlname:'delete' original.pk %}" class="btn-delete" onclick="return confirm('Удалить запись?')">Удалить</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
