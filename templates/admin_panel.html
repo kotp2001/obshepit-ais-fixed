@@ -259,6 +259,15 @@
 
     </div>
 
+
+    <!-- Раздел разблокировки пользователей -->
+    <div id="blocked-users-section" style="display:none;margin-top:32px;">
+        <p class="section-title">Заблокированные пользователи</p>
+        <div id="blocked-users-list" style="background:rgba(20,20,60,0.6);border:1px solid rgba(255,100,100,0.3);border-radius:16px;padding:16px;">
+            <p style="color:rgba(255,255,255,0.5);text-align:center;font-size:13px;">Загрузка...</p>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -279,5 +288,46 @@
         const el = document.getElementById('admin-date');
         if (el) el.textContent = d + ' ' + m + ' ' + y + ' г. — ' + day;
     })();
+
+    async function loadBlockedUsers() {
+        try {
+            const resp = await fetch('/api/blocked-users/');
+            const data = await resp.json();
+            const section = document.getElementById('blocked-users-section');
+            const list    = document.getElementById('blocked-users-list');
+            if (!data.success || !data.data.length) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+            list.innerHTML = data.data.map(u =>
+                '<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(240,70,70,0.1);border:1px solid rgba(240,70,70,0.3);border-radius:10px;padding:10px 16px;margin-bottom:8px;">' +
+                '<div><span style="color:#f87171;font-weight:600;">' + u.username + '</span>' +
+                '<span style="color:rgba(255,255,255,0.5);font-size:12px;margin-left:12px;">Попыток: ' + u.attempts + ' | До: ' + u.blocked_until + '</span></div>' +
+                '<button onclick="unblockUser('' + u.username + '')" style="background:#ffd700;color:#1a1a4a;border:none;border-radius:10px;padding:5px 14px;font-weight:700;font-size:12px;cursor:pointer;">' +
+                '<i class="fas fa-unlock me-1"></i>Разблокировать</button>' +
+                '</div>'
+            ).join('');
+        } catch(e) { console.error(e); }
+    }
+
+    async function unblockUser(username) {
+        try {
+            const resp = await fetch('/api/unblock-user/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username})
+            });
+            const data = await resp.json();
+            if (data.success) {
+                alert(data.message);
+                loadBlockedUsers();
+            }
+        } catch(e) { alert('Ошибка'); }
+    }
+
+    loadBlockedUsers();
+    setInterval(loadBlockedUsers, 30000);
+
 </script>
 {% endblock %}

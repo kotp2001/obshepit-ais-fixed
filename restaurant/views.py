@@ -226,12 +226,22 @@ def api_active_orders(request):
     for order in orders:
         items = [{'id': i.id, 'dish_name': i.dish.name, 'quantity': i.quantity, 'status': i.status}
                  for i in order.items.all()]
+        # Определяем имя официанта — из профиля или username
+        waiter_name = 'Не указан'
+        if order.waiter:
+            try:
+                role = order.waiter.profile.role
+                fn = order.waiter.first_name or order.waiter.username
+                waiter_name = fn
+            except Exception:
+                waiter_name = order.waiter.username
         data.append({
             'id': order.id,
             'table_number': order.table.number,
-            'created_at': order.created_at.strftime('%H:%M') if order.created_at else '',
+            'created_at': (order.created_at + timedelta(hours=0)).strftime('%H:%M') if order.created_at else '',
             'status': order.status,
             'items': items,
+            'waiter_name': waiter_name,
         })
     return JsonResponse({'success': True, 'data': data})
 
@@ -493,6 +503,68 @@ def auto_backup_trigger(request):
             return JsonResponse({'success': False, 'error': result.stderr[:300]})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_unblock_user(request):
+    """Разблокировка пользователя — только для admin"""
+    try:
+        if not request.user.is_authenticated or not request.user.is_superuser:
+            return JsonResponse({'success': False, 'error': 'Нет прав'}, status=403)
+        body    = json.loads(request.body)
+        username = body.get('username', '').strip()
+        LoginAttempt.objects.filter(username=username).update(attempts=0, blocked_until=None)
+        log_action(request, 'other', f'Разблокирован пользователь: {username}')
+        return JsonResponse({'success': True, 'message': f'Пользователь {username} разблокирован'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_change_password(request):
+    """Смена пароля текущего пользователя"""
+    try:
+        body     = json.loads(request.body)
+        username = body.get('username', '').strip()
+        old_pass = body.get('old_password', '').strip()
+        new_pass = body.get('new_password', '').strip()
+
+        if len(new_pass) < 6:
+            return JsonResponse({'success': False, 'error': 'Пароль должен быть не менее 6 символов'})
+
+        from django.contrib.auth import authenticate
+        user = authenticate(request, username=username, password=old_pass)
+        if not user:
+            return JsonResponse({'success': False, 'error': 'Неверный текущий пароль'})
+
+        user.set_password(new_pass)
+        user.save()
+        # Обновляем сессию чтобы не разлогинило
+        from django.contrib.auth import update_session_auth_hash
+        update_session_auth_hash(request, user)
+        log_action(request, 'other', f'Смена пароля: {username}')
+        return JsonResponse({'success': True, 'message': 'Пароль успешно изменён'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@require_http_methods(["GET"])
+def api_blocked_users(request):
+    """Список заблокированных пользователей — только для admin"""
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'Нет прав'}, status=403)
+    from datetime import datetime
+    now = datetime.now()
+    blocked = LoginAttempt.objects.filter(blocked_until__gt=now)
+    data = [{
+        'username': b.username,
+        'attempts': b.attempts,
+        'blocked_until': b.blocked_until.strftime('%H:%M:%S') if b.blocked_until else '',
+        'ip': b.ip_address or '',
+    } for b in blocked]
+    return JsonResponse({'success': True, 'data': data})
 
 # ── РЕЗЕРВНОЕ КОПИРОВАНИЕ ────────────────────────────────────────
 

@@ -102,6 +102,15 @@ class OrderAdmin(admin.ModelAdmin):
     readonly_fields = []
     fields         = ['table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method', 'guest_count', 'ready_at']
 
+    def save_model(self, request, obj, form, change):
+        from datetime import datetime
+        if not obj.created_at:
+            obj.created_at = datetime.now()
+        # Если waiter не выбран — ставим текущего пользователя
+        if not obj.waiter_id:
+            obj.waiter = request.user
+        super().save_model(request, obj, form, change)
+
 
 # ===== ПОЗИЦИИ ЗАКАЗА (отдельно) =====
 
@@ -121,7 +130,7 @@ class MaintenanceLogAdmin(admin.ModelAdmin):
     list_display  = ['id', 'date', 'work_performed', 'performed_by', 'created_at']
     list_filter   = ['date']
     search_fields = ['work_performed', 'performed_by']
-    fields        = ['date', 'work_performed', 'performed_by', 'signature']
+    fields        = ['date', 'work_performed', 'performed_by']
     readonly_fields = []
 
 

@@ -38,6 +38,11 @@ urlpatterns = [
     path('api/maintenance-logs/add/',   views.api_maintenance_logs_add,name='api_maintenance_logs_add'),
 
 
+    # Разблокировка / смена пароля
+    path('api/unblock-user/',    views.api_unblock_user,   name='api_unblock_user'),
+    path('api/change-password/', views.api_change_password, name='api_change_password'),
+    path('api/blocked-users/',   views.api_blocked_users,  name='api_blocked_users'),
+
     # Журнал действий
     path('api/action-logs/', views.api_action_logs, name='api_action_logs'),
 
