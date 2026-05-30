@@ -1,218 +1,327 @@
 {% extends 'base.html' %}
 {% block title %}Отчёты и аналитика{% endblock %}
+
+{% block extra_css %}
+<style>
+.report-card {
+    background: rgba(20,20,60,0.7);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.report-card h5 {
+    color: #ffd700;
+    font-weight: 700;
+    margin-bottom: 16px;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.stat-box {
+    background: rgba(30,30,80,0.6);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+}
+.stat-box .val { color: #ffd700; font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+.stat-box .lbl { color: rgba(255,255,255,0.6); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.chart-container { position: relative; height: 280px; }
+.form-select, .form-control {
+    background: rgba(30,30,80,0.9) !important;
+    border: 1px solid rgba(255,215,0,0.3) !important;
+    color: white !important;
+    border-radius: 10px !important;
+}
+.form-select option { background: #0d0d35; }
+.btn-report {
+    background: #ffd700;
+    color: #1a1a4a;
+    border: none;
+    border-radius: 20px;
+    padding: 7px 20px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s;
+}
+.btn-report:hover { background: #e6c200; }
+.btn-excel {
+    background: rgba(40,180,80,0.85);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 7px 18px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+}
+.dish-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(30,30,80,0.5);
+    border-radius: 10px;
+    padding: 8px 14px;
+    margin-bottom: 6px;
+}
+.dish-row .rank { color: rgba(255,215,0,0.6); font-size: 13px; margin-right: 10px; min-width: 24px; }
+.dish-row .name { color: white; font-size: 14px; flex: 1; }
+.dish-row .count { color: #ffd700; font-weight: 700; font-size: 14px; }
+.no-data { color: rgba(255,255,255,0.4); text-align: center; padding: 30px; font-size: 14px; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="fade-in">
-    <div class="card">
-        <div class="card-header">
-            <h4 class="mb-0">Панель управления</h4>
-        </div>
-        <div class="card-body">
-            <!-- Фильтр периода -->
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <label class="form-label">Период</label>
-                    <select id="period-select" class="form-control">
-                        <option value="day">Сегодня</option>
-                        <option value="week" selected>Неделя</option>
-                        <option value="month">Месяц</option>
-                        <option value="custom">Свой период</option>
-                    </select>
-                </div>
-                <div id="custom-date-range" style="display: none;" class="col-md-6">
-                    <div class="row">
-                        <div class="col-md-5">
-                            <label class="form-label">С</label>
-                            <input type="date" id="date-from" class="form-control">
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label">По</label>
-                            <input type="date" id="date-to" class="form-control">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 d-flex gap-2 align-items-end">
-                    <button class="btn btn-primary btn-sm" onclick="loadReports()">Обновить</button>
-                    <button class="btn btn-success btn-sm" onclick="exportData('orders')">
-                        <i class="fas fa-file-excel me-1"></i>Экспорт заказов
-                    </button>
-                    <button class="btn btn-info btn-sm" onclick="exportData('popular')">
-                        <i class="fas fa-file-excel me-1"></i>Экспорт блюд
-                    </button>
-                </div>
+
+    <!-- Фильтр периода -->
+    <div class="report-card">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:6px;display:block;">Период</label>
+                <select id="period-select" class="form-select">
+                    <option value="day">Сегодня</option>
+                    <option value="week" selected>Неделя</option>
+                    <option value="month">Месяц</option>
+                    <option value="custom">Свой период</option>
+                </select>
             </div>
-            
-            <!-- Карточки статистики -->
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="card text-center" style="background: rgba(26,26,74,0.9);">
-                        <div class="card-body py-2">
-                            <h6 style="color: rgba(255,255,255,0.7);">Выручка</h6>
-                            <h3 id="total-revenue" style="color: #ffd700; margin: 0;">0 ₽</h3>
-                        </div>
+            <div id="custom-date-range" style="display:none;" class="col-md-5">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:6px;display:block;">С</label>
+                        <input type="date" id="date-from" class="form-control">
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card text-center" style="background: rgba(42,90,42,0.9);">
-                        <div class="card-body py-2">
-                            <h6 style="color: rgba(255,255,255,0.7);">Заказов</h6>
-                            <h3 id="total-orders" style="color: #ffd700; margin: 0;">0</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card text-center" style="background: rgba(212,160,23,0.9);">
-                        <div class="card-body py-2">
-                            <h6 style="color: rgba(255,255,255,0.7);">Средний чек</h6>
-                            <h3 id="avg-check" style="color: #ffd700; margin: 0;">0 ₽</h3>
-                        </div>
+                    <div class="col-6">
+                        <label style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:6px;display:block;">По</label>
+                        <input type="date" id="date-to" class="form-control">
                     </div>
                 </div>
             </div>
-            
-            <!-- Продажи по дням -->
-            <div class="row mb-3">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header py-2">
-                            <h6 class="mb-0">Продажи по дням</h6>
-                        </div>
-                        <div class="card-body py-2">
-                            <div class="table-responsive">
-                                <table class="table table-sm table-dark" style="font-size: 12px;">
-                                    <thead id="table-dates">
-                                        <tr><th>Дата</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr id="table-revenue"><td><strong>Выручка</strong></td></tr>
-                                        <tr id="table-orders"><td><strong>Заказы</strong></td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Популярные блюда -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header py-2">
-                            <h6 class="mb-0">Популярные блюда за период</h6>
-                        </div>
-                        <div class="card-body py-2">
-                            <div id="popular-dishes" class="text-center">Загрузка...</div>
-                        </div>
-                    </div>
-                </div>
+            <div class="col-md-4 d-flex gap-2 flex-wrap">
+                <button class="btn-report" onclick="loadReports()">
+                    <i class="fas fa-sync me-1"></i>Обновить
+                </button>
+                <button class="btn-excel" onclick="exportData('orders')">
+                    <i class="fas fa-file-excel me-1"></i>Заказы
+                </button>
+                <button class="btn-excel" onclick="exportData('popular')">
+                    <i class="fas fa-file-excel me-1"></i>Блюда
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- Карточки статистики -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-box">
+                <div class="val" id="total-revenue">—</div>
+                <div class="lbl">Выручка</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-box">
+                <div class="val" id="total-orders">—</div>
+                <div class="lbl">Заказов</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-box">
+                <div class="val" id="avg-check">—</div>
+                <div class="lbl">Средний чек</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- График -->
+    <div class="report-card">
+        <h5><i class="fas fa-chart-line me-2"></i>Выручка по дням</h5>
+        <div id="chart-wrapper" class="chart-container">
+            <canvas id="revenue-chart"></canvas>
+        </div>
+        <div id="chart-no-data" class="no-data" style="display:none;">
+            <i class="fas fa-chart-bar fa-2x mb-2 d-block" style="opacity:.3;"></i>
+            Нет данных за выбранный период
+        </div>
+    </div>
+
+    <!-- Популярные блюда -->
+    <div class="report-card">
+        <h5><i class="fas fa-star me-2"></i>Популярные блюда</h5>
+        <div id="popular-dishes">
+            <div class="no-data">Загрузка...</div>
+        </div>
+    </div>
+
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-    document.getElementById('period-select').addEventListener('change', function() {
-        const customDiv = document.getElementById('custom-date-range');
-        if (this.value === 'custom') {
-            customDiv.style.display = 'flex';
-            const today = new Date();
-            const weekAgo = new Date();
-            weekAgo.setDate(today.getDate() - 7);
-            document.getElementById('date-from').value = weekAgo.toISOString().split('T')[0];
-            document.getElementById('date-to').value = today.toISOString().split('T')[0];
+let revenueChart = null;
+
+document.getElementById('period-select').addEventListener('change', function() {
+    const customDiv = document.getElementById('custom-date-range');
+    if (this.value === 'custom') {
+        customDiv.style.display = 'flex';
+        const today   = new Date();
+        const weekAgo = new Date();
+        weekAgo.setDate(today.getDate() - 7);
+        document.getElementById('date-from').value = weekAgo.toISOString().split('T')[0];
+        document.getElementById('date-to').value   = today.toISOString().split('T')[0];
+    } else {
+        customDiv.style.display = 'none';
+    }
+    loadReports();
+});
+
+async function loadReports() {
+    let period = document.getElementById('period-select').value;
+    let url    = '/api/reports/?period=' + period;
+
+    if (period === 'custom') {
+        const df = document.getElementById('date-from').value;
+        const dt = document.getElementById('date-to').value;
+        if (df && dt) url += '&date_from=' + df + '&date_to=' + dt;
+    }
+
+    try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (!data.success) return;
+
+        const d = data.data;
+
+        // Карточки
+        document.getElementById('total-revenue').textContent = d.total_revenue.toFixed(2) + ' ₽';
+        document.getElementById('total-orders').textContent  = d.total_orders;
+        document.getElementById('avg-check').textContent     = d.avg_check.toFixed(2) + ' ₽';
+
+        // График
+        const hasData = d.daily_data && d.daily_data.some(day => day.revenue > 0);
+        const wrapper = document.getElementById('chart-wrapper');
+        const noData  = document.getElementById('chart-no-data');
+
+        if (!hasData) {
+            wrapper.style.display = 'none';
+            noData.style.display  = 'block';
         } else {
-            customDiv.style.display = 'none';
-        }
-        loadReports();
-    });
-    
-    async function loadReports() {
-        let period = document.getElementById('period-select').value;
-        let url = `/api/reports/?period=${period}`;
-        
-        if (period === 'custom') {
-            const dateFrom = document.getElementById('date-from').value;
-            const dateTo = document.getElementById('date-to').value;
-            if (dateFrom && dateTo) {
-                url = `/api/reports/?period=custom&date_from=${dateFrom}&date_to=${dateTo}`;
-            }
-        }
-        
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.success) {
-                document.getElementById('total-revenue').innerHTML = data.data.total_revenue.toFixed(2) + ' ₽';
-                document.getElementById('total-orders').innerHTML = data.data.total_orders;
-                document.getElementById('avg-check').innerHTML = data.data.avg_check.toFixed(2) + ' ₽';
-                
-                let datesHtml = '<tr><th>Дата</th>';
-                let revenueHtml = '<tr><td><strong>Выручка</strong></td>';
-                let ordersHtml = '<tr><td><strong>Заказы</strong></td>';
-                
-                for (let day of data.data.daily_data) {
-                    datesHtml += `<th>${day.date}</th>`;
-                    revenueHtml += `<td>${day.revenue.toFixed(2)} ₽</td>`;
-                    ordersHtml += `<td>${day.orders} шт</td>`;
-                }
-                datesHtml += '</tr>';
-                revenueHtml += '</tr>';
-                ordersHtml += '</tr>';
-                
-                document.getElementById('table-dates').innerHTML = datesHtml;
-                document.getElementById('table-revenue').innerHTML = revenueHtml;
-                document.getElementById('table-orders').innerHTML = ordersHtml;
-                
-                let popularHtml = '';
-                if (data.data.popular_dishes && data.data.popular_dishes.length > 0) {
-                    popularHtml = '<div class="row">';
-                    data.data.popular_dishes.forEach((dish, idx) => {
-                        popularHtml += `
-                            <div class="col-md-4 mb-2">
-                                <div class="d-flex justify-content-between p-2" style="background: rgba(50,50,100,0.5); border-radius: 8px;">
-                                    <span><strong>${idx+1}.</strong> ${dish.name}</span>
-                                    <span style="color: #ffd700;">${dish.count} шт</span>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    popularHtml += '</div>';
-                } else {
-                    popularHtml = '<p class="text-center" style="color: rgba(255,255,255,0.7);">Нет данных</p>';
-                }
-                document.getElementById('popular-dishes').innerHTML = popularHtml;
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            document.getElementById('popular-dishes').innerHTML = '<p class="text-center text-danger">Ошибка загрузки</p>';
-        }
-    }
-    
-    document.addEventListener('DOMContentLoaded', loadReports);
+            wrapper.style.display = 'block';
+            noData.style.display  = 'none';
 
-    function exportData(type) {
-        const period = document.getElementById('period-select').value;
-        let url = `/export/${type}/?period=${period}`;
-        if (period === 'custom') {
-            const df = document.getElementById('date-from').value;
-            const dt = document.getElementById('date-to').value;
-            if (df && dt) url += `&date_from=${df}&date_to=${dt}`;
+            const labels   = d.daily_data.map(day => day.date);
+            const revenues = d.daily_data.map(day => day.revenue);
+            const orders   = d.daily_data.map(day => day.orders);
+
+            if (revenueChart) {
+                revenueChart.destroy();
+                revenueChart = null;
+            }
+
+            const ctx = document.getElementById('revenue-chart').getContext('2d');
+            revenueChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Выручка (₽)',
+                            data: revenues,
+                            backgroundColor: 'rgba(255,215,0,0.5)',
+                            borderColor: '#ffd700',
+                            borderWidth: 2,
+                            borderRadius: 6,
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: 'Заказов',
+                            data: orders,
+                            type: 'line',
+                            borderColor: '#5de8a0',
+                            backgroundColor: 'rgba(93,232,160,0.15)',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#5de8a0',
+                            pointRadius: 4,
+                            tension: 0.3,
+                            fill: true,
+                            yAxisID: 'y1',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: { color: 'rgba(255,255,255,0.8)', font: { size: 13 } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(10,10,40,0.95)',
+                            titleColor: '#ffd700',
+                            bodyColor: 'white',
+                            borderColor: 'rgba(255,215,0,0.3)',
+                            borderWidth: 1,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: 'rgba(255,255,255,0.7)', font: { size: 12 } },
+                            grid:  { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y: {
+                            type: 'linear', position: 'left',
+                            ticks: {
+                                color: '#ffd700', font: { size: 12 },
+                                callback: v => v.toFixed(0) + ' ₽'
+                            },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y1: {
+                            type: 'linear', position: 'right',
+                            ticks: { color: '#5de8a0', font: { size: 12 } },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
         }
-        window.location.href = url;
+
+        // Популярные блюда
+        const container = document.getElementById('popular-dishes');
+        if (!d.popular_dishes || !d.popular_dishes.length) {
+            container.innerHTML = '<div class="no-data"><i class="fas fa-utensils fa-2x mb-2 d-block" style="opacity:.3;"></i>Нет данных</div>';
+            return;
+        }
+        container.innerHTML = d.popular_dishes.map((dish, i) =>
+            '<div class="dish-row">' +
+            '<span class="rank">' + (i+1) + '.</span>' +
+            '<span class="name">' + dish.name + '</span>' +
+            '<span style="color:rgba(255,255,255,0.5);font-size:12px;margin-right:12px;">' + dish.price + ' ₽</span>' +
+            '<span class="count">' + dish.count + ' шт</span>' +
+            '</div>'
+        ).join('');
+
+    } catch (err) {
+        console.error('loadReports error:', err);
+        document.getElementById('popular-dishes').innerHTML =
+            '<div class="no-data" style="color:#f87171;"><i class="fas fa-exclamation-triangle me-2"></i>Ошибка загрузки</div>';
     }
+}
+
+function exportData(type) {
+    const period = document.getElementById('period-select').value;
+    let url = '/export/' + type + '/?period=' + period;
+    if (period === 'custom') {
+        const df = document.getElementById('date-from').value;
+        const dt = document.getElementById('date-to').value;
+        if (df && dt) url += '&date_from=' + df + '&date_to=' + dt;
+    }
+    window.location.href = url;
+}
+
+document.addEventListener('DOMContentLoaded', loadReports);
 </script>
-
-<style>
-    .table-dark {
-        background: rgba(30,30,70,0.5);
-    }
-    .table-dark th {
-        color: #ffd700;
-        font-weight: 600;
-    }
-    .table-dark td {
-        color: white;
-    }
-</style>
 {% endblock %}

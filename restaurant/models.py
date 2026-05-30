@@ -69,7 +69,6 @@ class Order(models.Model):
         db_table            = 'restaurant_order'
         verbose_name        = 'Заказ'
         verbose_name_plural = 'Заказы'
-        db_table            = 'restaurant_order'
         ordering            = ['-created_at']
 
     def __str__(self):
@@ -88,7 +87,6 @@ class OrderItem(models.Model):
     comment  = models.CharField(max_length=200, blank=True, verbose_name='Комментарий')
 
     class Meta:
-        db_table            = 'restaurant_orderitem'
         db_table            = 'restaurant_orderitem'
         verbose_name        = 'Позиция заказа'
         verbose_name_plural = 'Позиции заказа'
@@ -123,3 +121,67 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.get_role_display()}'
+
+
+class ActionLog(models.Model):
+    """Журнал действий пользователей"""
+    ACTION_CHOICES = [
+        ('login',          'Вход в систему'),
+        ('logout',         'Выход'),
+        ('create_order',   'Создание заказа'),
+        ('pay_order',      'Оплата заказа'),
+        ('update_item',    'Изменение статуса блюда'),
+        ('mark_ready',     'Заказ готов'),
+        ('create_backup',  'Резервная копия'),
+        ('view_report',    'Просмотр отчёта'),
+        ('other',          'Прочее'),
+    ]
+
+    user        = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Пользователь')
+    action      = models.CharField(max_length=30, choices=ACTION_CHOICES, default='other', verbose_name='Действие')
+    description = models.TextField(blank=True, verbose_name='Описание')
+    ip_address  = models.GenericIPAddressField(null=True, blank=True, verbose_name='IP-адрес')
+    timestamp   = models.DateTimeField(auto_now_add=True, verbose_name='Время')
+
+    class Meta:
+        verbose_name        = 'Журнал действий'
+        verbose_name_plural = 'Журнал действий'
+        ordering            = ['-timestamp']
+
+    def __str__(self):
+        u = self.user.username if self.user else 'Аноним'
+        return f'{self.timestamp.strftime("%d.%m.%Y %H:%M")} — {u} — {self.get_action_display()}'
+
+
+class Receipt(models.Model):
+    """Чек заказа (PDF на сервере)"""
+    order          = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='receipt', verbose_name='Заказ')
+    pdf_file       = models.FileField(upload_to='receipts/', blank=True, null=True, verbose_name='PDF файл')
+    created_at     = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
+    total          = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Сумма')
+    payment_method = models.CharField(max_length=20, blank=True, verbose_name='Способ оплаты')
+
+    class Meta:
+        verbose_name        = 'Чек'
+        verbose_name_plural = 'Чеки'
+        ordering            = ['-created_at']
+
+    def __str__(self):
+        return f'Чек #{self.order.id} — {self.total} ₽'
+
+
+class LoginAttempt(models.Model):
+    """Попытки входа для блокировки после 5 неудач"""
+    username    = models.CharField(max_length=150, verbose_name='Логин')
+    ip_address  = models.GenericIPAddressField(null=True, blank=True, verbose_name='IP')
+    attempts    = models.IntegerField(default=0, verbose_name='Попыток')
+    blocked_until = models.DateTimeField(null=True, blank=True, verbose_name='Заблокирован до')
+    last_attempt  = models.DateTimeField(auto_now=True, verbose_name='Последняя попытка')
+
+    class Meta:
+        verbose_name        = 'Попытка входа'
+        verbose_name_plural = 'Попытки входа'
+        unique_together     = [('username', 'ip_address')]
+
+    def __str__(self):
+        return f'{self.username} — {self.attempts} попыток'

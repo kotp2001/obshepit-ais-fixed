@@ -37,6 +37,15 @@ urlpatterns = [
     path('api/maintenance-logs/',       views.api_maintenance_logs,    name='api_maintenance_logs'),
     path('api/maintenance-logs/add/',   views.api_maintenance_logs_add,name='api_maintenance_logs_add'),
 
+
+    # Журнал действий
+    path('api/action-logs/', views.api_action_logs, name='api_action_logs'),
+
+    # Скачать чек
+    path('receipts/<int:receipt_id>/download/', views.download_receipt, name='download_receipt'),
+
+    # Авто-бэкап endpoint (для cron-job.org)
+    path('api/auto-backup/', views.auto_backup_trigger, name='auto_backup_trigger'),
     # Экспорт Excel
     path('export/orders/',  export_orders_excel,  name='export_orders'),
     path('export/popular/', export_popular_excel,  name='export_popular'),

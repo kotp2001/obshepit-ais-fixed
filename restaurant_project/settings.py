@@ -103,3 +103,6 @@ ADMIN_INDEX_TITLE = "Управление системой ресторана"
 LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/admin-panel/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Секретный ключ для авто-бэкапа (переопределить в переменных окружения Render)
+BACKUP_SECRET_KEY = os.environ.get('BACKUP_SECRET_KEY', 'obshepit-backup-2026')
