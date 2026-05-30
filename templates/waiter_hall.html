@@ -255,18 +255,21 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
         const container = document.getElementById('order-modal-container');
         container.innerHTML = modalHtml;
         updateCart();
-        const modal = new bootstrap.Modal(document.getElementById('orderModal'));
-        modal.show();
-        // Делегированный клик по блюдам (избегаем inline onclick с кавычками)
-        document.getElementById('orderModal').addEventListener('click', e => {
+
+        const modalEl = document.getElementById('orderModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        // Вешаем клик ДО show() — Bootstrap не переносит элемент, поэтому это безопасно
+        modalEl.addEventListener('click', e => {
             const btn = e.target.closest('.dish-btn');
             if (btn) {
                 btn.style.borderColor = 'rgba(255,215,0,0.4)';
-                setTimeout(() => btn.style.borderColor = 'rgba(255,255,255,0.1)', 300);
+                setTimeout(() => { if(btn) btn.style.borderColor = 'rgba(255,255,255,0.1)'; }, 300);
                 addToCart(parseInt(btn.dataset.id), btn.dataset.name, parseFloat(btn.dataset.price));
             }
         });
-        document.getElementById('orderModal').addEventListener('hidden.bs.modal', () => {
+
+        modalEl.addEventListener('hidden.bs.modal', () => {
             container.innerHTML = '';
         });
     } catch (err) {
