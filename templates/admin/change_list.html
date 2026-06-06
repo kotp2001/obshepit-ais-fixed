@@ -139,21 +139,23 @@
         position: relative;
         padding-right: 20px;
     }
+    #changelist-filter h3 {
+        cursor: pointer !important;
+        user-select: none;
+    }
     #changelist-filter h3::after {
-        content: '▼';
-        font-size: 12px;
-        position: absolute;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
+        content: ' ▼';
+        font-size: 11px;
         transition: transform 0.2s;
+        display: inline-block;
     }
     #changelist-filter.collapsed h3::after {
-        transform: translateY(-50%) rotate(-90deg);
+        transform: rotate(-90deg);
     }
     #changelist-filter.collapsed ul,
+    #changelist-filter.collapsed li,
     #changelist-filter.collapsed .filter-group {
-        display: none;
+        display: none !important;
     }
 </style>
 {% endblock %}
@@ -277,6 +279,22 @@
                 });
             }
         }
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Инициализация всех фильтров на странице
+        document.querySelectorAll('#changelist-filter').forEach(function(filterBlock) {
+            filterBlock.classList.add('collapsed');
+            const header = filterBlock.querySelector('h3');
+            if (header) {
+                header.style.cursor = 'pointer';
+                header.style.userSelect = 'none';
+                header.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    filterBlock.classList.toggle('collapsed');
+                });
+            }
+        });
     });
 </script>
 {% endblock %}

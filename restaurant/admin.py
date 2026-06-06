@@ -102,14 +102,21 @@ class OrderAdmin(admin.ModelAdmin):
     readonly_fields = []
     fields         = ['table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method', 'guest_count', 'ready_at']
 
+    def get_changeform_initial_data(self, request):
+        from datetime import datetime
+        initial = super().get_changeform_initial_data(request)
+        now = datetime.now()
+        initial['created_at_0'] = now.strftime('%Y-%m-%d')
+        initial['created_at_1'] = now.strftime('%H:%M:%S')
+        return initial
+
     def save_model(self, request, obj, form, change):
         from datetime import datetime
-        if not obj.created_at:
+        if obj.created_at is None:
             obj.created_at = datetime.now()
-        # Если waiter не выбран — ставим текущего пользователя
         if not obj.waiter_id:
             obj.waiter = request.user
-        super().save_model(request, obj, form, change)
+        obj.save()
 
 
 # ===== ПОЗИЦИИ ЗАКАЗА (отдельно) =====
@@ -151,6 +158,7 @@ class ActionLogAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):    return False
     def has_change_permission(self, request, obj=None): return False
+    def has_delete_permission(self, request, obj=None): return True
 
 
 # ===== ЧЕКИ =====

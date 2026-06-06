@@ -272,6 +272,8 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
         modalEl.addEventListener('hidden.bs.modal', () => {
             container.innerHTML = '';
         });
+
+        modal.show();
     } catch (err) {
         alert('Ошибка: ' + err.message);
     }

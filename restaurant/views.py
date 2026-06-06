@@ -227,10 +227,9 @@ def api_active_orders(request):
         items = [{'id': i.id, 'dish_name': i.dish.name, 'quantity': i.quantity, 'status': i.status}
                  for i in order.items.all()]
         # Определяем имя официанта — из профиля или username
-        waiter_name = 'Не указан'
+        waiter_name = 'Администратор'
         if order.waiter:
             try:
-                role = order.waiter.profile.role
                 fn = order.waiter.first_name or order.waiter.username
                 waiter_name = fn
             except Exception:
