@@ -8,7 +8,7 @@
             <h4 class="mb-0" style="color:#ffd700;font-weight:700;">
                 <i class="fas fa-utensils me-2"></i>Зал ресторана
             </h4>
-            <button class="btn btn-warning btn-sm" id="refresh-tables" onclick="loadTables()" style="border-radius:15px;font-weight:600;">
+            <button class="btn btn-warning btn-sm" onclick="loadTables()" style="border-radius:15px;font-weight:600;">
                 <i class="fas fa-sync me-1"></i>Обновить
             </button>
         </div>
@@ -30,7 +30,7 @@
     </div>
 </div>
 
-<!-- Модальное окно заказа -->
+<!-- Модальное окно заказа (будет заполняться динамически) -->
 <div id="order-modal-container"></div>
 
 <!-- Модальное окно оплаты -->
@@ -75,26 +75,17 @@ let currentTableSeats = 8;
 let currentCart = [];
 let currentOrderId = null;
 
-const STATUS = {
-    'new':     { label: 'Новый',     color: '#6ab0ff', bg: 'rgba(50,130,250,0.2)',  border: 'rgba(50,130,250,0.5)'  },
-    'cooking': { label: 'Готовится', color: '#fbb060', bg: 'rgba(250,150,30,0.2)',  border: 'rgba(250,150,30,0.5)'  },
-    'ready':   { label: 'Готов',     color: '#5de8a0', bg: 'rgba(40,180,100,0.2)', border: 'rgba(40,180,100,0.5)'  },
-    'paid':    { label: 'Оплачен',   color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   border: 'rgba(255,215,0,0.5)'   },
-};
-
-// ── ЗАГРУЗКА СТОЛОВ (с делегированием кликов) ──────────────────────────────
+// ── ЗАГРУЗКА СТОЛОВ И АКТИВНЫХ ЗАКАЗОВ ──────────────────────────
 async function loadTables() {
     try {
         const resp = await fetch('/api/tables/');
         const data = await resp.json();
         if (!data.success) throw new Error(data.error || 'Ошибка API');
-
         const container = document.getElementById('hall-container');
         if (!data.data.length) {
             container.innerHTML = '<p class="col-12 text-center" style="color:rgba(255,255,255,0.5);">Столы не найдены</p>';
             return;
         }
-
         container.innerHTML = data.data.map(table => {
             const free = table.status === 'free';
             const statusLabel = free ? 'Свободен' : table.status === 'occupied' ? 'Занят' : 'Зарезервирован';
@@ -102,12 +93,10 @@ async function loadTables() {
             const bgColor = free ? 'rgba(20,60,30,0.6)' : 'rgba(60,20,20,0.6)';
             const badgeBg = free ? 'rgba(40,180,80,0.3)' : 'rgba(210,50,50,0.3)';
             const badgeColor = free ? '#5de8a0' : '#f87171';
-            const opacity = free ? '1' : '0.6';
-
             return `
             <div class="col-6 col-md-3">
                 <div class="table-card" data-id="${table.id}" data-number="${table.number}" data-seats="${table.seats}" data-free="${free}" 
-                     style="background:${bgColor};border:2px solid ${borderColor};border-radius:16px;padding:18px 12px;text-align:center;cursor:${free ? 'pointer' : 'not-allowed'};opacity:${opacity};transition:transform .15s,box-shadow .15s;min-height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+                     style="background:${bgColor};border:2px solid ${borderColor};border-radius:16px;padding:18px 12px;text-align:center;cursor:${free ? 'pointer' : 'not-allowed'};opacity:${free ? '1' : '0.6'};transition:transform .15s,box-shadow .15s;">
                     <i class="fas fa-utensils" style="color:#ffd700;font-size:20px;"></i>
                     <div style="color:white;font-size:18px;font-weight:700;">Стол ${table.number}</div>
                     <div style="color:rgba(255,255,255,0.6);font-size:12px;">${table.seats} мест</div>
@@ -115,7 +104,6 @@ async function loadTables() {
                 </div>
             </div>`;
         }).join('');
-
         await loadActiveOrders();
     } catch (err) {
         document.getElementById('hall-container').innerHTML = `
@@ -126,7 +114,7 @@ async function loadTables() {
     }
 }
 
-// ── ДЕЛЕГИРОВАНИЕ КЛИКОВ НА СТОЛЫ ──────────────────────────────────────
+// Делегирование кликов по столам (надёжнее, чем навешивать обработчики)
 document.getElementById('hall-container')?.addEventListener('click', (e) => {
     const card = e.target.closest('.table-card');
     if (!card) return;
@@ -138,7 +126,7 @@ document.getElementById('hall-container')?.addEventListener('click', (e) => {
     }
 });
 
-// ── АКТИВНЫЕ ЗАКАЗЫ ──────────────────────────────────────────────
+// ── ЗАГРУЗКА АКТИВНЫХ ЗАКАЗОВ ──────────────────────────────────
 async function loadActiveOrders() {
     try {
         const resp = await fetch('/api/orders/active/');
@@ -148,6 +136,11 @@ async function loadActiveOrders() {
             container.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:13px;">Нет активных заказов</p>';
             return;
         }
+        const STATUS = {
+            'new':     { label: 'Новый',     color: '#6ab0ff', bg: 'rgba(50,130,250,0.2)',  border: 'rgba(50,130,250,0.5)'  },
+            'cooking': { label: 'Готовится', color: '#fbb060', bg: 'rgba(250,150,30,0.2)',  border: 'rgba(250,150,30,0.5)'  },
+            'ready':   { label: 'Готов',     color: '#5de8a0', bg: 'rgba(40,180,100,0.2)', border: 'rgba(40,180,100,0.5)'  },
+        };
         container.innerHTML = data.data.map(order => {
             const st = STATUS[order.status] || { label: order.status, color: '#fff', bg: 'rgba(80,80,80,0.2)', border: 'rgba(80,80,80,0.5)' };
             const items = (order.items || []).map(i => i.dish_name + ' x' + i.quantity).join(', ') || '—';
@@ -166,12 +159,10 @@ async function loadActiveOrders() {
                 </div>
             </div>`;
         }).join('');
-    } catch (e) {
-        console.error('loadActiveOrders error:', e);
-    }
+    } catch (e) { console.error(e); }
 }
 
-// ── ОТКРЫТИЕ МОДАЛКИ ЗАКАЗА (без изменений, но добавим `event.stopPropagation` на всякий случай) ──
+// ── ОТКРЫТИЕ МОДАЛКИ ЗАКАЗА (с явными обработчиками кнопок блюд) ─────
 async function openOrderModal(tableId, tableNumber, tableSeats) {
     currentTableId = tableId;
     currentTableSeats = tableSeats || 8;
@@ -184,30 +175,32 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
         ]);
         const dishData = await dishResp.json();
         const catData  = await catResp.json();
-
         if (!dishData.success) throw new Error('Ошибка загрузки меню');
 
         const dishes = dishData.data;
-        const cats   = catData.success ? catData.data : [];
+        const cats = catData.success ? catData.data : [];
 
-        const menuByCategory = cats.map(cat => {
+        // Формируем HTML меню с кнопками, на которые сразу повесим onclick
+        let menuHtml = '';
+        for (const cat of cats) {
             const catDishes = dishes.filter(d => d.category_id === cat.id);
-            if (!catDishes.length) return '';
-            return `
-            <div class="mb-3">
-                <h6 style="color:#ffd700;font-weight:700;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,215,0,0.2);">${cat.name}</h6>
-                <div class="row g-2">
-                    ${catDishes.map(d => `
-                        <div class="col-6">
-                            <div class="dish-btn" data-id="${d.id}" data-name="${d.name}" data-price="${d.price}" style="background:rgba(30,30,80,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px;cursor:pointer;transition:border-color .15s;">
-                                <div style="font-weight:600;color:white;font-size:14px;">${d.name}</div>
-                                <div style="color:#ffd700;font-size:13px;">${d.price} ₽</div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>`;
-        }).join('');
+            if (!catDishes.length) continue;
+            menuHtml += `<div class="mb-3"><h6 style="color:#ffd700;font-weight:700;margin-bottom:10px;">${cat.name}</h6><div class="row g-2">`;
+            for (const d of catDishes) {
+                menuHtml += `
+                <div class="col-6">
+                    <div style="background:rgba(30,30,80,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px;">
+                        <div style="font-weight:600;color:white;font-size:14px;">${d.name}</div>
+                        <div style="color:#ffd700;font-size:13px;">${d.price} ₽</div>
+                        <button class="btn-add-dish" data-id="${d.id}" data-name="${d.name}" data-price="${d.price}"
+                                style="margin-top:8px;background:#ffd700;color:#1a1a4a;border:none;border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;">
+                            ➕ Добавить
+                        </button>
+                    </div>
+                </div>`;
+            }
+            menuHtml += `</div></div>`;
+        }
 
         const modalHtml = `
         <div class="modal fade" id="orderModal" tabindex="-1">
@@ -221,7 +214,7 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
                         <div class="row g-3">
                             <div class="col-md-7">
                                 <h6 style="color:#ffd700;margin-bottom:14px;">Меню</h6>
-                                <div style="max-height:450px;overflow-y:auto;padding-right:4px;">${menuByCategory}</div>
+                                <div style="max-height:450px;overflow-y:auto;padding-right:4px;">${menuHtml}</div>
                             </div>
                             <div class="col-md-5">
                                 <h6 style="color:#ffd700;margin-bottom:14px;">Корзина</h6>
@@ -249,29 +242,29 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
         container.innerHTML = modalHtml;
         updateCart();
 
-        const modalEl = document.getElementById('orderModal');
-        const modal = new bootstrap.Modal(modalEl);
-
-        modalEl.addEventListener('click', (e) => {
-            const btn = e.target.closest('.dish-btn');
-            if (btn) {
-                btn.style.borderColor = 'rgba(255,215,0,0.4)';
-                setTimeout(() => { if(btn) btn.style.borderColor = 'rgba(255,255,255,0.1)'; }, 300);
-                addToCart(parseInt(btn.dataset.id), btn.dataset.name, parseFloat(btn.dataset.price));
-            }
+        // Навешиваем обработчики на кнопки "Добавить"
+        document.querySelectorAll('#orderModal .btn-add-dish').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = parseInt(btn.dataset.id);
+                const name = btn.dataset.name;
+                const price = parseFloat(btn.dataset.price);
+                addToCart(id, name, price);
+            });
         });
 
+        const modalEl = document.getElementById('orderModal');
+        const modal = new bootstrap.Modal(modalEl);
         modalEl.addEventListener('hidden.bs.modal', () => {
             container.innerHTML = '';
         });
-
         modal.show();
     } catch (err) {
         alert('Ошибка: ' + err.message);
     }
 }
 
-// ── КОРЗИНА (без изменений) ──────────────────────────────────────
+// ── КОРЗИНА ──────────────────────────────────────────────────────
 function addToCart(id, name, price) {
     const existing = currentCart.find(i => i.id === id);
     if (existing) existing.qty++;
@@ -289,7 +282,7 @@ function updateCart() {
     const totalEl   = document.getElementById('cart-total');
     if (!container) return;
     if (!currentCart.length) {
-        container.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:13px;text-align:center;padding:20px 0;">Корзина пуста</p>';
+        container.innerHTML = '<p style="color:rgba(255,255,255,0.4);text-align:center;padding:20px;">Корзина пуста</p>';
         if (totalEl) totalEl.textContent = '0 ₽';
         return;
     }
@@ -298,15 +291,17 @@ function updateCart() {
         total += item.price * item.qty;
         return `
         <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(30,30,80,0.5);border-radius:10px;padding:8px 12px;margin-bottom:6px;">
-            <div><div style="color:white;font-size:13px;font-weight:600;">${item.name}</div>
-            <div style="color:#ffd700;font-size:12px;">x${item.qty} × ${item.price} ₽</div></div>
+            <div>
+                <div style="color:white;font-size:13px;font-weight:600;">${item.name}</div>
+                <div style="color:#ffd700;font-size:12px;">x${item.qty} × ${item.price} ₽</div>
+            </div>
             <button onclick="removeFromCart(${item.id})" style="background:rgba(220,60,60,0.5);border:none;color:#f87171;border-radius:8px;padding:4px 10px;cursor:pointer;">✕</button>
         </div>`;
     }).join('');
     if (totalEl) totalEl.textContent = total + ' ₽';
 }
 
-// ── ОФОРМИТЬ ЗАКАЗ ───────────────────────────────────────────────
+// ── ОФОРМЛЕНИЕ ЗАКАЗА ────────────────────────────────────────────
 async function submitOrder() {
     if (!currentCart.length) { alert('Добавьте блюда в корзину'); return; }
     const guestCount = parseInt(document.getElementById('guest-count').value) || 1;
@@ -331,7 +326,7 @@ async function submitOrder() {
     }
 }
 
-// ── ОПЛАТА ───────────────────────────────────────────────────────
+// ── ОПЛАТА И ЧЕК ─────────────────────────────────────────────────
 function openPayment(orderId) {
     currentOrderId = orderId;
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
@@ -361,7 +356,6 @@ async function confirmPayment(orderId) {
     }
 }
 
-// ── ЧЕК ─────────────────────────────────────────────────────────
 async function showReceipt(orderId, forcedMethod) {
     try {
         const resp = await fetch('/api/orders/receipt/' + orderId + '/');
@@ -387,9 +381,7 @@ async function showReceipt(orderId, forcedMethod) {
             <div style="text-align:center;margin-top:16px;font-size:12px;color:#999;">Спасибо за визит!</div>`;
         const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
         modal.show();
-    } catch (e) {
-        console.error('showReceipt error:', e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 function addHours(timeStr, hours) {
@@ -399,6 +391,7 @@ function addHours(timeStr, hours) {
     return String(h).padStart(2,'0') + ':' + parts[1];
 }
 
+// Запуск
 loadTables();
 setInterval(loadTables, 30000);
 </script>
