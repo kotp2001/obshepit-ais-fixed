@@ -1,156 +1,203 @@
 {% extends 'base.html' %}
 {% load i18n admin_urls static admin_modify %}
 
-{% block title %}{% if add %}Добавление{% else %}Редактирование{% endif %} {{ opts.verbose_name }} | АИС Общепит{% endblock %}
+{% block title %}{% if add %}Добавление{% else %}Редактирование{% endif %} {{ opts.verbose_name }} | АИС Общепит
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Автопересчёт суммы заказа
+    function recalcTotal() {
+        var total = 0;
+        document.querySelectorAll('.inline-group tbody tr, #orderitem_set-group tbody tr').forEach(function(row) {
+            if (row.classList.contains('empty-form')) return;
+            var del = row.querySelector('input[type="checkbox"][name*="DELETE"]');
+            if (del && del.checked) return;
+            var qty   = parseFloat(row.querySelector('input[name*="quantity"]') && row.querySelector('input[name*="quantity"]').value) || 0;
+            var price = parseFloat(row.querySelector('input[name*="price"]') && row.querySelector('input[name*="price"]').value) || 0;
+            total += qty * price;
+        });
+        var f = document.querySelector('input[name="total_amount"]');
+        if (f && total > 0) f.value = total.toFixed(2);
+    }
+    document.addEventListener('input', function(e) {
+        if (e.target.name && (e.target.name.includes('quantity') || e.target.name.includes('price'))) recalcTotal();
+    });
+    document.addEventListener('change', function(e) {
+        if (e.target.name && e.target.name.includes('DELETE')) recalcTotal();
+    });
+    recalcTotal();
 
-{% block extra_css %}
+    // Скрываем поля комментариев и подписи
+    document.querySelectorAll('.field-comment, .field-signature').forEach(function(el) {
+        var row = el.closest('.form-row') || el.closest('td') || el.closest('th');
+        if (row) row.style.display = 'none';
+    });
+    document.querySelectorAll('td, th').forEach(function(cell) {
+        var inner = cell.querySelector('[name*="-comment"], [name*="-signature"]');
+        if (inner) {
+            cell.style.display = 'none';
+            // Скрываем заголовок той же колонки
+            var table = cell.closest('table');
+            if (table) {
+                var idx = Array.from(cell.parentNode.children).indexOf(cell);
+                var header = table.querySelector('thead tr');
+                if (header && header.children[idx]) header.children[idx].style.display = 'none';
+            }
+        }
+    });
+});
+</script>
 <style>
-.admin-change-form {
-    background: rgba(20,20,55,0.6);
-    border-radius: 14px;
-    padding: 24px;
-    border: 1px solid rgba(255,215,0,0.15);
-}
-.admin-change-form label {
-    color: rgba(255,255,255,0.85);
-    font-weight: 600;
-    font-size: 13px;
-    display: block;
-    margin-bottom: 5px;
-}
-/* Текстовые поля — белый фон, чёрный текст */
 .admin-change-form input[type="text"],
 .admin-change-form input[type="number"],
 .admin-change-form input[type="email"],
 .admin-change-form input[type="url"],
-.admin-change-form input[type="password"],
 .admin-change-form input[type="date"],
 .admin-change-form input[type="time"],
 .admin-change-form textarea {
     background: #ffffff !important;
-    border: 1px solid rgba(255,215,0,0.4) !important;
     color: #0a0a2a !important;
+    border: 1px solid rgba(255,215,0,0.4) !important;
     border-radius: 10px !important;
     padding: 8px 12px !important;
-    width: 100%;
-    max-width: 520px;
-    margin-bottom: 12px;
-    box-sizing: border-box;
-    font-size: 14px;
 }
-.admin-change-form input:focus,
-.admin-change-form textarea:focus {
-    border-color: #ffd700 !important;
-    box-shadow: 0 0 0 2px rgba(255,215,0,0.2) !important;
-    outline: none !important;
-}
-/* Select — тёмный */
-.admin-change-form select {
-    background: rgba(30,30,80,0.9);
-    border: 1px solid rgba(255,215,0,0.3);
-    color: white;
-    border-radius: 10px;
-    padding: 8px 12px;
-    width: 100%;
-    max-width: 520px;
-    margin-bottom: 12px;
-}
-.admin-change-form select option { background: #0d0d35; color: white; }
-.form-row { margin-bottom: 14px; }
-.fieldset {
-    margin-bottom: 20px;
-    border: 1px solid rgba(255,215,0,0.2);
-    border-radius: 12px;
-    padding: 16px;
-}
-.fieldset h2 { color: #ffd700; margin-top: 0; font-size: 15px; margin-bottom: 14px; }
-.form-actions {
-    margin-top: 20px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-.btn-save {
-    background: #ffd700; color: #1a1a4a;
-    border: none; border-radius: 20px;
-    padding: 8px 24px; cursor: pointer;
-    font-weight: 700; font-size: 14px;
-    transition: background .15s;
-}
-.btn-save:hover { background: #e6c200; }
-.btn-cancel {
-    background: rgba(100,100,130,0.6); color: rgba(255,255,255,0.8);
-    border: none; border-radius: 20px;
-    padding: 8px 24px; text-decoration: none; font-size: 14px;
-}
-.btn-delete {
-    background: rgba(220,60,60,0.85); color: white;
-    border: none; border-radius: 20px;
-    padding: 8px 24px; text-decoration: none;
-    font-size: 14px; margin-left: auto;
-}
-.errornote { background: rgba(220,60,60,.2); border: 1px solid rgba(220,60,60,.4); border-radius: 8px; padding: 8px 14px; color: #f87171; margin-bottom: 14px; }
-.errorlist { color: #f87171; list-style: none; padding: 0; }
-.help { color: rgba(255,255,255,.4); font-size: 12px; }
-/* Inline таблица */
-.inline-group {
-    margin-top: 20px;
-    border: 1px solid rgba(255,215,0,0.2);
-    border-radius: 12px;
-    padding: 16px;
-    background: rgba(20,20,55,0.5);
-}
-.inline-group h2 { color: #ffd700; margin-top: 0; font-size: 15px; }
-.inline-group table { width: 100%; border-collapse: collapse; }
-.inline-group table thead th {
-    background: rgba(20,20,60,0.9); color: #ffd700;
-    padding: 8px 12px; font-size: 12px; font-weight: 600;
-    border-bottom: 1px solid rgba(255,215,0,0.2);
-}
-.inline-group table tbody tr td {
-    background: rgba(25,25,70,0.5); color: white;
-    padding: 7px 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    vertical-align: middle;
-}
-.inline-group table tbody tr:hover td { background: rgba(50,50,110,0.6); }
-/* Поля inline тоже белые */
 .inline-group input[type="text"],
 .inline-group input[type="number"] {
-    background: #fff !important;
+    background: #ffffff !important;
     color: #0a0a2a !important;
     border: 1px solid rgba(255,215,0,0.3) !important;
     border-radius: 6px !important;
     padding: 4px 8px !important;
-    max-width: 100%;
 }
-.inline-group select {
-    background: rgba(30,30,80,0.9);
-    color: white; border: 1px solid rgba(255,215,0,0.2);
-    border-radius: 6px; padding: 4px 8px;
-}
-/* Скрываем поле комментарий везде */
-.field-comment, .field-signature { display: none !important; }
+</style>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-change-form {
+        background: rgba(30,30,70,0.4);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    .admin-change-form label {
+        color: #ffd700;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 5px;
+    }
+    .admin-change-form input, 
+    .admin-change-form textarea, 
+    .admin-change-form select {
+        background: rgba(50,50,100,0.8);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: white;
+        border-radius: 10px;
+        padding: 8px 12px;
+        width: 100%;
+        max-width: 500px;
+        margin-bottom: 15px;
+    }
+    .admin-change-form input:focus, 
+    .admin-change-form textarea:focus, 
+    .admin-change-form select:focus {
+        border-color: #ffd700;
+        outline: none;
+    }
+    .form-actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .btn-save {
+        background: #ffd700;
+        color: #1a1a4a;
+        border: none;
+        border-radius: 25px;
+        padding: 8px 25px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .btn-save:hover {
+        background: #e6c200;
+        transform: translateY(-1px);
+    }
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 8px 25px;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-cancel:hover {
+        background: #5a6268;
+    }
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 8px 25px;
+        text-decoration: none;
+        display: inline-block;
+        margin-left: auto;
+    }
+    .btn-delete:hover {
+        background: #c82333;
+    }
+    .errorlist {
+        color: #ff6b6b;
+        list-style: none;
+        padding-left: 0;
+    }
+    /* Стили для групп полей (как в стандартной админке) */
+    .fieldset {
+        margin-bottom: 20px;
+        border: 1px solid rgba(255,215,0,0.2);
+        border-radius: 10px;
+        padding: 15px;
+    }
+    .fieldset h2 {
+        color: #ffd700;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.2rem;
+    }
+    .form-row {
+        margin-bottom: 15px;
+    }
+    .inline-group {
+        margin-top: 20px;
+        border: 1px solid rgba(255,215,0,0.2);
+        border-radius: 10px;
+        padding: 15px;
+        background: rgba(30,30,70,0.3);
+    }
+    .inline-group h2 {
+        color: #ffd700;
+        margin-top: 0;
+    }
+    .aligned .form-row .field-box {
+        margin-bottom: 10px;
+    }
+    .vTextField, .vLargeTextField, .vURLField, .vIntegerField {
+        width: 100%;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="fade-in">
-    <div class="card" style="background:rgba(15,15,50,0.8);border:1px solid rgba(255,215,0,0.2);border-radius:16px;">
-        <div class="card-header" style="background:rgba(10,10,40,0.8);border-bottom:1px solid rgba(255,215,0,0.2);padding:14px 20px;">
-            <h4 class="mb-0" style="color:#ffd700;font-weight:700;">
-                {% if add %}
-                    <i class="fas fa-plus-circle me-2"></i>Новая запись: {{ opts.verbose_name }}
-                {% else %}
-                    <i class="fas fa-edit me-2"></i>{{ original }}
-                {% endif %}
-            </h4>
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">{% if add %}Новая запись{% else %}Редактирование: {{ original }}{% endif %}</h4>
         </div>
-        <div class="card-body" style="padding:20px;">
+        <div class="card-body">
             <div class="admin-change-form">
-                <form {% if has_file_field %}enctype="multipart/form-data"{% endif %}
-                      method="post" id="{{ opts.model_name }}_form" novalidate>
+                <form {% if has_file_field %}enctype="multipart/form-data"{% endif %} method="post" id="{{ opts.model_name }}_form" novalidate>
                     {% csrf_token %}
                     {% block form_top %}{% endblock %}
                     {% if errors %}
@@ -175,83 +222,17 @@
                     {% block after_related_objects %}{% endblock %}
 
                     {% block submit_buttons_bottom %}
-                    <div class="form-actions">
-                        <button type="submit" class="btn-save" name="_save">
-                            <i class="fas fa-save me-1"></i>Сохранить
-                        </button>
-                        <a href="{% url opts|admin_urlname:'changelist' %}" class="btn-cancel">
-                            Отмена
-                        </a>
-                        {% if not add and original and not is_popup %}
-                            <a href="{% url opts|admin_urlname:'delete' original.pk %}"
-                               class="btn-delete"
-                               onclick="return confirm('Удалить {{ original }}?')">
-                                <i class="fas fa-trash me-1"></i>Удалить
-                            </a>
-                        {% endif %}
-                    </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-save" name="_save">Сохранить</button>
+                            <a href="{% url opts|admin_urlname:'changelist' %}" class="btn-cancel">Отмена</a>
+                            {% if not add and original and not is_popup %}
+                                <a href="{% url opts|admin_urlname:'delete' original.pk %}" class="btn-delete" onclick="return confirm('Удалить?')">Удалить</a>
+                            {% endif %}
+                        </div>
                     {% endblock %}
                 </form>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-
-    // 1. Автопересчёт суммы заказа при изменении позиций
-    function recalcTotal() {
-        let total = 0;
-        document.querySelectorAll('.inline-group tbody tr').forEach(function(row) {
-            if (row.classList.contains('empty-form')) return;
-            const del = row.querySelector('input[type="checkbox"][name*="DELETE"]');
-            if (del && del.checked) return;
-            const qty   = parseFloat(row.querySelector('input[name*="quantity"]')?.value) || 0;
-            const price = parseFloat(row.querySelector('input[name*="price"]')?.value) || 0;
-            total += qty * price;
-        });
-        const totalField = document.querySelector('input[name="total_amount"]');
-        if (totalField && total > 0) {
-            totalField.value = total.toFixed(2);
-        }
-    }
-
-    document.addEventListener('input', function(e) {
-        const n = e.target.name || '';
-        if (n.includes('quantity') || n.includes('price')) {
-            recalcTotal();
-        }
-    });
-    document.addEventListener('change', function(e) {
-        const n = e.target.name || '';
-        if (n.includes('DELETE')) recalcTotal();
-    });
-
-    // 2. Скрываем поля комментариев и подписи
-    ['field-comment', 'field-signature'].forEach(function(cls) {
-        document.querySelectorAll('.' + cls).forEach(function(el) {
-            const row = el.closest('.form-row') || el.closest('td') || el.closest('th');
-            if (row) row.style.display = 'none';
-        });
-    });
-    // Скрываем колонки comment и signature в таблицах
-    document.querySelectorAll('th, td').forEach(function(cell) {
-        const inner = cell.querySelector('[name*="comment"], [name*="signature"]');
-        if (inner) cell.style.display = 'none';
-    });
-    // Скрываем заголовки колонок comment/signature
-    document.querySelectorAll('.inline-group thead th').forEach(function(th, i) {
-        if (th.textContent.toLowerCase().includes('comment') ||
-            th.textContent.toLowerCase().includes('signature') ||
-            th.textContent.toLowerCase().includes('комментарий') ||
-            th.textContent.toLowerCase().includes('подпись')) {
-            th.style.display = 'none';
-        }
-    });
-
-    // 3. Первоначальный расчёт суммы
-    recalcTotal();
-});
-</script>
 {% endblock %}

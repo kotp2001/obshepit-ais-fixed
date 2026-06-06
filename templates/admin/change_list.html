@@ -139,23 +139,21 @@
         position: relative;
         padding-right: 20px;
     }
-    #changelist-filter h3 {
-        cursor: pointer !important;
-        user-select: none;
-    }
     #changelist-filter h3::after {
-        content: ' ▼';
-        font-size: 11px;
+        content: '▼';
+        font-size: 12px;
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
         transition: transform 0.2s;
-        display: inline-block;
     }
     #changelist-filter.collapsed h3::after {
-        transform: rotate(-90deg);
+        transform: translateY(-50%) rotate(-90deg);
     }
     #changelist-filter.collapsed ul,
-    #changelist-filter.collapsed li,
     #changelist-filter.collapsed .filter-group {
-        display: none !important;
+        display: none;
     }
 </style>
 {% endblock %}
@@ -281,19 +279,17 @@
         }
     });
     document.addEventListener('DOMContentLoaded', function() {
-        // Инициализация всех фильтров на странице
-        document.querySelectorAll('#changelist-filter').forEach(function(filterBlock) {
-            filterBlock.classList.add('collapsed');
-            const header = filterBlock.querySelector('h3');
-            if (header) {
-                header.style.cursor = 'pointer';
-                header.style.userSelect = 'none';
-                header.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    filterBlock.classList.toggle('collapsed');
-                });
-            }
+        var filterBlock = document.getElementById('changelist-filter');
+        if (!filterBlock) return;
+        filterBlock.classList.add('collapsed');
+        // Делаем весь заголовок кликабельным
+        var headers = filterBlock.querySelectorAll('h2, h3');
+        headers.forEach(function(h) {
+            h.style.cursor = 'pointer';
+            h.style.userSelect = 'none';
+            h.addEventListener('click', function() {
+                filterBlock.classList.toggle('collapsed');
+            });
         });
     });
 </script>

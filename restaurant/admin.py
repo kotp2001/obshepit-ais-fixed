@@ -116,7 +116,7 @@ class OrderAdmin(admin.ModelAdmin):
             obj.created_at = datetime.now()
         if not obj.waiter_id:
             obj.waiter = request.user
-        obj.save()
+        super().save_model(request, obj, form, change)
 
 
 # ===== ПОЗИЦИИ ЗАКАЗА (отдельно) =====
