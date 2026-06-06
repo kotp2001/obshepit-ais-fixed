@@ -15,14 +15,13 @@
 </div>
 
 <div class="mt-4">
-    <h5 style="color:#ffd700;margin-bottom:16px;"><i class="fas fa-bell me-2"></i>Готовые заказы</h5>
-    <div id="readyOrdersList" class="row g-3"></div>
+    <h5 style="color:#ffd700;margin-bottom:16px;"><i class="fas fa-bell me-2"></i>Активные заказы</h5>
+    <div id="activeOrdersContainer" class="row g-3"></div>
 </div>
 
-<!-- Контейнер для модального окна заказа -->
 <div id="orderModalContainer"></div>
 
-<!-- Модальное окно оплаты -->
+<!-- Модальное окно оплаты и чека (оставляем без изменений) -->
 <div class="modal fade" id="paymentModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="background:rgba(20,20,60,0.97);border:1px solid rgba(255,215,0,0.3);">
@@ -31,7 +30,6 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p style="color:rgba(255,255,255,0.8);margin-bottom:16px;">Выберите способ оплаты:</p>
                 <select id="paymentMethodSelect" class="form-select mb-3" style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;">
                     <option value="cash">Наличные</option>
                     <option value="card">Карта</option>
@@ -43,7 +41,6 @@
     </div>
 </div>
 
-<!-- Модальное окно чека -->
 <div class="modal fade" id="receiptModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="background:white;color:#1a1a4a;border-radius:14px;font-family:monospace;">
@@ -61,38 +58,38 @@
 let currentTableId = null;
 let currentCart = [];
 
-// ---------- Загрузка столов и активных заказов ----------
-async function loadTablesAndOrders() {
+// ---------- Функция обновления столов и заказов ----------
+async function refreshAll() {
     try {
         const [tablesRes, ordersRes] = await Promise.all([fetch('/api/tables/'), fetch('/api/orders/active/')]);
         const tables = await tablesRes.json();
         const orders = await ordersRes.json();
 
-        // Столы
+        // Рендер столов
         const hallDiv = document.getElementById('hallContainer');
         if (tables.success && tables.data.length) {
             hallDiv.innerHTML = tables.data.map(table => {
                 const free = table.status === 'free';
-                const bgColor = free ? 'rgba(20,60,30,0.6)' : (table.status === 'occupied' ? 'rgba(60,20,20,0.6)' : 'rgba(60,50,20,0.6)');
-                const borderColor = free ? 'rgba(40,200,80,0.5)' : (table.status === 'occupied' ? 'rgba(220,60,60,0.5)' : 'rgba(220,180,40,0.5)');
-                const label = free ? 'Свободен' : (table.status === 'occupied' ? 'Занят' : 'Зарезервирован');
+                const bg = free ? 'rgba(20,60,30,0.6)' : (table.status === 'occupied' ? 'rgba(60,20,20,0.6)' : 'rgba(60,50,20,0.6)');
+                const border = free ? 'rgba(40,200,80,0.5)' : (table.status === 'occupied' ? 'rgba(220,60,60,0.5)' : 'rgba(220,180,40,0.5)');
+                const statusText = free ? 'Свободен' : (table.status === 'occupied' ? 'Занят' : 'Зарезервирован');
                 const cursor = free ? 'pointer' : 'not-allowed';
-                return `<div class="col-6 col-md-3"><div class="table-card" data-id="${table.id}" data-number="${table.number}" data-seats="${table.seats}" data-free="${free}" style="background:${bgColor};border:2px solid ${borderColor};border-radius:16px;padding:18px 12px;text-align:center;cursor:${cursor};opacity:${free ? '1' : '0.6'};"><i class="fas fa-utensils" style="color:#ffd700;font-size:20px;"></i><div style="color:white;font-size:18px;font-weight:700;">Стол ${table.number}</div><div style="color:rgba(255,255,255,0.6);font-size:12px;">${table.seats} мест</div><div style="background:rgba(0,0,0,0.3);color:${free ? '#a5d6a7' : '#f87171'};border:1px solid ${free ? '#a5d6a7' : '#f87171'};padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;">${label}</div></div></div>`;
+                return `<div class="col-6 col-md-3"><div class="table-card" data-id="${table.id}" data-number="${table.number}" data-seats="${table.seats}" data-free="${free}" style="background:${bg};border:2px solid ${border};border-radius:16px;padding:18px 12px;text-align:center;cursor:${cursor};opacity:${free ? '1' : '0.6'};"><i class="fas fa-utensils" style="color:#ffd700;font-size:20px;"></i><div style="color:white;font-size:18px;font-weight:700;">Стол ${table.number}</div><div style="color:rgba(255,255,255,0.6);font-size:12px;">${table.seats} мест</div><div style="background:rgba(0,0,0,0.3);color:${free ? '#a5d6a7' : '#f87171'};border:1px solid ${free ? '#a5d6a7' : '#f87171'};padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;">${statusText}</div></div></div>`;
             }).join('');
         } else hallDiv.innerHTML = '<p class="col-12 text-center" style="color:rgba(255,255,255,0.5);">Столы не найдены</p>';
 
-        // Готовые заказы
-        const readyDiv = document.getElementById('readyOrdersList');
+        // Рендер заказов
+        const activeDiv = document.getElementById('activeOrdersContainer');
         if (orders.success && orders.data.length) {
             const readyOrders = orders.data.filter(o => o.status === 'ready');
             if (readyOrders.length) {
-                readyDiv.innerHTML = readyOrders.map(order => `<div class="col-md-4"><div style="background:rgba(20,20,60,0.75);border:2px solid rgba(40,180,100,0.5);border-radius:16px;padding:16px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="color:#ffd700;font-weight:700;">Стол ${order.table_number}</span><span style="background:rgba(40,180,100,0.2);color:#5de8a0;border:1px solid #5de8a0;padding:3px 10px;border-radius:20px;font-size:12px;">Готов</span></div><div style="color:rgba(255,255,255,0.55);font-size:12px;margin-bottom:6px;">🕒 ${order.created_at || ''}</div><div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:12px;">${(order.items || []).map(i => `${i.dish_name} x${i.quantity}`).join(', ') || '—'}</div><button onclick="openPayment(${order.id})" style="width:100%;background:#ffd700;color:#1a1a4a;border:none;border-radius:10px;padding:8px;font-weight:700;cursor:pointer;">Принять оплату</button></div></div>`).join('');
+                activeDiv.innerHTML = readyOrders.map(order => `<div class="col-md-4"><div style="background:rgba(20,20,60,0.75);border:2px solid rgba(40,180,100,0.5);border-radius:16px;padding:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span style="color:#ffd700;font-weight:700;">Стол ${order.table_number}</span><span style="background:rgba(40,180,100,0.2);color:#5de8a0;border:1px solid #5de8a0;padding:3px 10px;border-radius:20px;font-size:12px;">Готов</span></div><div style="color:rgba(255,255,255,0.55);font-size:12px;">🕒 ${order.created_at || ''}</div><div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:12px;">${(order.items || []).map(i => `${i.dish_name} x${i.quantity}`).join(', ') || '—'}</div><button onclick="openPayment(${order.id})" style="width:100%;background:#ffd700;color:#1a1a4a;border:none;border-radius:10px;padding:8px;font-weight:700;cursor:pointer;">Принять оплату</button></div></div>`).join('');
                 return;
             }
         }
-        readyDiv.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:13px;">Нет готовых заказов</p>';
+        activeDiv.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:13px;">Нет готовых заказов</p>';
     } catch (err) {
-        console.error(err);
+        console.error('Ошибка обновления:', err);
         document.getElementById('hallContainer').innerHTML = `<div class="col-12 text-center text-danger">Ошибка загрузки: ${err.message}</div>`;
     }
 }
@@ -101,11 +98,14 @@ async function loadTablesAndOrders() {
 document.getElementById('hallContainer')?.addEventListener('click', (e) => {
     const card = e.target.closest('.table-card');
     if (card && card.dataset.free === 'true') {
-        openOrderModal(parseInt(card.dataset.id), parseInt(card.dataset.number), parseInt(card.dataset.seats));
+        const id = parseInt(card.dataset.id);
+        const number = parseInt(card.dataset.number);
+        const seats = parseInt(card.dataset.seats);
+        openOrderModal(id, number, seats);
     }
 });
 
-// ---------- Модальное окно заказа ----------
+// ---------- Открытие модального окна заказа (с простыми кнопками) ----------
 async function openOrderModal(tableId, tableNumber, maxSeats) {
     currentTableId = tableId;
     currentCart = [];
@@ -118,18 +118,65 @@ async function openOrderModal(tableId, tableNumber, maxSeats) {
         const catMap = {};
         if (cats.success) cats.data.forEach(c => catMap[c.id] = c.name);
         const grouped = {};
-        dishes.data.forEach(dish => { const cat = catMap[dish.category_id] || 'Без категории'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(dish); });
+        dishes.data.forEach(dish => {
+            const cat = catMap[dish.category_id] || 'Без категории';
+            if (!grouped[cat]) grouped[cat] = [];
+            grouped[cat].push(dish);
+        });
 
         let menuHtml = '';
         for (const [catName, catDishes] of Object.entries(grouped)) {
             menuHtml += `<div class="mb-3"><h6 style="color:#ffd700;font-weight:700;">${catName}</h6><div class="row g-2">`;
             for (const dish of catDishes) {
-                menuHtml += `<div class="col-6"><div style="background:rgba(30,30,80,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px;"><div style="font-weight:600;color:white;">${dish.name}</div><div style="color:#ffd700;font-size:13px;">${dish.price} ₽</div><button onclick="addToCart(${dish.id}, '${dish.name.replace(/'/g, "\\'")}', ${dish.price})" style="margin-top:8px;background:#ffd700;color:#1a1a4a;border:none;border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;">➕ Добавить</button></div></div>`;
+                menuHtml += `
+                    <div class="col-6">
+                        <div style="background:rgba(30,30,80,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px;">
+                            <div style="font-weight:600;color:white;">${dish.name}</div>
+                            <div style="color:#ffd700;font-size:13px;">${dish.price} ₽</div>
+                            <button onclick="window.addToCart(${dish.id}, '${dish.name.replace(/'/g, "\\'")}', ${dish.price})" 
+                                    style="margin-top:8px;background:#ffd700;color:#1a1a4a;border:none;border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;">
+                                ➕ Добавить
+                            </button>
+                        </div>
+                    </div>`;
             }
             menuHtml += `</div></div>`;
         }
 
-        const modalHtml = `<div class="modal fade" id="orderModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content" style="background:rgba(15,15,50,0.98);border:1px solid rgba(255,215,0,0.3);border-radius:16px;"><div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.15);"><h5 class="modal-title" style="color:#ffd700;">Заказ для стола ${tableNumber}</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body" style="padding:20px;"><div class="row g-3"><div class="col-md-7"><h6 style="color:#ffd700;">Меню</h6><div style="max-height:450px;overflow-y:auto;padding-right:4px;">${menuHtml}</div></div><div class="col-md-5"><h6 style="color:#ffd700;">Корзина</h6><div id="cartItems" style="min-height:120px;max-height:300px;overflow-y:auto;margin-bottom:14px;"></div><div style="border-top:1px solid rgba(255,255,255,0.15);padding-top:12px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;color:white;font-weight:700;font-size:16px;"><span>Итого:</span><span id="cartTotal" style="color:#ffd700;">0 ₽</span></div></div><label style="color:rgba(255,255,255,0.8);">Количество гостей</label><input type="number" id="guestCountInput" class="form-control mb-3" value="2" min="1" max="${maxSeats}" style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;"><small style="color:rgba(255,215,0,0.6);display:block;margin-top:-10px;margin-bottom:12px;">Макс. ${maxSeats} гостей</small><button onclick="submitOrder()" class="btn w-100 mb-2" style="background:#ffd700;color:#1a1a4a;font-weight:700;border-radius:12px;padding:10px;">Оформить заказ</button><button class="btn w-100" data-bs-dismiss="modal" style="background:rgba(80,80,80,0.4);color:rgba(255,255,255,0.7);border-radius:12px;padding:10px;">Отмена</button></div></div></div></div></div></div>`;
+        const modalHtml = `
+        <div class="modal fade" id="orderModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content" style="background:rgba(15,15,50,0.98);border:1px solid rgba(255,215,0,0.3);border-radius:16px;">
+                    <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.15);">
+                        <h5 class="modal-title" style="color:#ffd700;">Заказ для стола ${tableNumber}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" style="padding:20px;">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <h6 style="color:#ffd700;">Меню</h6>
+                                <div style="max-height:450px;overflow-y:auto;padding-right:4px;">${menuHtml}</div>
+                            </div>
+                            <div class="col-md-5">
+                                <h6 style="color:#ffd700;">Корзина</h6>
+                                <div id="cartItems" style="min-height:120px;max-height:300px;overflow-y:auto;margin-bottom:14px;"></div>
+                                <div style="border-top:1px solid rgba(255,255,255,0.15);padding-top:12px;margin-bottom:12px;">
+                                    <div style="display:flex;justify-content:space-between;color:white;font-weight:700;font-size:16px;">
+                                        <span>Итого:</span><span id="cartTotal" style="color:#ffd700;">0 ₽</span>
+                                    </div>
+                                </div>
+                                <label style="color:rgba(255,255,255,0.8);">Количество гостей</label>
+                                <input type="number" id="guestCountInput" class="form-control mb-3" value="2" min="1" max="${maxSeats}" style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;">
+                                <small style="color:rgba(255,215,0,0.6);display:block;margin-top:-10px;margin-bottom:12px;">Макс. ${maxSeats} гостей</small>
+                                <button onclick="window.submitOrder()" class="btn w-100 mb-2" style="background:#ffd700;color:#1a1a4a;font-weight:700;border-radius:12px;padding:10px;">Оформить заказ</button>
+                                <button class="btn w-100" data-bs-dismiss="modal" style="background:rgba(80,80,80,0.4);color:rgba(255,255,255,0.7);border-radius:12px;padding:10px;">Отмена</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
         const container = document.getElementById('orderModalContainer');
         container.innerHTML = modalHtml;
         updateCartDisplay();
@@ -137,30 +184,50 @@ async function openOrderModal(tableId, tableNumber, maxSeats) {
         const modal = new bootstrap.Modal(modalEl);
         modalEl.addEventListener('hidden.bs.modal', () => container.innerHTML = '');
         modal.show();
-    } catch (err) { alert('Ошибка: ' + err.message); }
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
 }
 
-// ---------- Корзина ----------
-window.addToCart = (id, name, price) => {
-    const idx = currentCart.findIndex(i => i.id === id);
-    if (idx !== -1) currentCart[idx].qty++;
+// ---------- Функции корзины ----------
+window.addToCart = function(id, name, price) {
+    const existing = currentCart.find(i => i.id === id);
+    if (existing) existing.qty++;
     else currentCart.push({ id, name, price, qty: 1 });
     updateCartDisplay();
 };
-window.removeFromCart = (id) => { currentCart = currentCart.filter(i => i.id !== id); updateCartDisplay(); };
+
+window.removeFromCart = function(id) {
+    currentCart = currentCart.filter(i => i.id !== id);
+    updateCartDisplay();
+};
+
 function updateCartDisplay() {
     const container = document.getElementById('cartItems');
     const totalSpan = document.getElementById('cartTotal');
     if (!container) return;
-    if (!currentCart.length) { container.innerHTML = '<p style="color:rgba(255,255,255,0.4);text-align:center;padding:20px;">Корзина пуста</p>'; if (totalSpan) totalSpan.textContent = '0 ₽'; return; }
+    if (currentCart.length === 0) {
+        container.innerHTML = '<p style="color:rgba(255,255,255,0.4);text-align:center;padding:20px;">Корзина пуста</p>';
+        if (totalSpan) totalSpan.textContent = '0 ₽';
+        return;
+    }
     let total = 0;
-    container.innerHTML = currentCart.map(item => { total += item.price * item.qty; return `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(30,30,80,0.5);border-radius:10px;padding:8px 12px;margin-bottom:6px;"><div><div style="color:white;">${item.name}</div><div style="color:#ffd700;font-size:12px;">x${item.qty} × ${item.price} ₽</div></div><button onclick="removeFromCart(${item.id})" style="background:rgba(220,60,60,0.5);border:none;color:#f87171;border-radius:8px;padding:4px 10px;cursor:pointer;">✕</button></div>`; }).join('');
+    container.innerHTML = currentCart.map(item => {
+        total += item.price * item.qty;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(30,30,80,0.5);border-radius:10px;padding:8px 12px;margin-bottom:6px;">
+                    <div><div style="color:white;">${item.name}</div><div style="color:#ffd700;font-size:12px;">x${item.qty} × ${item.price} ₽</div></div>
+                    <button onclick="window.removeFromCart(${item.id})" style="background:rgba(220,60,60,0.5);border:none;color:#f87171;border-radius:8px;padding:4px 10px;cursor:pointer;">✕</button>
+                </div>`;
+    }).join('');
     if (totalSpan) totalSpan.textContent = total + ' ₽';
 }
 
 // ---------- Оформление заказа ----------
-async function submitOrder() {
-    if (!currentCart.length) { alert('Добавьте блюда в корзину'); return; }
+window.submitOrder = async function() {
+    if (currentCart.length === 0) {
+        alert('Добавьте блюда в корзину');
+        return;
+    }
     const guestCount = parseInt(document.getElementById('guestCountInput').value) || 1;
     const items = currentCart.map(i => ({ dish_id: i.id, quantity: i.qty }));
     try {
@@ -173,11 +240,15 @@ async function submitOrder() {
         if (data.success) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('orderModal'));
             if (modal) modal.hide();
-            await loadTablesAndOrders();
+            await refreshAll();
             alert(`Заказ #${data.order_id} оформлен! Сумма: ${data.total} ₽`);
-        } else alert('Ошибка: ' + (data.error || 'неизвестная ошибка'));
-    } catch (err) { alert('Ошибка сети: ' + err.message); }
-}
+        } else {
+            alert('Ошибка: ' + (data.error || 'неизвестная ошибка'));
+        }
+    } catch (err) {
+        alert('Ошибка сети: ' + err.message);
+    }
+};
 
 // ---------- Оплата и чек ----------
 window.openPayment = (orderId) => {
@@ -185,18 +256,28 @@ window.openPayment = (orderId) => {
     modal.show();
     document.getElementById('confirmPayBtn').onclick = () => confirmPayment(orderId);
 };
+
 async function confirmPayment(orderId) {
     const method = document.getElementById('paymentMethodSelect').value;
     try {
-        const resp = await fetch('/api/orders/pay/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: orderId, payment_method: method }) });
+        const resp = await fetch('/api/orders/pay/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId, payment_method: method })
+        });
         const data = await resp.json();
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('paymentModal'))?.hide();
             await showReceipt(orderId, method);
-            await loadTablesAndOrders();
-        } else alert('Ошибка оплаты: ' + data.error);
-    } catch (err) { alert('Ошибка: ' + err.message); }
+            await refreshAll();
+        } else {
+            alert('Ошибка оплаты: ' + data.error);
+        }
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
 }
+
 async function showReceipt(orderId, forcedMethod) {
     try {
         const resp = await fetch(`/api/orders/receipt/${orderId}/`);
@@ -206,17 +287,35 @@ async function showReceipt(orderId, forcedMethod) {
         const payment = forcedMethod ? (labels[forcedMethod] || forcedMethod) : data.data.payment_method;
         const order = data.data;
         const itemsHtml = (order.items || []).map(i => `<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>${i.name} x${i.quantity}</span><span>${i.total} ₽</span></div>`).join('');
-        const receiptHtml = `<div style="text-align:center;margin-bottom:16px;"><div style="font-size:18px;font-weight:700;">АИС «Общепит»</div><div style="font-size:12px;color:#666;">Чек № ${order.order_id}</div></div><div style="margin-bottom:12px;font-size:13px;color:#666;">Стол: ${order.table_number} | ${order.created_at}</div><div style="border-top:1px dashed #ccc;border-bottom:1px dashed #ccc;padding:10px 0;margin-bottom:12px;">${itemsHtml}</div><div style="display:flex;justify-content:space-between;font-weight:700;font-size:16px;margin-bottom:8px;"><span>ИТОГО:</span><span>${order.total} ₽</span></div><div style="font-size:13px;color:#666;">Оплата: ${payment}</div><div style="text-align:center;margin-top:16px;font-size:12px;color:#999;">Спасибо за визит!</div>`;
+        const receiptHtml = `
+            <div style="text-align:center;margin-bottom:16px;">
+                <div style="font-size:18px;font-weight:700;">АИС «Общепит»</div>
+                <div style="font-size:12px;color:#666;">Чек № ${order.order_id}</div>
+            </div>
+            <div style="margin-bottom:12px;font-size:13px;color:#666;">Стол: ${order.table_number} | ${order.created_at}</div>
+            <div style="border-top:1px dashed #ccc;border-bottom:1px dashed #ccc;padding:10px 0;margin-bottom:12px;">${itemsHtml}</div>
+            <div style="display:flex;justify-content:space-between;font-weight:700;font-size:16px;margin-bottom:8px;">
+                <span>ИТОГО:</span><span>${order.total} ₽</span>
+            </div>
+            <div style="font-size:13px;color:#666;">Оплата: ${payment}</div>
+            <div style="text-align:center;margin-top:16px;font-size:12px;color:#999;">Спасибо за визит!</div>`;
         document.getElementById('receiptContent').innerHTML = receiptHtml;
         const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
         modal.show();
-        document.getElementById('printReceiptBtn').onclick = () => { const w = window.open('', '_blank'); w.document.write(`<html><head><title>Чек</title><style>body{font-family:monospace;padding:20px;}</style></head><body>${receiptHtml}</body></html>`); w.document.close(); w.print(); };
-    } catch (err) { console.error(err); }
+        document.getElementById('printReceiptBtn').onclick = () => {
+            const w = window.open('', '_blank');
+            w.document.write(`<html><head><title>Чек</title><style>body{font-family:monospace;padding:20px;}</style></head><body>${receiptHtml}</body></html>`);
+            w.document.close();
+            w.print();
+        };
+    } catch (err) {
+        console.error(err);
+    }
 }
 
-// ---------- Инициализация и автообновление ----------
-loadTablesAndOrders();
-setInterval(loadTablesAndOrders, 30000);
-document.getElementById('refreshBtn')?.addEventListener('click', () => loadTablesAndOrders());
+// ---------- Запуск и автообновление ----------
+refreshAll();
+setInterval(refreshAll, 30000);
+document.getElementById('refreshBtn')?.addEventListener('click', () => refreshAll());
 </script>
 {% endblock %}
