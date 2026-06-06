@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>АИС Общепит - {% block title %}Ресторан{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%);
+            position: relative;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            flex: 1 0 auto;
+            background: transparent !important;
+        }
+        
+        .navbar {
+            background: rgba(20,20,50,0.9);
+            backdrop-filter: blur(10px);
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .navbar-brand {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #ffd700 !important;
+        }
+        
+        .btn-logout {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        
+        .btn-logout:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+        
+        .btn-logout:active {
+            transform: translateY(1px);
+        }
+        
+        .card {
+            background: rgba(30,30,70,0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: rgba(20,20,50,0.8);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 15px 20px;
+        }
+        
+        .card-body {
+            color: white;
+            padding: 20px;
+        }
+        
+        .btn {
+            border-radius: 25px;
+            padding: 8px 20px;
+            font-weight: 500;
+            transition: transform 0.1s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:active {
+            transform: scale(0.97);
+        }
+        
+        .btn-warning {
+            background: #ffd700;
+            color: #1a1a4a;
+        }
+        
+        .btn-warning:hover {
+            background: #e6c200;
+            transform: translateY(-1px);
+        }
+        
+        .btn-primary {
+            background: #1a1a4a;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2a2a5a;
+            transform: translateY(-1px);
+        }
+        
+        .btn-success {
+            background: #2a5a2a;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #3a6a3a;
+            transform: translateY(-1px);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: rgba(100,100,140,0.8);
+            color: white;
+        }
+        
+        .form-control {
+            background: rgba(50,50,100,0.8);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 25px;
+            padding: 10px 15px;
+        }
+        
+        .form-control:focus {
+            background: rgba(60,60,110,0.9);
+            border-color: #ffd700;
+            color: white;
+            outline: none;
+            box-shadow: 0 0 5px rgba(255,215,0,0.3);
+        }
+        
+        .footer {
+            background: rgba(20,20,50,0.8);
+            margin-top: 40px;
+            padding: 15px;
+            text-align: center;
+            color: #ffd700;
+            font-size: 13px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+        
+        .footer a {
+            color: #ffd700;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .modal-content {
+            background: rgba(20,20,60,0.95) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .modal-body {
+            color: white;
+        }
+        
+        .modal-body .form-label {
+            color: white;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(30,30,70,0.5);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #ffd700;
+            border-radius: 10px;
+        }
+        
+        .admin-card {
+            transition: none;
+            cursor: pointer;
+        }
+        
+        .admin-card:hover {
+            transform: none;
+        }
+        
+        .admin-card .card-body {
+            transition: none;
+        }
+        
+        .admin-card:hover .card-body {
+            background: rgba(50,50,100,0.7);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" href="/admin-panel/" id="main-menu-btn" style="background:#ffd700;color:#1a1a4a!important;padding:6px 16px;border-radius:20px;font-weight:700;font-size:14px;display:none;">
+                <i class="fas fa-home me-1"></i> Главное меню
+            </a>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span id="nav-username" style="color:rgba(255,215,0,0.8); font-size:13px; display:none;">
+                    <i class="fas fa-user-circle me-1"></i><span id="nav-username-text"></span>
+                </span>
+                <button class="btn-logout" onclick="logout()" id="logout-btn" style="display: none;">Выйти</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <div class="footer">
+        <div class="container">
+            <p class="mb-0">АИС «Общепит» — Автоматизированная информационная система управления рестораном</p>
+            <p class="mb-0 mt-1" style="font-size: 11px;">
+                <a href="/help/">Руководство пользователя</a> | 
+                <a href="/docs/">Регламенты</a> | 
+                <a href="/maintenance-log/">Журнал ТО</a> |
+                <a href="https://forms.yandex.ru/u/69f11c7990fa7b3c1459172e" target="_blank">Обратная связь</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 5 + 's';
+                star.style.animationDuration = 2 + Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+        createStars();
+        
+        function checkAuth() {
+            const role = localStorage.getItem('user_role');
+            const logoutBtn = document.getElementById('logout-btn');
+            const navUser = document.getElementById('nav-username');
+            const navUserText = document.getElementById('nav-username-text');
+            const mainMenuBtn = document.getElementById('main-menu-btn');
+            const uname = localStorage.getItem('user_name');
+            if (role) {
+                logoutBtn.style.display = 'block';
+                if (uname && navUser) { navUser.style.display='flex'; navUserText.textContent='Вы вошли как ' + uname; }
+                // Кнопка "Главное меню" только для admin
+                if (role === 'admin' && mainMenuBtn) mainMenuBtn.style.display = 'inline-flex';
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_name');
+            window.location.href = '/';
+        }
+        
+        checkAuth();
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
