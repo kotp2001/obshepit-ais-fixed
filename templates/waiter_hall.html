@@ -3,94 +3,22 @@
 
 {% block extra_css %}
 <style>
-    /* Специфичные стили для зала (не трогают фон и плашки) */
-    /* Уменьшаем отступы для компактности */
-    .container.py-4 {
-        padding-top: 0.75rem !important;
-        padding-bottom: 0.75rem !important;
-    }
-    .hall-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        margin-bottom: 16px;
-    }
-    .table-card {
-        background: rgba(15, 20, 45, 0.65);
-        backdrop-filter: blur(4px);
-        border-radius: 20px;
-        padding: 16px 12px;
-        text-align: center;
-        transition: all 0.25s ease;
-        border: 1px solid rgba(255, 215, 0, 0.3);
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-    }
+    /* Стили полностью сохранены – без изменений */
+    .container.py-4 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+    .hall-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+    .table-card { background: rgba(15,20,45,0.65); backdrop-filter: blur(4px); border-radius: 20px; padding: 16px 12px; text-align: center; transition: all 0.25s ease; border: 1px solid rgba(255,215,0,0.3); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .table-icon { font-size: 28px; color: #ffd700; }
     .table-number { font-size: 20px; font-weight: 700; color: white; }
     .table-seats { font-size: 12px; color: rgba(255,255,255,0.6); }
-    .table-status {
-        font-size: 11px;
-        font-weight: 600;
-        padding: 3px 12px;
-        border-radius: 40px;
-        background: rgba(0,0,0,0.5);
-        border: 1px solid;
-        width: fit-content;
-    }
-    .orders-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 12px;
-        margin-top: 8px;
-    }
-    .order-card {
-        background: rgba(10, 12, 32, 0.7);
-        backdrop-filter: blur(4px);
-        border-radius: 16px;
-        padding: 12px;
-        border: 1px solid rgba(255,215,0,0.25);
-    }
-    .dish-item {
-        background: rgba(30, 35, 70, 0.7);
-        border-radius: 14px;
-        padding: 10px;
-        cursor: pointer;
-        transition: 0.15s;
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-    .cart-item {
-        background: rgba(20, 25, 55, 0.6);
-        border-radius: 12px;
-        padding: 8px;
-        margin-bottom: 6px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .btn-gold {
-        background: #ffd700;
-        color: #0a0f2a;
-        font-weight: 700;
-        border: none;
-        border-radius: 40px;
-        padding: 8px 16px;
-        transition: 0.2s;
-    }
-    /* Для footer - уменьшаем отступ сверху */
-    footer.footer, .footer {
-        margin-top: 16px !important;
-    }
-    /* Адаптив */
-    @media (max-width: 900px) {
-        .hall-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    }
-    @media (max-width: 500px) {
-        .hall-grid { grid-template-columns: 1fr; }
-    }
+    .table-status { font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 40px; background: rgba(0,0,0,0.5); border: 1px solid; width: fit-content; }
+    .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 8px; }
+    .order-card { background: rgba(10,12,32,0.7); backdrop-filter: blur(4px); border-radius: 16px; padding: 12px; border: 1px solid rgba(255,215,0,0.25); }
+    .dish-item { background: rgba(30,35,70,0.7); border-radius: 14px; padding: 10px; cursor: pointer; transition: 0.15s; border: 1px solid rgba(255,255,255,0.1); }
+    .cart-item { background: rgba(20,25,55,0.6); border-radius: 12px; padding: 8px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .btn-gold { background: #ffd700; color: #0a0f2a; font-weight: 700; border: none; border-radius: 40px; padding: 8px 16px; transition: 0.2s; }
+    footer.footer, .footer { margin-top: 16px !important; }
+    @media (max-width: 900px) { .hall-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+    @media (max-width: 500px) { .hall-grid { grid-template-columns: 1fr; } }
 </style>
 {% endblock %}
 
@@ -104,7 +32,6 @@
     </button>
 </div>
 
-<!-- Сетка столов (4 колонки) -->
 <div id="hall-container" class="hall-grid">
     <div class="text-center" style="grid-column:1/-1; padding:30px;">
         <div class="spinner-border text-warning" role="status"></div>
@@ -112,7 +39,6 @@
     </div>
 </div>
 
-<!-- Блок активных заказов -->
 <div class="mt-3">
     <h5 style="color:#ffd700; margin-bottom: 12px; font-size: 1.25rem;"><i class="fas fa-bell me-2"></i>Блюда готовы / ожидают оплаты</h5>
     <div id="ready-orders-list" class="orders-grid">
@@ -120,7 +46,6 @@
     </div>
 </div>
 
-<!-- Контейнер для модального окна заказа -->
 <div id="order-modal-container"></div>
 
 <!-- Модальное окно оплаты -->
@@ -178,13 +103,11 @@ async function loadTables() {
         const resp = await fetch('/api/tables/');
         const data = await resp.json();
         if (!data.success) throw new Error(data.error || 'Ошибка API');
-
         const container = document.getElementById('hall-container');
         if (!data.data.length) {
             container.innerHTML = '<div class="text-center" style="grid-column:1/-1;">Столы не найдены</div>';
             return;
         }
-
         container.innerHTML = data.data.map(table => {
             const free = table.status === 'free';
             const statusLabel = free ? 'Свободен' : (table.status === 'occupied' ? 'Занят' : 'Зарезервирован');
@@ -192,7 +115,6 @@ async function loadTables() {
             const statusBg = free ? 'rgba(40,180,80,0.2)' : 'rgba(220,60,60,0.2)';
             const cursor = free ? 'pointer' : 'not-allowed';
             const opacity = free ? '1' : '0.6';
-
             return `
                 <div class="table-card" data-id="${table.id}" data-number="${table.number}" data-seats="${table.seats}" data-free="${free}"
                      style="opacity:${opacity}; cursor:${cursor};">
@@ -205,7 +127,6 @@ async function loadTables() {
                 </div>
             `;
         }).join('');
-
         document.querySelectorAll('.table-card').forEach(card => {
             if (card.dataset.free === 'true') {
                 card.addEventListener('click', () => {
@@ -217,7 +138,6 @@ async function loadTables() {
                 });
             }
         });
-
         await loadActiveOrders();
     } catch (err) {
         document.getElementById('hall-container').innerHTML = `
@@ -251,10 +171,15 @@ async function loadActiveOrders() {
                     </div>
                     <div class="small text-light-emphasis mb-1" style="font-size:11px;"><i class="fas fa-clock me-1"></i>${time}</div>
                     <div class="small text-white-50 mb-2" style="font-size:11px;">${items}</div>
-                    ${isReady ? `<button class="btn btn-gold w-100 py-1" style="font-size:12px;" onclick="openPayment(${order.id})"><i class="fas fa-cash-register me-1"></i>Принять оплату</button>` : ''}
+                    ${isReady ? `<button class="btn btn-gold w-100 py-1" style="font-size:12px;" data-order-id="${order.id}"><i class="fas fa-cash-register me-1"></i>Принять оплату</button>` : ''}
                 </div>
             `;
         }).join('');
+        // Назначаем обработчики для кнопок "Принять оплату"
+        document.querySelectorAll('#ready-orders-list .btn-gold').forEach(btn => {
+            const orderId = parseInt(btn.getAttribute('data-order-id'));
+            btn.onclick = () => openPayment(orderId);
+        });
     } catch(e) { console.error(e); }
 }
 
@@ -263,7 +188,6 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
     currentTableId = tableId;
     currentTableSeats = tableSeats || 8;
     currentCart = [];
-
     try {
         const [dishResp, catResp] = await Promise.all([
             fetch('/api/dishes/'),
@@ -272,30 +196,27 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
         const dishData = await dishResp.json();
         const catData  = await catResp.json();
         if (!dishData.success) throw new Error('Ошибка загрузки меню');
-
         const dishes = dishData.data;
         const cats   = catData.success ? catData.data : [];
-
-        const menuHtml = cats.map(cat => {
+        let menuHtml = '';
+        for (let cat of cats) {
             const catDishes = dishes.filter(d => d.category_id === cat.id);
-            if (!catDishes.length) return '';
-            return `
-                <div class="mb-3">
-                    <h6 class="text-warning border-bottom border-warning pb-1 mb-2" style="font-size:1rem;">${cat.name}</h6>
-                    <div class="row g-2">
-                        ${catDishes.map(d => `
-                            <div class="col-6">
-                                <div class="dish-item" data-id="${d.id}" data-name="${d.name}" data-price="${d.price}">
-                                    <div class="fw-semibold" style="font-size:13px;">${d.name}</div>
-                                    <div class="text-warning small" style="font-size:11px;">${d.price} ₽</div>
-                                </div>
-                            </div>
-                        `).join('')}
+            if (!catDishes.length) continue;
+            menuHtml += `<div class="mb-3">
+                <h6 class="text-warning border-bottom border-warning pb-1 mb-2" style="font-size:1rem;">${cat.name}</h6>
+                <div class="row g-2">`;
+            catDishes.forEach(d => {
+                menuHtml += `
+                    <div class="col-6">
+                        <div class="dish-item" data-id="${d.id}" data-name="${d.name}" data-price="${d.price}">
+                            <div class="fw-semibold" style="font-size:13px;">${d.name}</div>
+                            <div class="text-warning small" style="font-size:11px;">${d.price} ₽</div>
+                        </div>
                     </div>
-                </div>
-            `;
-        }).join('');
-
+                `;
+            });
+            menuHtml += `</div></div>`;
+        }
         const modalHtml = `
             <div class="modal fade" id="orderModal" tabindex="-1">
                 <div class="modal-dialog modal-xl">
@@ -333,16 +254,12 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
         const container = document.getElementById('order-modal-container');
         container.innerHTML = modalHtml;
         updateCart();
-
         const modalEl = document.getElementById('orderModal');
         const modal = new bootstrap.Modal(modalEl);
         modalEl.addEventListener('click', e => {
             const dishDiv = e.target.closest('.dish-item');
             if (dishDiv) {
-                const id = parseInt(dishDiv.dataset.id);
-                const name = dishDiv.dataset.name;
-                const price = parseFloat(dishDiv.dataset.price);
-                addToCart(id, name, price);
+                addToCart(parseInt(dishDiv.dataset.id), dishDiv.dataset.name, parseFloat(dishDiv.dataset.price));
             }
         });
         modalEl.addEventListener('hidden.bs.modal', () => container.innerHTML = '');
@@ -395,12 +312,10 @@ async function submitOrder() {
     const maxGuests = currentTableSeats;
     if (guestCount > maxGuests) guestCount = maxGuests;
     if (guestCount < 1) guestCount = 1;
-    
     const pad = n => String(n).padStart(2,'0');
     const now = new Date();
     const localTime = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     const items = currentCart.map(i => ({ dish_id: i.id, quantity: i.qty }));
-
     try {
         const resp = await fetch('/api/orders/create/', {
             method: 'POST',
@@ -419,15 +334,22 @@ async function submitOrder() {
     } catch(e) { alert('Ошибка сети: ' + e.message); }
 }
 
-// Оплата
+// ========== ИСПРАВЛЕННАЯ ОПЛАТА С ДИАГНОСТИКОЙ ==========
 function openPayment(orderId) {
     currentOrderId = orderId;
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
     modal.show();
-    document.getElementById('confirm-pay-btn').onclick = () => confirmPayment(orderId);
+    // Убираем старый обработчик, чтобы не накапливались
+    const confirmBtn = document.getElementById('confirm-pay-btn');
+    const newBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+    newBtn.id = 'confirm-pay-btn';
+    newBtn.onclick = () => confirmPayment(orderId);
 }
+
 async function confirmPayment(orderId) {
     const method = document.getElementById('payment-method').value;
+    console.log(`→ Отправка оплаты заказа #${orderId}, метод: ${method}`);
     try {
         const resp = await fetch('/api/orders/pay/', {
             method: 'POST',
@@ -435,14 +357,19 @@ async function confirmPayment(orderId) {
             body: JSON.stringify({ order_id: orderId, payment_method: method })
         });
         const data = await resp.json();
+        console.log('← Ответ сервера:', data);
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('paymentModal'))?.hide();
             await showReceipt(orderId, method);
             await loadTables();
+            alert('Оплата прошла успешно!');
         } else {
-            alert('Ошибка оплаты: ' + data.error);
+            alert('Ошибка оплаты: ' + (data.error || 'неизвестная ошибка'));
         }
-    } catch(e) { alert('Ошибка: ' + e.message); }
+    } catch(e) {
+        console.error('Ошибка при запросе оплаты:', e);
+        alert('Ошибка соединения: ' + e.message);
+    }
 }
 
 // Чек
@@ -450,7 +377,7 @@ async function showReceipt(orderId, forcedMethod) {
     try {
         const resp = await fetch(`/api/orders/receipt/${orderId}/`);
         const data = await resp.json();
-        if (!data.success) return;
+        if (!data.success) throw new Error(data.error);
         const labels = { cash: 'Наличные', card: 'Карта', qr: 'QR-код' };
         const payment = forcedMethod ? (labels[forcedMethod] || forcedMethod) : data.data.payment_method;
         const order = data.data;
@@ -473,7 +400,10 @@ async function showReceipt(orderId, forcedMethod) {
             <div style="text-align:center; margin-top:12px; font-size:10px;">Спасибо за визит!</div>
         `;
         new bootstrap.Modal(document.getElementById('receiptModal')).show();
-    } catch(e) { console.error(e); }
+    } catch(e) {
+        console.error('Ошибка получения чека:', e);
+        alert('Не удалось загрузить чек, но оплата прошла.');
+    }
 }
 
 function addHours(timeStr, hours) {
