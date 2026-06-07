@@ -12,7 +12,6 @@ urlpatterns = [
     path('help/', views.help_page, name='help'),
     path('docs/', views.docs_page, name='docs'),
     path('maintenance-log/', views.maintenance_log_page, name='maintenance_log'),
-    path('api/orders/pay/', views.api_pay_order, name='api_pay_order'),
 
     # --- API авторизации ---
     path('api/login/', views.api_login, name='api_login'),
@@ -31,8 +30,8 @@ urlpatterns = [
     path('api/orders/take/', views.api_take_order, name='api_take_order'),
     path('api/orders/receipt/<int:order_id>/', views.api_order_receipt, name='api_receipt'),
 
-    # --- API оплаты (исправленная, единственная) ---
-    path('api/pay-fixed/', views.api_pay_fixed, name='api_pay_fixed'),
+    # --- ЕДИНСТВЕННЫЙ РАБОЧИЙ ЭНДПОЙНТ ОПЛАТЫ ---
+    path('api/orders/pay/', views.api_pay_fixed, name='api_pay_order'),   # теперь будет работать
 
     # --- API отчёты и ТО ---
     path('api/reports/', views.api_reports, name='api_reports'),
