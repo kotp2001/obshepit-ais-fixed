@@ -3,7 +3,7 @@
 {% block content %}
 
 <style>
-    /* === КРАСИВЫЙ ДИЗАЙН (из последнего кода) === */
+    /* === КРАСИВЫЙ ДИЗАЙН (взят из вашего последнего кода) === */
     .hall-title {
         color: #ffd700;
         font-weight: 700;
@@ -79,7 +79,7 @@
         box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         border-color: #ffd700;
     }
-    /* Кастомное окно заказа (стилизация) */
+    /* Кастомное окно заказа (стилизация, корзина не скроллится) */
     .order-modal-overlay {
         position: fixed;
         top: 0;
@@ -100,9 +100,8 @@
         width: 90%;
         max-width: 1200px;
         max-height: 90vh;
-        overflow-y: auto;
-        padding: 20px;
-        color: white;
+        display: flex;
+        flex-direction: column;
         position: relative;
         animation: fadeInScale 0.2s ease;
     }
@@ -118,8 +117,33 @@
         cursor: pointer;
         color: #ffd700;
         transition: 0.2s;
+        z-index: 10;
     }
     .close-modal:hover { color: #e6c200; }
+    .modal-scrollable {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        padding: 20px;
+    }
+    .menu-column {
+        flex: 1;
+        overflow-y: auto;
+        max-height: calc(90vh - 100px);
+        padding-right: 15px;
+    }
+    .cart-column {
+        width: 320px;
+        margin-left: 20px;
+        display: flex;
+        flex-direction: column;
+        background: rgba(0,0,0,0.3);
+        border-radius: 20px;
+        padding: 15px;
+        position: sticky;
+        top: 0;
+        align-self: flex-start;
+    }
     .dish-card {
         background: rgba(40,40,90,0.6);
         border-radius: 14px;
@@ -156,6 +180,15 @@
         padding: 2px 10px;
     }
     .btn-danger-cart:hover { background: #dc3545; }
+    /* Запрет ручного ввода количества гостей (только стрелки) */
+    input[type=number].guest-input {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+    input[type=number].guest-input::-webkit-inner-spin-button, 
+    input[type=number].guest-input::-webkit-outer-spin-button {
+        opacity: 1;
+    }
 </style>
 
 <div class="card" style="background:rgba(20,20,60,0.6); backdrop-filter: blur(10px); border-radius: 20px;">
@@ -211,7 +244,7 @@
 </div>
 
 <script>
-// === РАБОЧАЯ ЛОГИКА (из проверенного кода, использует кастомный оверлей) ===
+// === РАБОЧАЯ ЛОГИКА (кастомный оверлей, без Bootstrap модалок для заказа) ===
 let currentTableId = null;
 let currentCart = [];
 
@@ -292,7 +325,7 @@ async function loadReadyOrders() {
     } catch (err) { console.error(err); }
 }
 
-// Открытие окна заказа (кастомный оверлей, без Bootstrap)
+// Открытие окна заказа (кастомный оверлей, корзина не скроллится)
 async function openOrderWindow(tableId, tableNumber, maxSeats) {
     currentTableId = tableId;
     currentCart = [];
@@ -331,20 +364,18 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
         modalDiv.className = 'order-modal-content';
         modalDiv.innerHTML = `
             <div class="close-modal">&times;</div>
-            <div class="row">
-                <div class="col-md-7">
-                    <h4>Меню</h4>
-                    <div id="modalMenu">${menuHtml}</div>
-                </div>
-                <div class="col-md-5">
+            <div class="modal-scrollable">
+                <div class="menu-column" id="modalMenu">${menuHtml}</div>
+                <div class="cart-column">
                     <h4>Корзина</h4>
-                    <div id="modalCart" style="min-height:150px; background:rgba(0,0,0,0.3); border-radius:14px; padding:12px;"></div>
+                    <div id="modalCart" style="min-height:150px; margin-bottom:15px;"></div>
                     <div class="mt-2"><strong>Итого: <span id="modalTotal">0</span> ₽</strong></div>
-                    <div class="mt-2">
+                    <div class="mt-3">
                         <label>Количество гостей (макс. ${maxSeats})</label>
-                        <input type="number" id="modalGuestCount" class="form-control" value="2" min="1" max="${maxSeats}">
+                        <input type="number" id="modalGuestCount" class="form-control guest-input" value="2" min="1" max="${maxSeats}" step="1"
+                               onkeydown="return false" style="pointer-events: auto;">
                     </div>
-                    <button id="modalSubmitOrder" class="btn-gold w-100 mt-3">Оформить заказ</button>
+                    <button id="modalSubmitOrder" class="btn-gold w-100 mt-4">Оформить заказ</button>
                     <button id="modalCancel" class="btn-secondary w-100 mt-2" style="background:#6c757d; border:none; border-radius:30px; padding:6px;">Отмена</button>
                 </div>
             </div>
@@ -437,7 +468,7 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
     }
 }
 
-// Оплата и чек (использует Bootstrap модалки – они рабочие)
+// Оплата и чек (Bootstrap модалки)
 async function openPayment(orderId) {
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
     modal.show();
