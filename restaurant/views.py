@@ -638,7 +638,6 @@ def admin_backup_restore(request, filename):
 # ========== НОВАЯ ПРОСТАЯ ОПЛАТА (ГАРАНТИРОВАННО РАБОТАЕТ) ==========
 @csrf_exempt
 def api_pay_fixed(request):
-    """Упрощённая оплата заказа. Принимает POST с JSON: {"order_id": 123, "payment_method": "cash"}"""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Only POST allowed'}, status=405)
     try:
@@ -647,19 +646,30 @@ def api_pay_fixed(request):
         payment_method = data.get('payment_method')
         if not order_id:
             return JsonResponse({'success': False, 'error': 'Не указан ID заказа'})
+
+        # === НОВАЯ ПРОВЕРКА СПОСОБА ОПЛАТЫ ===
+        allowed_methods = ['cash', 'card', 'qr']
+        if payment_method not in allowed_methods:
+            return JsonResponse({'success': False, 'error': 'Неверный способ оплаты'}, status=400)
+
         order = Order.objects.get(id=order_id)
         if order.status == 'paid':
             return JsonResponse({'success': False, 'error': 'Заказ уже оплачен'})
+
         order.status = 'paid'
         order.payment_method = payment_method
         order.save()
         order.table.status = 'free'
         order.table.save()
-        # Пытаемся создать чек (если упадёт, не страшно)
+
+        # === НОВОЕ ЛОГИРОВАНИЕ ===
+        log_action(request, 'pay_order', f'Заказ #{order.id}, {order.payment_method}')
+
         try:
             generate_receipt_pdf(order)
         except:
             pass
+
         return JsonResponse({'success': True, 'order_id': order.id})
     except Order.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Заказ не найден'}, status=404)
