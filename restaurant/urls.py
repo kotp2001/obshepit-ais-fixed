@@ -12,6 +12,7 @@ urlpatterns = [
     path('help/', views.help_page, name='help'),
     path('docs/', views.docs_page, name='docs'),
     path('maintenance-log/', views.maintenance_log_page, name='maintenance_log'),
+    path('api/orders/pay/', views.api_pay_order, name='api_pay_order'),
 
     # --- API авторизации ---
     path('api/login/', views.api_login, name='api_login'),
