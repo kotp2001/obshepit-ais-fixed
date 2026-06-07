@@ -3,7 +3,6 @@
 
 {% block extra_css %}
 <style>
-    /* Стили для зала — фон не трогаем, он из base.html */
     .hall-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -426,7 +425,7 @@ function openPayment(orderId) {
 async function confirmPayment(orderId) {
     const method = document.getElementById('payment-method').value;
     try {
-        // Исправленный URL – /api/pay-fixed/
+        // Исправленный URL – используем /api/pay-fixed/
         const resp = await fetch('/api/pay-fixed/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -440,10 +439,7 @@ async function confirmPayment(orderId) {
         } else {
             alert('Ошибка оплаты: ' + data.error);
         }
-    } catch(e) { 
-        console.error(e);
-        alert('Ошибка соединения с сервером. Проверьте, что сервер работает и добавлен @csrf_exempt в views.py');
-    }
+    } catch(e) { alert('Ошибка: ' + e.message); }
 }
 
 async function showReceipt(orderId, forcedMethod) {
