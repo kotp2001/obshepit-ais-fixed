@@ -50,29 +50,29 @@
         transform: translateY(-1px);
         color: white;
     }
+        .btn-edit, .btn-delete {
+        padding: 5px 0;
+        border-radius: 20px;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+        width: 90px;
+        text-align: center;
+    }
     .btn-edit {
-        background: #ffd700;
-        color: #1a1a4a;
-        padding: 4px 12px;
-        border-radius: 20px;
-        text-decoration: none;
-        font-size: 0.8rem;
+        background: rgba(90,110,180,0.6);
+        color: #d0d8ff;
+        border: 1px solid rgba(100,120,200,0.5);
     }
-    .btn-edit:hover {
-        background: #e6c200;
-    }
+    .btn-edit:hover { background: rgba(90,110,180,0.85); color: white; }
     .btn-delete {
-        background: #dc3545;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        text-decoration: none;
-        font-size: 0.8rem;
-        margin-left: 5px;
+        background: rgba(140,60,60,0.6);
+        color: #ffb0b0;
+        border: 1px solid rgba(160,70,70,0.5);
+        margin-left: 4px;
     }
-    .btn-delete:hover {
-        background: #c82333;
-    }
+    .btn-delete:hover { background: rgba(180,60,60,0.85); color: white; }
     .search-bar {
         background: rgba(50,50,100,0.8);
         border: 1px solid #ffd700;
@@ -265,32 +265,23 @@
     });
 
     // Сворачивание фильтра при загрузке
-    document.addEventListener('DOMContentLoaded', function() {
-        const filterBlock = document.getElementById('changelist-filter');
-        if (filterBlock) {
-            // Убеждаемся, что блок свёрнут (класс уже добавлен в разметку, но на всякий случай)
-            filterBlock.classList.add('collapsed');
-            const header = filterBlock.querySelector('h3');
-            if (header) {
-                header.addEventListener('click', function(e) {
-                    filterBlock.classList.toggle('collapsed');
-                });
-            }
-        }
+    
+    
     });
+
+    // ── Фильтр: свернуть/развернуть ──
     document.addEventListener('DOMContentLoaded', function() {
-        var filterBlock = document.getElementById('changelist-filter');
-        if (!filterBlock) return;
-        filterBlock.classList.add('collapsed');
-        // Делаем весь заголовок кликабельным
-        var headers = filterBlock.querySelectorAll('h2, h3');
-        headers.forEach(function(h) {
+        var fb = document.getElementById('changelist-filter');
+        if (!fb) return;
+        fb.classList.add('collapsed');
+        fb.querySelectorAll('h2, h3').forEach(function(h) {
             h.style.cursor = 'pointer';
-            h.style.userSelect = 'none';
-            h.addEventListener('click', function() {
-                filterBlock.classList.toggle('collapsed');
+            h.addEventListener('click', function(e) {
+                e.preventDefault();
+                fb.classList.toggle('collapsed');
             });
         });
     });
-</script>
+
+    </script>
 {% endblock %}

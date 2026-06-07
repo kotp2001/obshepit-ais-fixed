@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django import forms
+from datetime import datetime
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from .models import Category, Dish, Table, Order, OrderItem, MaintenanceLog, Profile, ActionLog, Receipt, LoginAttempt
@@ -84,15 +86,40 @@ class TableAdmin(admin.ModelAdmin):
 class OrderItemInline(admin.TabularInline):
     model   = OrderItem
     extra   = 0
-    fields  = ['dish', 'quantity', 'price', 'status', 'comment']
+    fields  = ['dish', 'quantity', 'price', 'status']
     readonly_fields = []
     show_change_link = True
 
+
+
+
+class OrderAdminForm(forms.ModelForm):
+    """Форма заказа — created_at всегда имеет значение"""
+    created_at = forms.SplitDateTimeField(
+        widget=forms.SplitDateTimeWidget(
+            date_attrs={'type': 'date'},
+            time_attrs={'type': 'time'},
+        ),
+        initial=datetime.now,
+        required=False,
+        label='Дата и время создания'
+    )
+
+    class Meta:
+        model = __import__('restaurant.models', fromlist=['Order']).Order
+        fields = '__all__'
+
+    def clean_created_at(self):
+        val = self.cleaned_data.get('created_at')
+        if not val:
+            return datetime.now()
+        return val
 
 # ===== ЗАКАЗЫ =====
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    form = OrderAdminForm
     list_display   = ['id', 'table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method']
     list_filter    = ['status', 'payment_method', 'created_at']
     list_editable  = ['status']
@@ -100,7 +127,7 @@ class OrderAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     inlines        = [OrderItemInline]
     readonly_fields = []
-    fields         = ['table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method', 'guest_count', 'ready_at']
+    fields         = ['table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method', 'guest_count']
 
     def get_changeform_initial_data(self, request):
         from datetime import datetime
@@ -159,6 +186,14 @@ class ActionLogAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):    return False
     def has_change_permission(self, request, obj=None): return False
     def has_delete_permission(self, request, obj=None): return True
+
+    def add_view(self, request, form_url='', extra_context=None):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden('Нельзя добавлять записи вручную')
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        from django.http import HttpResponseRedirect
+        return HttpResponseRedirect('../')
 
 
 # ===== ЧЕКИ =====
