@@ -294,7 +294,6 @@ def api_pay_fixed(request):
         if not order_id:
             return JsonResponse({'success': False, 'error': 'Не указан ID заказа'})
 
-        # Проверка допустимого способа оплаты
         allowed_methods = ['cash', 'card', 'qr']
         if payment_method not in allowed_methods:
             return JsonResponse({'success': False, 'error': 'Неверный способ оплаты'}, status=400)
@@ -309,10 +308,7 @@ def api_pay_fixed(request):
         order.table.status = 'free'
         order.table.save()
 
-        # Логирование действия
         log_action(request, 'pay_order', f'Заказ #{order.id}, {order.payment_method}')
-
-        # Генерация чека (если не получится – не страшно)
         try:
             generate_receipt_pdf(order)
         except:
