@@ -4,7 +4,6 @@
 {% block extra_css %}
 <style>
     /* Специфичные стили для зала (не трогают фон и плашки) */
-    /* Уменьшаем отступы для компактности */
     .container.py-4 {
         padding-top: 0.75rem !important;
         padding-bottom: 0.75rem !important;
@@ -94,11 +93,9 @@
         background: #ffed66;
         transform: scale(1.02);
     }
-    /* Для footer - уменьшаем отступ сверху */
     footer.footer, .footer {
         margin-top: 16px !important;
     }
-    /* Адаптив */
     @media (max-width: 900px) {
         .hall-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     }
@@ -265,18 +262,10 @@ async function loadActiveOrders() {
                     </div>
                     <div class="small text-light-emphasis mb-1" style="font-size:11px;"><i class="fas fa-clock me-1"></i>${time}</div>
                     <div class="small text-white-50 mb-2" style="font-size:11px;">${items}</div>
-                    ${isReady ? `<button class="btn btn-gold w-100 py-1" style="font-size:12px;" data-order-id="${order.id}"><i class="fas fa-cash-register me-1"></i>Принять оплату</button>` : ''}
+                    ${isReady ? `<button class="btn btn-gold w-100 py-1" style="font-size:12px;" onclick="openPayment(${order.id})"><i class="fas fa-cash-register me-1"></i>Принять оплату</button>` : ''}
                 </div>
             `;
         }).join('');
-        // Назначаем обработчики на кнопки "Принять оплату" (динамически)
-        document.querySelectorAll('#ready-orders-list .btn-gold').forEach(btn => {
-            const orderId = parseInt(btn.getAttribute('data-order-id'));
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                openPayment(orderId);
-            };
-        });
     } catch(e) { console.error(e); }
 }
 
@@ -441,7 +430,7 @@ async function submitOrder() {
     } catch(e) { alert('Ошибка сети: ' + e.message); }
 }
 
-// ========== ОПЛАТА (ВЗЯТО ИЗ ПЕРВОГО РАБОЧЕГО ФАЙЛА) ==========
+// ========== ОПЛАТА (исправленная, с правильным URL) ==========
 function openPayment(orderId) {
     currentOrderId = orderId;
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
@@ -458,7 +447,7 @@ async function confirmPayment(orderId) {
     const method = document.getElementById('payment-method').value;
     console.log(`→ Отправка оплаты заказа #${orderId}, метод: ${method}`);
     try {
-        const resp = await fetch('/api/pay-fixed/', {
+        const resp = await fetch('/api/pay-fixed/', {   // ПРАВИЛЬНЫЙ URL (не /api/orders/pay/)
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ order_id: orderId, payment_method: method })
@@ -479,7 +468,7 @@ async function confirmPayment(orderId) {
     }
 }
 
-// Чек (оставляем существующую функцию, она использует /api/orders/receipt/)
+// Чек
 async function showReceipt(orderId, forcedMethod) {
     try {
         const resp = await fetch(`/api/orders/receipt/${orderId}/`);
