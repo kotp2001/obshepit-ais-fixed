@@ -15,7 +15,7 @@
 </div>
 
 <div class="mt-4">
-    <h5><i class="fas fa-clipboard-list me-2"></i>Заказы</h5>
+    <h5><i class="fas fa-clipboard-list me-2"></i>Активные заказы</h5>
     <div id="ordersContainer" class="row g-3"></div>
 </div>
 
@@ -136,7 +136,7 @@ async function loadOrders() {
             if (order.items && order.items.length) {
                 itemsList = '<ul class="small mb-2">';
                 for (let it of order.items) {
-                    itemsList += `<li>${it.dish_name} x${it.quantity} <span class="text-muted">(${it.status})</span></li>`;
+                    itemsList += `<li>${it.dish_name} x${it.quantity}</li>`;
                 }
                 itemsList += '</ul>';
             } else {
