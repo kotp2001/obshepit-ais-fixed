@@ -15,14 +15,14 @@
 </div>
 
 <div class="mt-4">
-    <h5><i class="fas fa-bell me-2"></i>Готовые заказы</h5>
-    <div id="readyOrdersContainer" class="row g-3"></div>
+    <h5><i class="fas fa-clipboard-list me-2"></i>Заказы</h5>
+    <div id="ordersContainer" class="row g-3"></div>
 </div>
 
-<!-- Контейнер для кастомного окна заказа -->
+<!-- Контейнер для динамического окна заказа -->
 <div id="orderModalContainer"></div>
 
-<!-- Модалка оплаты -->
+<!-- Модальное окно оплаты -->
 <div class="modal fade" id="paymentModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -42,11 +42,11 @@
     </div>
 </div>
 
-<!-- Модалка чека -->
+<!-- Модальное окно чека -->
 <div class="modal fade" id="receiptModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="background:white; color:black;">
-            <div class="modal-body" id="receiptContent" style="font-family: monospace;"></div>
+        <div class="modal-content">
+            <div class="modal-body" id="receiptContent" style="background:white; color:black; font-family:monospace;"></div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
                 <button class="btn btn-warning" id="printReceiptBtn">Печать</button>
@@ -56,43 +56,41 @@
 </div>
 
 <script>
-// ========== ПОЛНОСТЬЮ РАБОЧАЯ ЛОГИКА (без лишнего CSS) ==========
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 let currentTableId = null;
 let currentCart = [];
 
-// 1. Загрузка столов
+// ==================== ЗАГРУЗКА СТОЛОВ ====================
 async function loadTables() {
     try {
         const resp = await fetch('/api/tables/');
         const data = await resp.json();
         const container = document.getElementById('hallContainer');
         if (!data.success || !data.data.length) {
-            container.innerHTML = '<p class="text-center">Нет столов</p>';
+            container.innerHTML = '<p class="text-center">Столы не найдены</p>';
             return;
         }
         let html = '';
         for (let t of data.data) {
             const free = t.status === 'free';
-            const statusClass = free ? 'free' : (t.status === 'occupied' ? 'occupied' : 'reserved');
-            const label = free ? 'Свободен' : (t.status === 'occupied' ? 'Занят' : 'Забронирован');
-            // Используем цвета из base.html (bg-* классы Bootstrap)
+            const statusLabel = free ? 'Свободен' : (t.status === 'occupied' ? 'Занят' : 'Забронирован');
             const bgClass = free ? 'bg-success bg-opacity-25' : (t.status === 'occupied' ? 'bg-danger bg-opacity-25' : 'bg-warning bg-opacity-25');
             const borderClass = free ? 'border-success' : (t.status === 'occupied' ? 'border-danger' : 'border-warning');
             html += `
                 <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="card table-card ${bgClass} border-2 ${borderClass}" data-id="${t.id}" data-number="${t.number}" data-seats="${t.seats}" data-free="${free}" style="cursor: ${free ? 'pointer' : 'not-allowed'}; opacity: ${free ? '1' : '0.7'};">
+                    <div class="card table-card h-100 ${bgClass} border-2 ${borderClass}" data-id="${t.id}" data-number="${t.number}" data-seats="${t.seats}" data-free="${free}" style="cursor: ${free ? 'pointer' : 'not-allowed'}; opacity: ${free ? '1' : '0.8'};">
                         <div class="card-body text-center">
                             <i class="fas fa-chair fa-2x mb-2"></i>
-                            <h5 class="card-title">Стол ${t.number}</h5>
-                            <p class="card-text">${t.seats} мест</p>
-                            <span class="badge ${free ? 'bg-success' : (t.status === 'occupied' ? 'bg-danger' : 'bg-warning')}">${label}</span>
+                            <h5 class="card-title text-white">Стол ${t.number}</h5>
+                            <p class="card-text text-white-50">${t.seats} мест</p>
+                            <span class="badge ${free ? 'bg-success' : (t.status === 'occupied' ? 'bg-danger' : 'bg-warning')}">${statusLabel}</span>
                         </div>
                     </div>
                 </div>
             `;
         }
         container.innerHTML = html;
-        // Навешиваем клики на свободные столы
+        // Навешиваем обработчики только на свободные столы
         document.querySelectorAll('.table-card[data-free="true"]').forEach(card => {
             card.addEventListener('click', () => {
                 const id = parseInt(card.dataset.id);
@@ -101,51 +99,81 @@ async function loadTables() {
                 openOrderWindow(id, number, seats);
             });
         });
-        await loadReadyOrders();
-    } catch (err) { console.error(err); }
+        await loadOrders();
+    } catch (err) {
+        console.error('loadTables error:', err);
+        document.getElementById('hallContainer').innerHTML = '<p class="text-center text-danger">Ошибка загрузки столов</p>';
+    }
 }
 
-// 2. Готовые заказы
-async function loadReadyOrders() {
+// ==================== ЗАГРУЗКА ЗАКАЗОВ ====================
+async function loadOrders() {
     try {
         const resp = await fetch('/api/orders/active/');
         const data = await resp.json();
-        const container = document.getElementById('readyOrdersContainer');
+        const container = document.getElementById('ordersContainer');
         if (!data.success || !data.data.length) {
             container.innerHTML = '<p class="text-muted">Нет активных заказов</p>';
             return;
         }
-        const ready = data.data.filter(o => o.status === 'ready');
-        if (!ready.length) {
-            container.innerHTML = '<p class="text-muted">Нет готовых заказов</p>';
-            return;
-        }
         let html = '';
-        for (let o of ready) {
+        for (let order of data.data) {
+            let statusBadge = '';
+            let statusClass = '';
+            if (order.status === 'new') {
+                statusBadge = '<span class="badge bg-info">Новый</span>';
+                statusClass = 'border-info';
+            } else if (order.status === 'cooking') {
+                statusBadge = '<span class="badge bg-warning text-dark">Готовится</span>';
+                statusClass = 'border-warning';
+            } else if (order.status === 'ready') {
+                statusBadge = '<span class="badge bg-success">Готов</span>';
+                statusClass = 'border-success';
+            } else {
+                statusBadge = `<span class="badge bg-secondary">${order.status}</span>`;
+            }
+            let itemsList = '';
+            if (order.items && order.items.length) {
+                itemsList = '<ul class="small mb-2">';
+                for (let it of order.items) {
+                    itemsList += `<li>${it.dish_name} x${it.quantity} <span class="text-muted">(${it.status})</span></li>`;
+                }
+                itemsList += '</ul>';
+            } else {
+                itemsList = '<p class="small text-muted">Нет позиций</p>';
+            }
+            const payButton = order.status === 'ready' 
+                ? `<button class="btn btn-warning w-100 mt-2 pay-order-btn" data-order-id="${order.id}">Принять оплату</button>` 
+                : '';
             html += `
                 <div class="col-md-4 mb-3">
-                    <div class="card h-100" data-order-id="${o.id}">
+                    <div class="card h-100 ${statusClass} border-2">
                         <div class="card-body">
-                            <h5 class="card-title text-warning">Заказ для стола ${o.table_number}</h5>
-                            <p class="card-text">${o.created_at}</p>
-                            <button class="btn btn-warning w-100 pay-now-btn">Принять оплату</button>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title text-white">Стол ${order.table_number}</h5>
+                                ${statusBadge}
+                            </div>
+                            <p class="card-text small text-white-50">Создан: ${order.created_at}</p>
+                            ${itemsList}
+                            ${payButton}
                         </div>
                     </div>
                 </div>
             `;
         }
         container.innerHTML = html;
-        document.querySelectorAll('.pay-now-btn').forEach(btn => {
+        document.querySelectorAll('.pay-order-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const card = btn.closest('[data-order-id]');
-                const orderId = parseInt(card.dataset.orderId);
+                const orderId = parseInt(btn.dataset.orderId);
                 openPayment(orderId);
             });
         });
-    } catch (err) { console.error(err); }
+    } catch (err) {
+        console.error('loadOrders error:', err);
+    }
 }
 
-// 3. Открыть окно заказа (кастомное, без Bootstrap модалки)
+// ==================== ОТКРЫТИЕ ОКНА ЗАКАЗА (КОРЗИНА) ====================
 async function openOrderWindow(tableId, tableNumber, maxSeats) {
     currentTableId = tableId;
     currentCart = [];
@@ -154,7 +182,6 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
         const dishesData = await dishesResp.json();
         if (!dishesData.success) throw new Error('Ошибка загрузки меню');
         const dishes = dishesData.data;
-        // Группировка по категориям
         const grouped = {};
         for (let d of dishes) {
             const cat = d.category || 'Без категории';
@@ -168,9 +195,9 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
                 const safeName = d.name.replace(/'/g, "\\'");
                 menuHtml += `
                     <div class="col-6">
-                        <div class="card h-100">
+                        <div class="card h-100 bg-dark bg-opacity-50">
                             <div class="card-body p-2">
-                                <div class="fw-bold">${d.name}</div>
+                                <div class="fw-bold text-white">${d.name}</div>
                                 <div class="text-warning">${d.price} ₽</div>
                                 <button class="btn btn-sm btn-success mt-1 add-dish-btn" data-id="${d.id}" data-name="${safeName}" data-price="${d.price}">+ Добавить</button>
                             </div>
@@ -182,16 +209,14 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
         }
         // Создаём оверлей
         const overlay = document.createElement('div');
-        overlay.className = 'order-modal-overlay';
-        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1050; display:flex; justify-content:center; align-items:center;';
+        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1050; display:flex; justify-content:center; align-items:center;';
         const modalDiv = document.createElement('div');
-        modalDiv.className = 'order-modal-content';
-        modalDiv.style.cssText = 'background:rgba(20,20,60,0.95); backdrop-filter:blur(10px); border-radius:20px; width:90%; max-width:1200px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; position:relative;';
+        modalDiv.style.cssText = 'background:rgba(20,20,60,0.98); backdrop-filter:blur(10px); border-radius:20px; width:90%; max-width:1200px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; position:relative; border:1px solid #ffd700;';
         modalDiv.innerHTML = `
-            <div style="position:absolute; top:15px; right:20px; font-size:28px; cursor:pointer; color:#ffd700;" class="close-modal">&times;</div>
+            <div style="position:absolute; top:15px; right:20px; font-size:28px; cursor:pointer; color:#ffd700; z-index:10;" class="close-modal">&times;</div>
             <div style="display:flex; flex:1; overflow:hidden; padding:20px; gap:20px;">
                 <div style="flex:2; overflow-y:auto; padding-right:10px;" id="modalMenu"></div>
-                <div style="width:320px; background:rgba(0,0,0,0.3); border-radius:20px; padding:15px; position:sticky; top:0; align-self:flex-start;">
+                <div style="width:320px; background:rgba(0,0,0,0.4); border-radius:20px; padding:15px; position:sticky; top:0; align-self:flex-start;">
                     <h5>Корзина</h5>
                     <div id="modalCart" style="min-height:150px;"></div>
                     <div class="mt-2"><strong>Итого: <span id="modalTotal">0</span> ₽</strong></div>
@@ -212,7 +237,6 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
         modalDiv.querySelector('.close-modal').onclick = () => overlay.remove();
         modalDiv.querySelector('#modalCancel').onclick = () => overlay.remove();
 
-        // Корзина
         function renderCart() {
             const cartDiv = document.getElementById('modalCart');
             const totalSpan = document.getElementById('modalTotal');
@@ -264,9 +288,8 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
         attachAddHandlers();
         renderCart();
 
-        // Оформление заказа
         modalDiv.querySelector('#modalSubmitOrder').onclick = async () => {
-            if (currentCart.length === 0) { alert('Добавьте блюда'); return; }
+            if (currentCart.length === 0) { alert('Добавьте блюда в корзину'); return; }
             const guestCount = parseInt(document.getElementById('modalGuestCount').value);
             const items = currentCart.map(i => ({ dish_id: i.id, quantity: i.qty }));
             try {
@@ -285,15 +308,18 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
                 }
             } catch (err) { alert('Ошибка сети: ' + err.message); }
         };
-    } catch (err) { alert('Ошибка: ' + err.message); }
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
 }
 
-// 4. Оплата и чек
+// ==================== ОПЛАТА И ЧЕК ====================
 async function openPayment(orderId) {
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
     modal.show();
     document.getElementById('confirmPayBtn').onclick = () => confirmPayment(orderId);
 }
+
 async function confirmPayment(orderId) {
     const method = document.getElementById('paymentMethod').value;
     try {
@@ -306,12 +332,13 @@ async function confirmPayment(orderId) {
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
             await showReceipt(orderId, method);
-            loadTables();
+            await loadTables();
         } else {
             alert('Ошибка оплаты: ' + data.error);
         }
     } catch (err) { alert('Ошибка: ' + err.message); }
 }
+
 async function showReceipt(orderId, forcedMethod) {
     try {
         const resp = await fetch(`/api/orders/receipt/${orderId}/`);
