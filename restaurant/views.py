@@ -662,3 +662,56 @@ def admin_backup_restore(request, filename):
     except Exception as e:
         return HttpResponse(f'Ошибка: {str(e)}', status=500)
     return redirect('/backup/')
+  def active_orders(request):
+    """Возвращает все неоплаченные заказы (статус new, cooking, ready)"""
+    orders = Order.objects.exclude(status='paid').select_related('table')
+    result = []
+    for order in orders:
+        items = OrderItem.objects.filter(order=order).select_related('dish')
+        result.append({
+            'id': order.id,
+            'table_number': order.table.number,
+            'status': order.status,
+            'created_at': order.created_at.strftime('%H:%M'),
+            'items': [{'dish_name': item.dish.name, 'quantity': item.quantity} for item in items]
+        })
+    return JsonResponse({'success': True, 'data': result})
+
+@csrf_exempt
+def pay_order(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+        payment_method = data.get('payment_method')
+        order = Order.objects.get(id=order_id)
+        if order.status == 'paid':
+            return JsonResponse({'success': False, 'error': 'Заказ уже оплачен'})
+        order.status = 'paid'
+        order.payment_method = payment_method
+        order.save()
+        return JsonResponse({'success': True})
+    except Order.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Заказ не найден'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+def order_receipt(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+        items = OrderItem.objects.filter(order=order).select_related('dish')
+        total = sum(item.dish.price * item.quantity for item in items)
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'order_id': order.id,
+                'table_number': order.table.number,
+                'created_at': order.created_at.strftime('%d.%m.%Y %H:%M'),
+                'total': total,
+                'payment_method': order.payment_method,
+                'items': [{'name': item.dish.name, 'quantity': item.quantity, 'total': item.dish.price * item.quantity} for item in items]
+            }
+        })
+    except Order.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Заказ не найден'})
