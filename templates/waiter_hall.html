@@ -1,83 +1,217 @@
 {% extends 'base.html' %}
 {% block title %}Зал ресторана - Официант{% endblock %}
 {% block content %}
+
 <style>
-    .table-card { transition: 0.2s; cursor: pointer; }
-    .table-card:hover { transform: translateY(-3px); }
-    .order-window {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(20,20,60,0.98);
-        backdrop-filter: blur(10px);
-        border: 2px solid #ffd700;
-        border-radius: 20px;
-        padding: 20px;
-        z-index: 1000;
-        width: 90%;
-        max-width: 1200px;
-        max-height: 90vh;
-        overflow-y: auto;
-        color: white;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    .order-window .close-btn {
-        position: absolute;
-        top: 10px;
-        right: 20px;
-        font-size: 28px;
-        cursor: pointer;
+    /* === КРАСИВЫЙ ДИЗАЙН (из последнего кода) === */
+    .hall-title {
         color: #ffd700;
+        font-weight: 700;
+        margin-bottom: 0;
     }
-    .overlay {
+    /* Карточки столов */
+    .table-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-radius: 20px;
+        padding: 18px 12px;
+        text-align: center;
+        min-height: 140px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        background: rgba(30,30,70,0.6);
+        backdrop-filter: blur(5px);
+        border: 2px solid transparent;
+    }
+    .table-card.free {
+        background: linear-gradient(135deg, rgba(40,90,40,0.7), rgba(30,70,30,0.6));
+        border-color: #ffd700;
+    }
+    .table-card.occupied {
+        background: linear-gradient(135deg, rgba(140,40,40,0.7), rgba(100,30,30,0.6));
+        border-color: #ff8c8c;
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+    .table-card.reserved {
+        background: linear-gradient(135deg, rgba(140,100,30,0.7), rgba(100,70,20,0.6));
+        border-color: #ffb347;
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+    .table-card.free:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        border-color: #ffd700;
+        background: linear-gradient(135deg, rgba(50,110,50,0.8), rgba(40,90,40,0.7));
+    }
+    .table-number {
+        font-size: 22px;
+        font-weight: 700;
+        color: white;
+    }
+    .table-seats {
+        font-size: 13px;
+        color: rgba(255,255,255,0.8);
+    }
+    .table-status {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 12px;
+        border-radius: 20px;
+        background: rgba(0,0,0,0.3);
+        color: #ffd700;
+        display: inline-block;
+    }
+    /* Готовые заказы */
+    .ready-order-card {
+        background: rgba(20,20,60,0.75);
+        border: 1px solid rgba(255,215,0,0.3);
+        border-radius: 16px;
+        padding: 16px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .ready-order-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        border-color: #ffd700;
+    }
+    /* Кастомное окно заказа (стилизация) */
+    .order-modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0,0,0,0.7);
-        z-index: 999;
+        background: rgba(0,0,0,0.8);
+        z-index: 1050;
+        display: none;
+        justify-content: center;
+        align-items: center;
     }
+    .order-modal-content {
+        background: linear-gradient(135deg, rgba(20,20,60,0.98), rgba(10,10,40,0.98));
+        backdrop-filter: blur(8px);
+        border: 2px solid #ffd700;
+        border-radius: 28px;
+        width: 90%;
+        max-width: 1200px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 20px;
+        color: white;
+        position: relative;
+        animation: fadeInScale 0.2s ease;
+    }
+    @keyframes fadeInScale {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .close-modal {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 28px;
+        cursor: pointer;
+        color: #ffd700;
+        transition: 0.2s;
+    }
+    .close-modal:hover { color: #e6c200; }
     .dish-card {
-        background: rgba(30,30,80,0.6);
-        border-radius: 12px;
-        padding: 8px;
-        margin-bottom: 8px;
+        background: rgba(40,40,90,0.6);
+        border-radius: 14px;
+        padding: 10px;
+        margin-bottom: 10px;
+        transition: 0.1s;
     }
+    .dish-card:hover { background: rgba(60,60,110,0.8); }
     .cart-item {
         display: flex;
         justify-content: space-between;
+        align-items: center;
+        background: rgba(30,30,80,0.5);
+        border-radius: 12px;
+        padding: 8px 12px;
         margin-bottom: 8px;
-        border-bottom: 1px solid #444;
-        padding-bottom: 5px;
     }
-    .btn-warning {
+    .btn-gold {
         background: #ffd700;
         color: #1a1a4a;
         border: none;
+        border-radius: 30px;
+        padding: 6px 14px;
+        font-weight: 600;
+        transition: 0.1s;
     }
-    .btn-warning:hover { background: #e6c200; }
-    .btn-secondary { background: #6c757d; }
+    .btn-gold:hover { background: #e6c200; transform: translateY(-1px); }
+    .btn-gold:active { transform: translateY(1px); }
+    .btn-danger-cart {
+        background: rgba(220,60,60,0.7);
+        border: none;
+        color: white;
+        border-radius: 30px;
+        padding: 2px 10px;
+    }
+    .btn-danger-cart:hover { background: #dc3545; }
 </style>
 
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h4><i class="fas fa-utensils me-2"></i>Зал ресторана</h4>
-        <button class="btn btn-warning btn-sm" id="refreshBtn">Обновить</button>
+<div class="card" style="background:rgba(20,20,60,0.6); backdrop-filter: blur(10px); border-radius: 20px;">
+    <div class="card-header" style="background:rgba(10,10,40,0.9); border-radius: 20px 20px 0 0; border-bottom: 1px solid #ffd700;">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="hall-title"><i class="fas fa-utensils me-2"></i>Зал ресторана</h4>
+            <button class="btn btn-gold btn-sm" id="refreshTablesBtn"><i class="fas fa-sync-alt me-1"></i>Обновить</button>
+        </div>
     </div>
     <div class="card-body">
-        <div id="tablesContainer" class="row g-3"></div>
+        <div id="hallContainer" class="row g-3"></div>
     </div>
 </div>
 
-<div id="readyOrdersContainer" class="mt-4">
-    <h5>Готовые заказы</h5>
-    <div id="readyList" class="row"></div>
+<div class="mt-4">
+    <h5 style="color:#ffd700;"><i class="fas fa-bell me-2"></i>Готовые заказы</h5>
+    <div id="readyOrdersContainer" class="row g-3"></div>
+</div>
+
+<div id="orderModalContainer"></div>
+
+<!-- Модальное окно оплаты (Bootstrap) -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:rgba(20,20,60,0.97); border:1px solid #ffd700;">
+            <div class="modal-header">
+                <h5 class="modal-title" style="color:#ffd700;">Оплата заказа</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <select id="paymentMethod" class="form-select mb-3" style="background:#2a2a5a; color:white; border-color:#ffd700;">
+                    <option value="cash">Наличные</option>
+                    <option value="card">Карта</option>
+                    <option value="qr">QR-код</option>
+                </select>
+                <button id="confirmPayBtn" class="btn-gold w-100 py-2">Подтвердить оплату</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно чека (Bootstrap) -->
+<div class="modal fade" id="receiptModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:white; color:#1a1a4a; border-radius: 20px;">
+            <div class="modal-body" id="receiptContent" style="padding: 20px;"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button class="btn btn-warning" id="printReceiptBtn">Печать</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-// Глобальные переменные
+// === РАБОЧАЯ ЛОГИКА (из проверенного кода, использует кастомный оверлей) ===
 let currentTableId = null;
 let currentCart = [];
 
@@ -86,7 +220,7 @@ async function loadTables() {
     try {
         const resp = await fetch('/api/tables/');
         const data = await resp.json();
-        const container = document.getElementById('tablesContainer');
+        const container = document.getElementById('hallContainer');
         if (!data.success || !data.data.length) {
             container.innerHTML = '<p class="text-center">Нет столов</p>';
             return;
@@ -94,45 +228,38 @@ async function loadTables() {
         let html = '';
         for (let t of data.data) {
             const free = t.status === 'free';
-            const bg = free ? 'rgba(40,90,40,0.6)' : 'rgba(90,40,40,0.6)';
-            const border = free ? '#2e7d32' : '#c62828';
+            const statusClass = free ? 'free' : (t.status === 'occupied' ? 'occupied' : 'reserved');
             const label = free ? 'Свободен' : (t.status === 'occupied' ? 'Занят' : 'Забронирован');
             html += `
                 <div class="col-6 col-md-3 mb-3">
-                    <div class="table-card p-3 text-center rounded" style="background:${bg}; border:2px solid ${border}; opacity:${free ? 1 : 0.6}"
-                         data-id="${t.id}" data-number="${t.number}" data-seats="${t.seats}" data-free="${free}">
-                        <i class="fas fa-utensils fa-2x text-warning"></i>
-                        <h4>Стол ${t.number}</h4>
-                        <p>${t.seats} мест</p>
-                        <span class="badge bg-light text-dark">${label}</span>
+                    <div class="table-card ${statusClass}" data-id="${t.id}" data-number="${t.number}" data-seats="${t.seats}" data-free="${free}">
+                        <i class="fas fa-chair" style="color:#ffd700; font-size:24px;"></i>
+                        <div class="table-number">Стол ${t.number}</div>
+                        <div class="table-seats">${t.seats} мест</div>
+                        <div class="table-status">${label}</div>
                     </div>
                 </div>
             `;
         }
         container.innerHTML = html;
-        // Навешиваем обработчики на столы
-        document.querySelectorAll('.table-card').forEach(card => {
-            if (card.dataset.free === 'true') {
-                card.addEventListener('click', () => {
-                    const id = parseInt(card.dataset.id);
-                    const number = parseInt(card.dataset.number);
-                    const seats = parseInt(card.dataset.seats);
-                    openOrderWindow(id, number, seats);
-                });
-            }
+        document.querySelectorAll('.table-card.free').forEach(card => {
+            card.addEventListener('click', () => {
+                const id = parseInt(card.dataset.id);
+                const number = parseInt(card.dataset.number);
+                const seats = parseInt(card.dataset.seats);
+                openOrderWindow(id, number, seats);
+            });
         });
         await loadReadyOrders();
-    } catch (err) {
-        console.error(err);
-    }
+    } catch (err) { console.error(err); }
 }
 
-// Загрузка готовых заказов
+// Готовые заказы
 async function loadReadyOrders() {
     try {
         const resp = await fetch('/api/orders/active/');
         const data = await resp.json();
-        const container = document.getElementById('readyList');
+        const container = document.getElementById('readyOrdersContainer');
         if (!data.success || !data.data.length) {
             container.innerHTML = '<p class="text-muted">Нет активных заказов</p>';
             return;
@@ -146,24 +273,26 @@ async function loadReadyOrders() {
         for (let o of ready) {
             html += `
                 <div class="col-md-4 mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="text-warning">Заказ для стола ${o.table_number}</h5>
-                            <p>${o.created_at}</p>
-                            <button class="btn btn-warning pay-btn" data-order-id="${o.id}">Принять оплату</button>
-                        </div>
+                    <div class="ready-order-card" data-order-id="${o.id}">
+                        <h5 class="text-warning">Заказ для стола ${o.table_number}</h5>
+                        <p class="small text-light">${o.created_at}</p>
+                        <button class="btn-gold btn-sm pay-now-btn">Принять оплату</button>
                     </div>
                 </div>
             `;
         }
         container.innerHTML = html;
-        document.querySelectorAll('.pay-btn').forEach(btn => {
-            btn.addEventListener('click', () => openPayment(parseInt(btn.dataset.orderId)));
+        document.querySelectorAll('.pay-now-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const card = btn.closest('.ready-order-card');
+                const orderId = parseInt(card.dataset.orderId);
+                openPayment(orderId);
+            });
         });
     } catch (err) { console.error(err); }
 }
 
-// Открыть окно заказа
+// Открытие окна заказа (кастомный оверлей, без Bootstrap)
 async function openOrderWindow(tableId, tableNumber, maxSeats) {
     currentTableId = tableId;
     currentCart = [];
@@ -172,7 +301,6 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
         const dishesData = await dishesResp.json();
         if (!dishesData.success) throw new Error('Ошибка загрузки меню');
         const dishes = dishesData.data;
-        // Группировка по категориям
         const grouped = {};
         for (let d of dishes) {
             const cat = d.category || 'Без категории';
@@ -186,47 +314,54 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
                 const safeName = d.name.replace(/'/g, "\\'");
                 menuHtml += `
                     <div class="col-6">
-                        <div class="dish-card p-2 rounded">
-                            <div><strong>${d.name}</strong></div>
+                        <div class="dish-card">
+                            <strong>${d.name}</strong>
                             <div class="text-warning">${d.price} ₽</div>
-                            <button class="btn btn-sm btn-warning mt-1 add-to-cart-btn" data-id="${d.id}" data-name="${safeName}" data-price="${d.price}">➕ Добавить</button>
+                            <button class="btn-gold btn-sm mt-1 add-dish-btn" data-id="${d.id}" data-name="${safeName}" data-price="${d.price}">➕ Добавить</button>
                         </div>
                     </div>
                 `;
             }
             menuHtml += `</div>`;
         }
-        // Создаём overlay и окно
+        // Создаём оверлей и модальное окно
         const overlay = document.createElement('div');
-        overlay.className = 'overlay';
-        const win = document.createElement('div');
-        win.className = 'order-window';
-        win.innerHTML = `
-            <div class="close-btn" style="position:absolute; top:10px; right:20px; font-size:28px; cursor:pointer;">&times;</div>
+        overlay.className = 'order-modal-overlay';
+        const modalDiv = document.createElement('div');
+        modalDiv.className = 'order-modal-content';
+        modalDiv.innerHTML = `
+            <div class="close-modal">&times;</div>
             <div class="row">
                 <div class="col-md-7">
                     <h4>Меню</h4>
-                    <div id="windowMenu">${menuHtml}</div>
+                    <div id="modalMenu">${menuHtml}</div>
                 </div>
                 <div class="col-md-5">
                     <h4>Корзина</h4>
-                    <div id="windowCart" style="min-height:150px; background:rgba(0,0,0,0.3); border-radius:10px; padding:10px;"></div>
-                    <div class="mt-2"><strong>Итого: <span id="windowTotal">0</span> ₽</strong></div>
+                    <div id="modalCart" style="min-height:150px; background:rgba(0,0,0,0.3); border-radius:14px; padding:12px;"></div>
+                    <div class="mt-2"><strong>Итого: <span id="modalTotal">0</span> ₽</strong></div>
                     <div class="mt-2">
                         <label>Количество гостей (макс. ${maxSeats})</label>
-                        <input type="number" id="windowGuestCount" class="form-control" value="2" min="1" max="${maxSeats}">
+                        <input type="number" id="modalGuestCount" class="form-control" value="2" min="1" max="${maxSeats}">
                     </div>
-                    <button id="windowSubmitOrder" class="btn btn-warning w-100 mt-3">Оформить заказ</button>
-                    <button id="windowCancel" class="btn btn-secondary w-100 mt-2">Отмена</button>
+                    <button id="modalSubmitOrder" class="btn-gold w-100 mt-3">Оформить заказ</button>
+                    <button id="modalCancel" class="btn-secondary w-100 mt-2" style="background:#6c757d; border:none; border-radius:30px; padding:6px;">Отмена</button>
                 </div>
             </div>
         `;
+        overlay.appendChild(modalDiv);
         document.body.appendChild(overlay);
-        document.body.appendChild(win);
+        overlay.style.display = 'flex';
+
+        // Закрытие
+        const closeBtn = modalDiv.querySelector('.close-modal');
+        closeBtn.onclick = () => overlay.remove();
+        modalDiv.querySelector('#modalCancel').onclick = () => overlay.remove();
+
         // Функция обновления корзины
-        function renderWindowCart() {
-            const cartDiv = document.getElementById('windowCart');
-            const totalSpan = document.getElementById('windowTotal');
+        function renderCart() {
+            const cartDiv = document.getElementById('modalCart');
+            const totalSpan = document.getElementById('modalTotal');
             if (!cartDiv) return;
             if (currentCart.length === 0) {
                 cartDiv.innerHTML = '<p class="text-center">Корзина пуста</p>';
@@ -235,49 +370,51 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
             }
             let total = 0;
             let html = '';
-            for (let item of currentCart) {
+            for (let i=0; i<currentCart.length; i++) {
+                const item = currentCart[i];
                 total += item.price * item.qty;
                 html += `
                     <div class="cart-item">
-                        <div>${item.name} x${item.qty}</div>
-                        <div>${item.price * item.qty} ₽ <button class="btn btn-sm btn-danger remove-from-cart" data-id="${item.id}">✕</button></div>
+                        <div><strong>${item.name}</strong> x${item.qty}</div>
+                        <div>${item.price * item.qty} ₽ <button class="btn-danger-cart remove-item" data-index="${i}">✕</button></div>
                     </div>
                 `;
             }
             cartDiv.innerHTML = html;
             if (totalSpan) totalSpan.innerText = total;
-            document.querySelectorAll('.remove-from-cart').forEach(btn => {
+            document.querySelectorAll('.remove-item').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const id = parseInt(btn.dataset.id);
-                    currentCart = currentCart.filter(i => i.id !== id);
-                    renderWindowCart();
+                    const idx = parseInt(btn.dataset.index);
+                    currentCart.splice(idx, 1);
+                    renderCart();
                 });
             });
         }
+
         // Добавление в корзину
-        function attachAddToCart() {
-            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = parseInt(btn.dataset.id);
-                    const name = btn.dataset.name;
-                    const price = parseFloat(btn.dataset.price);
-                    const existing = currentCart.find(i => i.id === id);
-                    if (existing) existing.qty++;
-                    else currentCart.push({ id, name, price, qty: 1 });
-                    renderWindowCart();
-                });
+        function attachAddHandlers() {
+            document.querySelectorAll('.add-dish-btn').forEach(btn => {
+                btn.removeEventListener('click', addHandler);
+                btn.addEventListener('click', addHandler);
             });
         }
-        attachAddToCart();
-        renderWindowCart();
-        // Обработчики закрытия
-        const closeBtn = win.querySelector('.close-btn');
-        closeBtn.onclick = () => { overlay.remove(); win.remove(); };
-        win.querySelector('#windowCancel').onclick = () => { overlay.remove(); win.remove(); };
+        function addHandler(e) {
+            const btn = e.currentTarget;
+            const id = parseInt(btn.dataset.id);
+            const name = btn.dataset.name;
+            const price = parseFloat(btn.dataset.price);
+            const existing = currentCart.find(i => i.id === id);
+            if (existing) existing.qty++;
+            else currentCart.push({ id, name, price, qty: 1 });
+            renderCart();
+        }
+        attachAddHandlers();
+        renderCart();
+
         // Оформление заказа
-        win.querySelector('#windowSubmitOrder').onclick = async () => {
+        modalDiv.querySelector('#modalSubmitOrder').onclick = async () => {
             if (currentCart.length === 0) { alert('Добавьте блюда'); return; }
-            const guestCount = parseInt(document.getElementById('windowGuestCount').value);
+            const guestCount = parseInt(document.getElementById('modalGuestCount').value);
             const items = currentCart.map(i => ({ dish_id: i.id, quantity: i.qty }));
             try {
                 const resp = await fetch('/api/orders/create/', {
@@ -288,7 +425,7 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
                 const data = await resp.json();
                 if (data.success) {
                     alert(`Заказ #${data.order_id} создан! Сумма: ${data.total} ₽`);
-                    overlay.remove(); win.remove();
+                    overlay.remove();
                     loadTables();
                 } else {
                     alert('Ошибка: ' + data.error);
@@ -300,40 +437,63 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
     }
 }
 
-// Оплата
+// Оплата и чек (использует Bootstrap модалки – они рабочие)
 async function openPayment(orderId) {
-    const method = prompt("Выберите способ оплаты:\n1 - Наличные\n2 - Карта\n3 - QR-код", "1");
-    let payMethod = '';
-    if (method === '1') payMethod = 'cash';
-    else if (method === '2') payMethod = 'card';
-    else if (method === '3') payMethod = 'qr';
-    else return;
+    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    modal.show();
+    document.getElementById('confirmPayBtn').onclick = () => confirmPayment(orderId);
+}
+async function confirmPayment(orderId) {
+    const method = document.getElementById('paymentMethod').value;
     try {
         const resp = await fetch('/api/orders/pay/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order_id: orderId, payment_method: payMethod })
+            body: JSON.stringify({ order_id: orderId, payment_method: method })
         });
         const data = await resp.json();
         if (data.success) {
-            const receiptResp = await fetch(`/api/orders/receipt/${orderId}/`);
-            const receipt = await receiptResp.json();
-            if (receipt.success) {
-                let msg = `ЧЕК\nАИС "Общепит"\nЗаказ #${receipt.data.order_id}\nСтол ${receipt.data.table_number}\n${receipt.data.created_at}\n`;
-                receipt.data.items.forEach(i => {
-                    msg += `${i.name} x${i.quantity} = ${i.total} ₽\n`;
-                });
-                msg += `ИТОГО: ${receipt.data.total} ₽\nОплата: ${payMethod === 'cash' ? 'Наличные' : (payMethod === 'card' ? 'Карта' : 'QR-код')}\nСпасибо!`;
-                alert(msg);
-            }
+            bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+            await showReceipt(orderId, method);
             loadTables();
         } else {
             alert('Ошибка оплаты: ' + data.error);
         }
     } catch (err) { alert('Ошибка: ' + err.message); }
 }
+async function showReceipt(orderId, forcedMethod) {
+    try {
+        const resp = await fetch(`/api/orders/receipt/${orderId}/`);
+        const data = await resp.json();
+        if (!data.success) return;
+        const labels = { cash: 'Наличные', card: 'Карта', qr: 'QR-код' };
+        const payment = forcedMethod ? (labels[forcedMethod] || forcedMethod) : data.data.payment_method;
+        const order = data.data;
+        const itemsHtml = order.items.map(i => `<div class="d-flex justify-content-between"><span>${i.name} x${i.quantity}</span><span>${i.total} ₽</span></div>`).join('');
+        document.getElementById('receiptContent').innerHTML = `
+            <div class="text-center">
+                <h4>АИС «Общепит»</h4>
+                <div>Чек № ${order.order_id}</div>
+                <hr>
+                <div>Стол ${order.table_number} | ${order.created_at}</div>
+                <div class="border-top border-bottom my-2 py-2">${itemsHtml}</div>
+                <div class="d-flex justify-content-between fw-bold"><span>ИТОГО:</span><span>${order.total} ₽</span></div>
+                <div>Оплата: ${payment}</div>
+                <div class="mt-3">Спасибо за визит!</div>
+            </div>
+        `;
+        const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+        modal.show();
+        document.getElementById('printReceiptBtn').onclick = () => {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`<html><head><title>Чек</title><style>body{font-family: monospace;}</style></head><body>${document.getElementById('receiptContent').innerHTML}</body></html>`);
+            printWindow.document.close();
+            printWindow.print();
+        };
+    } catch (err) { console.error(err); }
+}
 
-document.getElementById('refreshBtn').addEventListener('click', () => loadTables());
+document.getElementById('refreshTablesBtn').addEventListener('click', () => loadTables());
 loadTables();
 </script>
 {% endblock %}
