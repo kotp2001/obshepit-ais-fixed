@@ -21,12 +21,12 @@ urlpatterns = [
     path('api/staff/',       views.api_staff,       name='api_staff'),
     path('api/dishes/',      views.api_dishes,      name='api_dishes'),
     path('api/categories/',  views.api_categories,  name='api_categories'),
-    path('api/tables/',      views.api_tables,       name='api_tables'),
+    path('api/tables/',      views.api_tables,      name='api_tables'),
 
-    # API заказы
+    # API заказы (правильные, с префиксом api_)
     path('api/orders/create/',                   views.api_create_order,      name='api_create_order'),
     path('api/orders/active/',                   views.api_active_orders,     name='api_active_orders'),
-    path('api/orders/update-item/',              views.api_update_item_status,name='api_update_item'),
+    path('api/orders/update-item/',              views.api_update_item_status, name='api_update_item'),
     path('api/orders/mark-ready/',               views.api_mark_order_ready,  name='api_mark_ready'),
     path('api/orders/take/',                     views.api_take_order,        name='api_take_order'),
     path('api/orders/pay/',                      views.api_pay_order,         name='api_pay_order'),
@@ -35,7 +35,7 @@ urlpatterns = [
     # API отчёты и ТО
     path('api/reports/',                views.api_reports,             name='api_reports'),
     path('api/maintenance-logs/',       views.api_maintenance_logs,    name='api_maintenance_logs'),
-    path('api/maintenance-logs/add/',   views.api_maintenance_logs_add,name='api_maintenance_logs_add'),
+    path('api/maintenance-logs/add/',   views.api_maintenance_logs_add, name='api_maintenance_logs_add'),
 
     # Разблокировка / смена пароля
     path('api/unblock-user/',    views.api_unblock_user,   name='api_unblock_user'),
@@ -48,7 +48,7 @@ urlpatterns = [
     # Скачать чек
     path('receipts/<int:receipt_id>/download/', views.download_receipt, name='download_receipt'),
 
-    # Авто-бэкап endpoint (для cron-job.org)
+    # Авто-бэкап
     path('api/auto-backup/', views.auto_backup_trigger, name='auto_backup_trigger'),
 
     # Экспорт Excel
