@@ -122,9 +122,7 @@ class Profile(models.Model):
     def __str__(self):
         return f'{self.user.username} - {self.get_role_display()}'
 
-
 class ActionLog(models.Model):
-    """Журнал действий пользователей"""
     ACTION_CHOICES = [
         ('login',          'Вход в систему'),
         ('logout',         'Выход'),
@@ -152,9 +150,7 @@ class ActionLog(models.Model):
         u = self.user.username if self.user else 'Аноним'
         return f'{self.timestamp.strftime("%d.%m.%Y %H:%M")} — {u} — {self.get_action_display()}'
 
-
 class Receipt(models.Model):
-    """Чек заказа (PDF на сервере)"""
     order          = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='receipt', verbose_name='Заказ')
     pdf_file       = models.FileField(upload_to='receipts/', blank=True, null=True, verbose_name='PDF файл')
     created_at     = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
@@ -169,9 +165,7 @@ class Receipt(models.Model):
     def __str__(self):
         return f'Чек #{self.order.id} — {self.total} ₽'
 
-
 class LoginAttempt(models.Model):
-    """Попытки входа для блокировки после 5 неудач"""
     username    = models.CharField(max_length=150, verbose_name='Логин')
     ip_address  = models.GenericIPAddressField(null=True, blank=True, verbose_name='IP')
     attempts    = models.IntegerField(default=0, verbose_name='Попыток')
