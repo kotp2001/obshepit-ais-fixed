@@ -219,31 +219,19 @@ def api_create_order(request):
 
 @require_http_methods(["GET"])
 def api_active_orders(request):
-    orders = Order.objects.filter(
-        status__in=['new', 'cooking', 'ready']
-    ).select_related('table').prefetch_related('items__dish')
-    data = []
+    """Возвращает все неоплаченные заказы (статус new, cooking, ready)"""
+    orders = Order.objects.exclude(status='paid').select_related('table')
+    result = []
     for order in orders:
-        items = [{'id': i.id, 'dish_name': i.dish.name, 'quantity': i.quantity, 'status': i.status}
-                 for i in order.items.all()]
-        # Определяем имя официанта — из профиля или username
-        waiter_name = 'Не указан'
-        if order.waiter:
-            try:
-                role = order.waiter.profile.role
-                fn = order.waiter.first_name or order.waiter.username
-                waiter_name = fn
-            except Exception:
-                waiter_name = order.waiter.username
-        data.append({
+        items = OrderItem.objects.filter(order=order).select_related('dish')
+        result.append({
             'id': order.id,
             'table_number': order.table.number,
-            'created_at': (order.created_at + timedelta(hours=0)).strftime('%H:%M') if order.created_at else '',
             'status': order.status,
-            'items': items,
-            'waiter_name': waiter_name,
+            'created_at': order.created_at.strftime('%H:%M') if order.created_at else '',
+            'items': [{'dish_name': item.dish.name, 'quantity': item.quantity} for item in items]
         })
-    return JsonResponse({'success': True, 'data': data})
+    return JsonResponse({'success': True, 'data': result})
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -662,56 +650,3 @@ def admin_backup_restore(request, filename):
     except Exception as e:
         return HttpResponse(f'Ошибка: {str(e)}', status=500)
     return redirect('/backup/')
-  def active_orders(request):
-    """Возвращает все неоплаченные заказы (статус new, cooking, ready)"""
-    orders = Order.objects.exclude(status='paid').select_related('table')
-    result = []
-    for order in orders:
-        items = OrderItem.objects.filter(order=order).select_related('dish')
-        result.append({
-            'id': order.id,
-            'table_number': order.table.number,
-            'status': order.status,
-            'created_at': order.created_at.strftime('%H:%M'),
-            'items': [{'dish_name': item.dish.name, 'quantity': item.quantity} for item in items]
-        })
-    return JsonResponse({'success': True, 'data': result})
-
-@csrf_exempt
-def pay_order(request):
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
-    try:
-        data = json.loads(request.body)
-        order_id = data.get('order_id')
-        payment_method = data.get('payment_method')
-        order = Order.objects.get(id=order_id)
-        if order.status == 'paid':
-            return JsonResponse({'success': False, 'error': 'Заказ уже оплачен'})
-        order.status = 'paid'
-        order.payment_method = payment_method
-        order.save()
-        return JsonResponse({'success': True})
-    except Order.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Заказ не найден'})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
-
-def order_receipt(request, order_id):
-    try:
-        order = Order.objects.get(id=order_id)
-        items = OrderItem.objects.filter(order=order).select_related('dish')
-        total = sum(item.dish.price * item.quantity for item in items)
-        return JsonResponse({
-            'success': True,
-            'data': {
-                'order_id': order.id,
-                'table_number': order.table.number,
-                'created_at': order.created_at.strftime('%d.%m.%Y %H:%M'),
-                'total': total,
-                'payment_method': order.payment_method,
-                'items': [{'name': item.dish.name, 'quantity': item.quantity, 'total': item.dish.price * item.quantity} for item in items]
-            }
-        })
-    except Order.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Заказ не найден'})
