@@ -4,8 +4,10 @@
 
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="mb-0">Зал ресторана</h4>
-        <button class="btn btn-warning btn-sm" id="refreshTablesBtn">Обновить</button>
+        <h4 class="mb-0"><i class="fas fa-utensils me-2"></i>Зал ресторана</h4>
+        <button class="btn btn-warning btn-sm" id="refreshTablesBtn">
+            <i class="fas fa-sync-alt me-1"></i>Обновить
+        </button>
     </div>
     <div class="card-body">
         <div id="tablesGrid" class="row g-3"></div>
@@ -13,12 +15,14 @@
 </div>
 
 <div class="mt-4">
-    <h5>Активные заказы</h5>
+    <h5><i class="fas fa-clipboard-list me-2"></i>Активные заказы</h5>
     <div id="ordersGrid" class="row g-3"></div>
 </div>
 
+<!-- Контейнер для кастомного окна заказа -->
 <div id="modalContainer"></div>
 
+<!-- Модальное окно оплаты -->
 <div class="modal fade" id="paymentModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -38,6 +42,7 @@
     </div>
 </div>
 
+<!-- Модальное окно чека -->
 <div class="modal fade" id="receiptModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -51,9 +56,11 @@
 </div>
 
 <script>
+// ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
 let currentTableId = null;
 let currentCart = [];
 
+// ========== ЗАГРУЗКА СТОЛОВ ==========
 async function loadTables() {
     try {
         const resp = await fetch('/api/tables/');
@@ -82,6 +89,7 @@ async function loadTables() {
             `;
         }
         container.innerHTML = html;
+        // Навешиваем обработчики только на свободные столы
         document.querySelectorAll('.table-card[data-free="true"]').forEach(card => {
             card.addEventListener('click', () => {
                 const id = parseInt(card.dataset.id);
@@ -97,6 +105,7 @@ async function loadTables() {
     }
 }
 
+// ========== ЗАГРУЗКА ЗАКАЗОВ ==========
 async function loadOrders() {
     try {
         const resp = await fetch('/api/orders/active/');
@@ -121,6 +130,7 @@ async function loadOrders() {
             } else {
                 itemsList = '<p class="small text-muted">Нет позиций</p>';
             }
+            // Кнопка оплаты только для статуса ready
             const payButton = order.status === 'ready' 
                 ? `<button class="btn btn-warning w-100 mt-2 pay-order-btn" data-order-id="${order.id}">Принять оплату</button>` 
                 : '';
@@ -141,6 +151,7 @@ async function loadOrders() {
             `;
         }
         container.innerHTML = html;
+        // Обработчики кнопок оплаты
         document.querySelectorAll('.pay-order-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const orderId = parseInt(btn.dataset.orderId);
@@ -150,14 +161,16 @@ async function loadOrders() {
     } catch (err) { console.error(err); }
 }
 
+// ========== ОТКРЫТИЕ ОКНА ЗАКАЗА (КОРЗИНА) ==========
 async function openOrderWindow(tableId, tableNumber, maxSeats) {
     currentTableId = tableId;
     currentCart = [];
     try {
         const dishesResp = await fetch('/api/dishes/');
         const dishesData = await dishesResp.json();
-        if (!dishesData.success) throw new Error('Ошибка меню');
+        if (!dishesData.success) throw new Error('Ошибка загрузки меню');
         const dishes = dishesData.data;
+        // Группировка по категориям
         const grouped = {};
         for (let d of dishes) {
             const cat = d.category || 'Без категории';
@@ -183,6 +196,7 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
             }
             menuHtml += `</div>`;
         }
+        // Кастомное окно заказа (не Bootstrap модалка)
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1050; display:flex; justify-content:center; align-items:center;';
         const modalDiv = document.createElement('div');
@@ -208,9 +222,12 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
         document.body.appendChild(overlay);
         document.getElementById('modalMenu').innerHTML = menuHtml;
 
-        modalDiv.querySelector('.close-modal').onclick = () => overlay.remove();
+        // Закрытие
+        const closeBtn = modalDiv.querySelector('div:first-child');
+        closeBtn.onclick = () => overlay.remove();
         modalDiv.querySelector('#modalCancel').onclick = () => overlay.remove();
 
+        // Функция отображения корзины
         function renderCart() {
             const cartDiv = document.getElementById('modalCart');
             const totalSpan = document.getElementById('modalTotal');
@@ -243,6 +260,7 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
             });
         }
 
+        // Добавление блюд
         function attachAddHandlers() {
             document.querySelectorAll('.add-dish-btn').forEach(btn => {
                 btn.removeEventListener('click', addHandler);
@@ -262,8 +280,9 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
         attachAddHandlers();
         renderCart();
 
+        // Оформление заказа
         modalDiv.querySelector('#modalSubmitOrder').onclick = async () => {
-            if (currentCart.length === 0) { alert('Добавьте блюда'); return; }
+            if (currentCart.length === 0) { alert('Добавьте блюда в корзину'); return; }
             const guestCount = parseInt(document.getElementById('modalGuestCount').value);
             const items = currentCart.map(i => ({ dish_id: i.id, quantity: i.qty }));
             try {
@@ -282,12 +301,16 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
                 }
             } catch (err) { alert('Ошибка сети: ' + err.message); }
         };
-    } catch (err) { alert('Ошибка: ' + err.message); }
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
 }
 
+// ========== ОПЛАТА ==========
 async function openPayment(orderId) {
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
     modal.show();
+    // Убираем старые обработчики, чтобы не было дублей
     const confirmBtn = document.getElementById('confirmPayBtn');
     const newBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
@@ -306,11 +329,13 @@ async function confirmPayment(orderId) {
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
             await showReceipt(orderId, method);
-            await loadTables();
+            await loadTables(); // обновляем список
         } else {
             alert('Ошибка оплаты: ' + data.error);
         }
-    } catch (err) { alert('Ошибка: ' + err.message); }
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
 }
 
 async function showReceipt(orderId, forcedMethod) {
