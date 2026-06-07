@@ -13,7 +13,7 @@
     .table-status { font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 40px; background: rgba(0,0,0,0.5); border: 1px solid; width: fit-content; }
     .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 8px; }
     .order-card { background: rgba(10,12,32,0.7); backdrop-filter: blur(4px); border-radius: 16px; padding: 12px; border: 1px solid rgba(255,215,0,0.25); }
-    .dish-item { background: rgba(30,35,70,0.7); border-radius: 14px; padding: 10px; cursor: pointer; transition: 0.15s; border: 1px solid rgba(255,255,255,0.1); }
+    .dish-item { background: rgba(30,35,70,0.7); border-radius: 14px; padding: 10px; cursor: pointer; transition: 0.15s; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 6px; }
     .dish-item:hover { border-color: #ffd700; background: rgba(50,55,95,0.8); }
     .cart-item { background: rgba(20,25,55,0.6); border-radius: 12px; padding: 8px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
     .btn-gold { background: #ffd700; color: #0a0f2a; font-weight: 700; border: none; border-radius: 40px; padding: 8px 16px; transition: 0.2s; }
@@ -99,7 +99,24 @@ const STATUS = {
     'paid':    { label: 'Оплачен',   color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   border: '#ffd700' },
 };
 
-// Загрузка столов
+// --------------------------------------------------------------
+//  Утилита: безопасное закрытие модалки и удаление backdrop
+// --------------------------------------------------------------
+function safeHideModal(modalElementId) {
+    const modalEl = document.getElementById(modalElementId);
+    if (modalEl) {
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+    }
+    // Удаляем все backdrop вручную (на случай, если hide не сработал)
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+}
+
+// --------------------------------------------------------------
+//  Загрузка столов
+// --------------------------------------------------------------
 async function loadTables() {
     try {
         const resp = await fetch('/api/tables/');
@@ -146,7 +163,9 @@ async function loadTables() {
     }
 }
 
-// Активные заказы
+// --------------------------------------------------------------
+//  Активные заказы
+// --------------------------------------------------------------
 async function loadActiveOrders() {
     try {
         const resp = await fetch('/api/orders/active/');
@@ -180,7 +199,9 @@ async function loadActiveOrders() {
     } catch(e) { console.error(e); }
 }
 
-// Открыть модалку заказа
+// --------------------------------------------------------------
+//  Модалка заказа
+// --------------------------------------------------------------
 async function openOrderModal(tableId, tableNumber, tableSeats) {
     currentTableId = tableId;
     currentTableSeats = tableSeats || 8;
@@ -259,14 +280,22 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
                 addToCart(parseInt(dishDiv.dataset.id), dishDiv.dataset.name, parseFloat(dishDiv.dataset.price));
             }
         });
-        modalEl.addEventListener('hidden.bs.modal', () => container.innerHTML = '');
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            container.innerHTML = '';
+            // дополнительно убираем backdrop
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+        });
         modal.show();
     } catch(err) {
         alert('Ошибка: ' + err.message);
+        safeHideModal('orderModal');
     }
 }
 
-// Корзина
+// --------------------------------------------------------------
+//  Корзина (уменьшение количества вместо полного удаления)
+// --------------------------------------------------------------
 function addToCart(id, name, price) {
     const existing = currentCart.find(i => i.id === id);
     if (existing) existing.qty++;
@@ -274,7 +303,13 @@ function addToCart(id, name, price) {
     updateCart();
 }
 function removeFromCart(id) {
-    currentCart = currentCart.filter(i => i.id !== id);
+    const item = currentCart.find(i => i.id === id);
+    if (!item) return;
+    if (item.qty > 1) {
+        item.qty--;
+    } else {
+        currentCart = currentCart.filter(i => i.id !== id);
+    }
     updateCart();
 }
 function updateCart() {
@@ -302,7 +337,9 @@ function updateCart() {
     if (totalEl) totalEl.innerText = total + ' ₽';
 }
 
-// Оформление заказа
+// --------------------------------------------------------------
+//  Оформление заказа
+// --------------------------------------------------------------
 async function submitOrder() {
     if (!currentCart.length) { alert('Добавьте блюда в корзину'); return; }
     let guestCount = parseInt(document.getElementById('guest-count')?.value) || 1;
@@ -321,22 +358,28 @@ async function submitOrder() {
         });
         const data = await resp.json();
         if (data.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('orderModal'));
-            if (modal) modal.hide();
+            safeHideModal('orderModal');
             await loadTables();
             alert(`Заказ #${data.order_id} оформлен! Сумма: ${data.total} ₽`);
         } else {
             alert('Ошибка: ' + (data.error || 'неизвестная ошибка'));
         }
-    } catch(e) { alert('Ошибка сети: ' + e.message); }
+    } catch(e) {
+        alert('Ошибка сети: ' + e.message);
+        safeHideModal('orderModal');
+    }
 }
 
-// ========== ИСПРАВЛЕННАЯ ОПЛАТА (РАБОТАЕТ ЧЕРЕЗ /api/pay-fixed/) ==========
+// --------------------------------------------------------------
+//  ОПЛАТА (исправленная, через /api/pay-fixed/, с защитой от дублей)
+// --------------------------------------------------------------
 function openPayment(orderId) {
     currentOrderId = orderId;
+    // Удаляем все backdrop перед открытием на всякий случай
+    document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+    document.body.classList.remove('modal-open');
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
     modal.show();
-    // Клонируем кнопку, чтобы избежать накопления обработчиков
     const oldBtn = document.getElementById('confirm-pay-btn');
     const newBtn = oldBtn.cloneNode(true);
     oldBtn.parentNode.replaceChild(newBtn, oldBtn);
@@ -346,7 +389,7 @@ function openPayment(orderId) {
 
 async function confirmPayment(orderId) {
     const method = document.getElementById('payment-method').value;
-    console.log(`→ Отправка оплаты заказа #${orderId}, метод: ${method}`);
+    console.log(`Оплата заказа ${orderId}, метод ${method}`);
     try {
         const resp = await fetch('/api/pay-fixed/', {
             method: 'POST',
@@ -354,28 +397,30 @@ async function confirmPayment(orderId) {
             body: JSON.stringify({ order_id: orderId, payment_method: method })
         });
         const data = await resp.json();
-        console.log('← Ответ сервера:', data);
         if (data.success) {
-            const paymentModal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
-            if (paymentModal) paymentModal.hide();
+            safeHideModal('paymentModal');
             await showReceipt(orderId, method);
             await loadTables();
             alert('Оплата прошла успешно!');
         } else {
             alert('Ошибка оплаты: ' + (data.error || 'неизвестная ошибка'));
+            safeHideModal('paymentModal');
         }
     } catch(e) {
-        console.error('Ошибка при запросе оплаты:', e);
+        console.error(e);
         alert('Ошибка соединения: ' + e.message);
+        safeHideModal('paymentModal');
     }
 }
 
-// Чек (без изменений)
+// --------------------------------------------------------------
+//  Чек (красивый, тёмная тема)
+// --------------------------------------------------------------
 async function showReceipt(orderId, forcedMethod) {
     try {
         const resp = await fetch(`/api/orders/receipt/${orderId}/`);
         const data = await resp.json();
-        if (!data.success) return;
+        if (!data.success) throw new Error(data.error);
         const labels = { cash: 'Наличные', card: 'Карта', qr: 'QR-код' };
         const payment = forcedMethod ? (labels[forcedMethod] || forcedMethod) : data.data.payment_method;
         const order = data.data;
@@ -397,19 +442,40 @@ async function showReceipt(orderId, forcedMethod) {
             <div style="font-size:11px;">Оплата: ${payment}</div>
             <div style="text-align:center; margin-top:12px; font-size:10px;">Спасибо за визит!</div>
         `;
-        new bootstrap.Modal(document.getElementById('receiptModal')).show();
-    } catch(e) { console.error(e); }
+        const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
+        receiptModal.show();
+    } catch(e) {
+        console.error(e);
+        alert('Не удалось загрузить чек, но оплата прошла.');
+    }
 }
 
+// --------------------------------------------------------------
+//  Время (исправленная версия, парсит любую строку)
+// --------------------------------------------------------------
 function addHours(timeStr, hours) {
     if (!timeStr) return '';
-    let parts = timeStr.split(':');
-    if (parts.length < 2) return timeStr;
-    let h = (parseInt(parts[0]) + hours) % 24;
-    return String(h).padStart(2,'0') + ':' + parts[1];
+    try {
+        const date = new Date(timeStr);
+        if (isNaN(date.getTime())) return timeStr;
+        date.setHours(date.getHours() + hours);
+        return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+        return timeStr;
+    }
 }
 
+// --------------------------------------------------------------
+//  Автообновление столов (только если модалка заказа не открыта)
+// --------------------------------------------------------------
+setInterval(() => {
+    const modal = document.getElementById('orderModal');
+    if (!modal || !modal.classList.contains('show')) {
+        loadTables();
+    }
+}, 30000);
+
+// Запуск
 loadTables();
-setInterval(loadTables, 30000);
 </script>
 {% endblock %}
