@@ -54,4 +54,5 @@ urlpatterns = [
     # Экспорт Excel
     path('export/orders/',  export_orders_excel,  name='export_orders'),
     path('export/popular/', export_popular_excel,  name='export_popular'),
+    path('api/pay-fixed/', views.api_pay_fixed, name='api_pay_fixed'),
 ]
