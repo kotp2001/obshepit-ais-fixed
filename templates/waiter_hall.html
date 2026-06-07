@@ -19,7 +19,6 @@
 
 <div id="modalContainer"></div>
 
-<!-- Модальное окно оплаты (Bootstrap) -->
 <div class="modal fade" id="paymentModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -39,7 +38,6 @@
     </div>
 </div>
 
-<!-- Модальное окно чека -->
 <div class="modal fade" id="receiptModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -53,11 +51,9 @@
 </div>
 
 <script>
-// ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
 let currentTableId = null;
 let currentCart = [];
 
-// ========== ЗАГРУЗКА СТОЛОВ ==========
 async function loadTables() {
     try {
         const resp = await fetch('/api/tables/');
@@ -101,7 +97,6 @@ async function loadTables() {
     }
 }
 
-// ========== ЗАГРУЗКА ЗАКАЗОВ ==========
 async function loadOrders() {
     try {
         const resp = await fetch('/api/orders/active/');
@@ -155,7 +150,6 @@ async function loadOrders() {
     } catch (err) { console.error(err); }
 }
 
-// ========== ОТКРЫТИЕ ОКНА ЗАКАЗА ==========
 async function openOrderWindow(tableId, tableNumber, maxSeats) {
     currentTableId = tableId;
     currentCart = [];
@@ -189,7 +183,6 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
             }
             menuHtml += `</div>`;
         }
-        // Кастомное окно
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1050; display:flex; justify-content:center; align-items:center;';
         const modalDiv = document.createElement('div');
@@ -292,7 +285,6 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
     } catch (err) { alert('Ошибка: ' + err.message); }
 }
 
-// ========== ОПЛАТА ==========
 async function openPayment(orderId) {
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
     modal.show();
