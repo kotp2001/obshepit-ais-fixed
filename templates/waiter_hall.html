@@ -3,29 +3,11 @@
 {% block content %}
 
 <style>
-    .border-warning-custom {
-        border: 2px solid #e6c200 !important;
-    }
-    .btn-warning-custom {
-        background-color: #e6c200;
-        color: #1a1a4a;
-    }
-    .text-warning {
-        color: #e6c200 !important;
-    }
-    .bg-warning {
-        background-color: #e6c200 !important;
-    }
-    .badge.bg-warning {
-        background-color: #e6c200 !important;
-        color: #1a1a4a !important;
-    }
-    .card-title, .card-text, .text-white-50 {
-        color: #ffffff !important;
-    }
-    .text-white-50 {
-        color: rgba(255,255,255,0.7) !important;
-    }
+    .border-warning-custom { border: 2px solid #e6c200 !important; }
+    .btn-warning-custom { background-color: #e6c200; color: #1a1a4a; }
+    .text-warning { color: #e6c200 !important; }
+    .card-title, .card-text, .text-white-50 { color: #ffffff !important; }
+    .text-white-50 { color: rgba(255,255,255,0.7) !important; }
 </style>
 
 <div class="card mb-4">
@@ -48,7 +30,6 @@
 <div id="modalContainer"></div>
 
 <script>
-// ========== CSRF токен ==========
 function getCSRFToken() {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -64,11 +45,9 @@ function getCSRFToken() {
     return cookieValue;
 }
 
-// ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
 let currentTableId = null;
 let currentCart = [];
 
-// ========== ЗАГРУЗКА СТОЛОВ ==========
 async function loadTables() {
     try {
         const resp = await fetch('/api/tables/');
@@ -112,7 +91,6 @@ async function loadTables() {
     }
 }
 
-// ========== ЗАГРУЗКА ЗАКАЗОВ ==========
 async function loadOrders() {
     try {
         const resp = await fetch('/api/orders/active/');
@@ -166,7 +144,7 @@ async function loadOrders() {
     } catch (err) { console.error(err); }
 }
 
-// ========== ОПЛАТА ==========
+// ========== ОПЛАТА (кастомное окно) ==========
 function openPaymentWindow(orderId) {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1050; display:flex; justify-content:center; align-items:center;';
@@ -194,10 +172,8 @@ function openPaymentWindow(orderId) {
         const method = modalDiv.querySelector('#paymentMethodSelect').value;
         const csrfToken = getCSRFToken();
 
-        // ВАЖНО: Укажите правильный URL для оплаты!
-        // Если вы переименовали функцию в views.py на api_pay_order, используйте '/api/orders/pay/'
-        // Если оставили api_pay_fixed, используйте '/api/pay/fixed/'
-        const paymentUrl = '/api/orders/pay/';   // <- ИЗМЕНИТЕ, ЕСЛИ НУЖНО
+        // Используем исправленный эндпоинт (после правки urls.py он будет работать)
+        const paymentUrl = '/api/orders/pay/';
 
         try {
             const response = await fetch(paymentUrl, {
@@ -227,7 +203,6 @@ function openPaymentWindow(orderId) {
     };
 }
 
-// ========== ЧЕК ==========
 async function showReceipt(orderId, forcedMethod) {
     try {
         const resp = await fetch(`/api/orders/receipt/${orderId}/`);
@@ -269,7 +244,6 @@ async function showReceipt(orderId, forcedMethod) {
     } catch (err) { console.error(err); }
 }
 
-// ========== ОКНО ЗАКАЗА (КОРЗИНА) ==========
 async function openOrderWindow(tableId, tableNumber, maxSeats) {
     currentTableId = tableId;
     currentCart = [];
