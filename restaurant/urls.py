@@ -28,7 +28,6 @@ urlpatterns = [
     path('api/orders/update-item/', views.api_update_item_status, name='api_update_item'),
     path('api/orders/mark-ready/', views.api_mark_order_ready, name='api_mark_ready'),
     path('api/orders/take/', views.api_take_order, name='api_take_order'),
-    path('api/orders/pay/', views.api_pay_order, name='api_pay_order'),
     path('api/orders/receipt/<int:order_id>/', views.api_order_receipt, name='api_receipt'),
 
     # --- API оплаты (новая, рабочая, используется в waiter_hall.html) ---
