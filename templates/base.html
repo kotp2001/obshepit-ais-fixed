@@ -7,69 +7,92 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* ---------- ГЛОБАЛЬНЫЕ СТИЛИ ---------- */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         html, body {
             height: 100%;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(ellipse at 30% 20%, #0a0f2a, #02030a);
             min-height: 100vh;
-            background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%);
+            color: #f0f0f0;
             position: relative;
-            overflow-x: hidden;
             display: flex;
             flex-direction: column;
         }
-        
-        .stars {
+
+        /* ---------- ЗВЁЗДНОЕ НЕБО (ВАШ ЭТАЛОН) ---------- */
+        body::before {
+            content: '';
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             pointer-events: none;
+            background-image: 
+                radial-gradient(2px 2px at 15% 30%, #fff, rgba(0,0,0,0)),
+                radial-gradient(3px 3px at 75% 45%, #ffeaa7, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 92% 18%, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 8% 85%, #ffd966, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 45% 95%, #fff, rgba(0,0,0,0)),
+                radial-gradient(3px 3px at 63% 22%, #f9f3d9, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 32% 68%, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 88% 77%, #ffd700, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 5% 55%, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 50% 12%, #ffecb3, rgba(0,0,0,0));
+            background-repeat: no-repeat;
+            background-size: 200px 200px, 300px 300px, 150px 150px, 250px 250px, 180px 180px, 220px 220px, 120px 120px, 280px 280px, 140px 140px, 260px 260px;
+            opacity: 0.8;
+            animation: starsGlow 4s infinite alternate;
             z-index: 0;
         }
-        
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            opacity: 0;
-            animation: twinkle 3s ease-in-out infinite;
+
+        @keyframes starsGlow {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
-        
-        @keyframes twinkle {
-            0%, 100% { opacity: 0; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.2); }
-        }
-        
+
+        /* Контейнер и карточки — поверх звёзд */
         .container {
             position: relative;
-            z-index: 1;
+            z-index: 2;
             flex: 1 0 auto;
             background: transparent !important;
         }
-        
+
+        /* ---------- НАВБАР (ВЕРХНЯЯ ПЛАШКА) ---------- */
         .navbar {
-            background: rgba(20,20,50,0.9);
+            background: rgba(20, 20, 50, 0.9);
             backdrop-filter: blur(10px);
             padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+            position: relative;
+            z-index: 10;
         }
-        
+
         .navbar-brand {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #ffd700 !important;
+            background: #ffd700;
+            color: #1a1a4a !important;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            transition: 0.1s;
         }
-        
+        .navbar-brand:hover {
+            background: #e6c200;
+            transform: translateY(-1px);
+        }
+
         .btn-logout {
             background: #dc3545;
             color: white;
@@ -80,36 +103,35 @@
             cursor: pointer;
             transition: transform 0.1s ease;
         }
-        
         .btn-logout:hover {
             background: #c82333;
             transform: translateY(-1px);
         }
-        
         .btn-logout:active {
             transform: translateY(1px);
         }
-        
+
+        /* ---------- КАРТОЧКИ И КНОПКИ (ОБЩИЕ) ---------- */
         .card {
-            background: rgba(30,30,70,0.6);
+            background: rgba(30, 30, 70, 0.6);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             overflow: hidden;
         }
-        
+
         .card-header {
-            background: rgba(20,20,50,0.8);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(20, 20, 50, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
             padding: 15px 20px;
         }
-        
+
         .card-body {
             color: white;
             padding: 20px;
         }
-        
+
         .btn {
             border-radius: 25px;
             padding: 8px 20px;
@@ -118,158 +140,143 @@
             border: none;
             cursor: pointer;
         }
-        
         .btn:active {
             transform: scale(0.97);
         }
-        
         .btn-warning {
             background: #ffd700;
             color: #1a1a4a;
         }
-        
         .btn-warning:hover {
             background: #e6c200;
             transform: translateY(-1px);
         }
-        
         .btn-primary {
             background: #1a1a4a;
             color: white;
         }
-        
         .btn-primary:hover {
             background: #2a2a5a;
             transform: translateY(-1px);
         }
-        
         .btn-success {
             background: #2a5a2a;
             color: white;
         }
-        
         .btn-success:hover {
             background: #3a6a3a;
             transform: translateY(-1px);
         }
-        
         .btn-danger {
             background: #dc3545;
             color: white;
         }
-        
         .btn-danger:hover {
             background: #c82333;
             transform: translateY(-1px);
         }
-        
         .btn-secondary {
-            background: rgba(100,100,140,0.8);
+            background: rgba(100, 100, 140, 0.8);
             color: white;
         }
-        
+
         .form-control {
-            background: rgba(50,50,100,0.8);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(50, 50, 100, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
             border-radius: 25px;
             padding: 10px 15px;
         }
-        
         .form-control:focus {
-            background: rgba(60,60,110,0.9);
+            background: rgba(60, 60, 110, 0.9);
             border-color: #ffd700;
             color: white;
             outline: none;
-            box-shadow: 0 0 5px rgba(255,215,0,0.3);
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
         }
-        
+
+        /* ---------- ФУТЕР (НИЖНЯЯ ПЛАШКА) ---------- */
         .footer {
-            background: rgba(20,20,50,0.8);
+            background: rgba(20, 20, 50, 0.8);
             margin-top: 40px;
             padding: 15px;
             text-align: center;
             color: #ffd700;
             font-size: 13px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid rgba(255, 215, 0, 0.2);
             flex-shrink: 0;
+            position: relative;
+            z-index: 2;
         }
-        
         .footer a {
             color: #ffd700;
             text-decoration: none;
         }
-        
         .footer a:hover {
             text-decoration: underline;
         }
-        
+
+        /* ---------- МОДАЛЬНЫЕ ОКНА ---------- */
         .modal-content {
-            background: rgba(20,20,60,0.95) !important;
+            background: rgba(20, 20, 60, 0.95) !important;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,215,0,0.3);
+            border: 1px solid rgba(255, 215, 0, 0.3);
         }
-        
         .modal-header {
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
         .modal-body {
             color: white;
         }
-        
         .modal-body .form-label {
             color: white;
         }
-        
+
+        /* ---------- АНИМАЦИИ ---------- */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
         .fade-in {
             animation: fadeIn 0.4s ease forwards;
         }
-        
+
+        /* Скролл */
         ::-webkit-scrollbar {
             width: 8px;
         }
-        
         ::-webkit-scrollbar-track {
-            background: rgba(30,30,70,0.5);
+            background: rgba(30, 30, 70, 0.5);
             border-radius: 10px;
         }
-        
         ::-webkit-scrollbar-thumb {
             background: #ffd700;
             border-radius: 10px;
         }
-        
+
+        /* Дополнительные стили для админ-карточек */
         .admin-card {
             transition: none;
             cursor: pointer;
         }
-        
         .admin-card:hover {
             transform: none;
         }
-        
         .admin-card .card-body {
             transition: none;
         }
-        
         .admin-card:hover .card-body {
-            background: rgba(50,50,100,0.7);
+            background: rgba(50, 50, 100, 0.7);
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <div class="stars" id="stars"></div>
-    
+
+    <!-- Верхняя панель (навбар) -->
     <nav class="navbar">
         <div class="container">
-            <a class="navbar-brand" href="/admin-panel/" id="main-menu-btn" style="background:#ffd700;color:#1a1a4a!important;padding:6px 16px;border-radius:20px;font-weight:700;font-size:14px;display:none;">
+            <a class="navbar-brand" href="/" id="main-menu-btn" style="display:none;">
                 <i class="fas fa-home me-1"></i> Главное меню
             </a>
             <div style="display:flex; align-items:center; gap:12px;">
@@ -281,10 +288,12 @@
         </div>
     </nav>
 
+    <!-- Основной контент -->
     <div class="container py-4">
         {% block content %}{% endblock %}
     </div>
 
+    <!-- Нижняя плашка (футер) -->
     <div class="footer">
         <div class="container">
             <p class="mb-0">АИС «Общепит» — Автоматизированная информационная система управления рестораном</p>
@@ -299,22 +308,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function createStars() {
-            const starsContainer = document.getElementById('stars');
-            for (let i = 0; i < 200; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.width = Math.random() * 3 + 'px';
-                star.style.height = star.style.width;
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 5 + 's';
-                star.style.animationDuration = 2 + Math.random() * 3 + 's';
-                starsContainer.appendChild(star);
-            }
-        }
-        createStars();
-        
+        // Функция авторизации (использует localStorage)
         function checkAuth() {
             const role = localStorage.getItem('user_role');
             const logoutBtn = document.getElementById('logout-btn');
@@ -324,18 +318,21 @@
             const uname = localStorage.getItem('user_name');
             if (role) {
                 logoutBtn.style.display = 'block';
-                if (uname && navUser) { navUser.style.display='flex'; navUserText.textContent='Вы вошли как ' + uname; }
-                // Кнопка "Главное меню" только для admin
+                if (uname && navUser) {
+                    navUser.style.display = 'flex';
+                    navUserText.textContent = 'Вы вошли как ' + uname;
+                }
+                // Кнопка "Главное меню" только для admin (если нужно)
                 if (role === 'admin' && mainMenuBtn) mainMenuBtn.style.display = 'inline-flex';
             }
         }
-        
+
         function logout() {
             localStorage.removeItem('user_role');
             localStorage.removeItem('user_name');
             window.location.href = '/';
         }
-        
+
         checkAuth();
     </script>
     {% block extra_js %}{% endblock %}
