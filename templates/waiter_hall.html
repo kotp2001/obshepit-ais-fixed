@@ -27,6 +27,23 @@
 let currentTableId = null;
 let currentCart = [];
 
+// Функция получения CSRF-токена из cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
 // ========== ЗАГРУЗКА СТОЛОВ ==========
 async function loadTables() {
     try {
@@ -125,17 +142,16 @@ async function loadOrders() {
     } catch (err) { console.error(err); }
 }
 
-// ========== КАСТОМНОЕ ОКНО ОПЛАТЫ (аналог окна заказа) ==========
+// ========== КАСТОМНОЕ ОКНО ОПЛАТЫ (с белым текстом и мягкой рамкой) ==========
 function openPaymentWindow(orderId) {
-    // Создаём оверлей
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1050; display:flex; justify-content:center; align-items:center;';
     const modalDiv = document.createElement('div');
-    modalDiv.style.cssText = 'background:rgba(20,20,60,0.98); backdrop-filter:blur(10px); border-radius:20px; width:400px; max-width:90%; padding:20px; position:relative; border:1px solid #ffd700; text-align:center;';
+    modalDiv.style.cssText = 'background:rgba(20,20,60,0.98); backdrop-filter:blur(10px); border-radius:20px; width:400px; max-width:90%; padding:20px; position:relative; border:1px solid rgba(255,215,0,0.5); text-align:center;';
     modalDiv.innerHTML = `
         <div style="position:absolute; top:10px; right:15px; font-size:24px; cursor:pointer; color:#ffd700;">&times;</div>
-        <h4>Оплата заказа</h4>
-        <select id="paymentMethodSelect" class="form-select mt-3 mb-3" style="background:rgba(30,30,80,0.9); color:white;">
+        <h4 style="color:white;">Оплата заказа</h4>
+        <select id="paymentMethodSelect" class="form-select mt-3 mb-3" style="background:rgba(30,30,80,0.9); color:white; border:1px solid rgba(255,215,0,0.3);">
             <option value="cash">Наличные</option>
             <option value="card">Карта</option>
             <option value="qr">QR-код</option>
@@ -147,7 +163,6 @@ function openPaymentWindow(orderId) {
     // Закрытие по крестику
     const closeBtn = modalDiv.querySelector('div:first-child');
     closeBtn.onclick = () => overlay.remove();
-    // Закрытие по клику вне окна (опционально)
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
     // Обработчик оплаты
     const confirmBtn = modalDiv.querySelector('#confirmPaymentBtn');
@@ -156,7 +171,10 @@ function openPaymentWindow(orderId) {
         try {
             const resp = await fetch('/api/orders/pay/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
                 body: JSON.stringify({ order_id: orderId, payment_method: method })
             });
             const data = await resp.json();
@@ -168,12 +186,12 @@ function openPaymentWindow(orderId) {
                 alert('Ошибка оплаты: ' + data.error);
             }
         } catch (err) {
-            alert('Ошибка: ' + err.message);
+            alert('Ошибка соединения: ' + err.message);
         }
     };
 }
 
-// ========== ПОКАЗ ЧЕКА (кастомное окно) ==========
+// ========== ПОКАЗ ЧЕКА ==========
 async function showReceipt(orderId, forcedMethod) {
     try {
         const resp = await fetch(`/api/orders/receipt/${orderId}/`);
@@ -183,7 +201,6 @@ async function showReceipt(orderId, forcedMethod) {
         const payment = forcedMethod ? (labels[forcedMethod] || forcedMethod) : data.data.payment_method;
         const order = data.data;
         const itemsHtml = order.items.map(i => `<div class="d-flex justify-content-between"><span>${i.name} x${i.quantity}</span><span>${i.total} ₽</span></div>`).join('');
-        // Создаём окно чека
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1050; display:flex; justify-content:center; align-items:center;';
         const modalDiv = document.createElement('div');
@@ -204,11 +221,9 @@ async function showReceipt(orderId, forcedMethod) {
         `;
         overlay.appendChild(modalDiv);
         document.body.appendChild(overlay);
-        // Закрытие
         const closeBtn = modalDiv.querySelector('div:first-child');
         closeBtn.onclick = () => overlay.remove();
         overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-        // Печать
         const printBtn = modalDiv.querySelector('#printReceiptBtn');
         printBtn.onclick = () => {
             const w = window.open('', '_blank');
@@ -252,21 +267,20 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
             }
             menuHtml += `</div>`;
         }
-        // Кастомное окно заказа
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1050; display:flex; justify-content:center; align-items:center;';
         const modalDiv = document.createElement('div');
-        modalDiv.style.cssText = 'background:rgba(20,20,60,0.98); backdrop-filter:blur(10px); border-radius:20px; width:90%; max-width:1200px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; position:relative; border:1px solid #ffd700;';
+        modalDiv.style.cssText = 'background:rgba(20,20,60,0.98); backdrop-filter:blur(10px); border-radius:20px; width:90%; max-width:1200px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; position:relative; border:1px solid rgba(255,215,0,0.5);';
         modalDiv.innerHTML = `
             <div style="position:absolute; top:15px; right:20px; font-size:28px; cursor:pointer; color:#ffd700; z-index:10;">&times;</div>
             <div style="display:flex; flex:1; overflow:hidden; padding:20px; gap:20px;">
                 <div style="flex:2; overflow-y:auto; padding-right:10px;" id="modalMenu"></div>
                 <div style="width:320px; background:rgba(0,0,0,0.4); border-radius:20px; padding:15px; position:sticky; top:0; align-self:flex-start;">
-                    <h5>Корзина</h5>
+                    <h5 style="color:white;">Корзина</h5>
                     <div id="modalCart" style="min-height:150px;"></div>
-                    <div class="mt-2"><strong>Итого: <span id="modalTotal">0</span> ₽</strong></div>
+                    <div class="mt-2"><strong style="color:white;">Итого: <span id="modalTotal" style="color:#ffd700;">0</span> ₽</strong></div>
                     <div class="mt-3">
-                        <label>Количество гостей (макс. ${maxSeats})</label>
+                        <label style="color:white;">Количество гостей (макс. ${maxSeats})</label>
                         <input type="number" id="modalGuestCount" class="form-control" value="2" min="1" max="${maxSeats}" step="1" onkeydown="return false">
                     </div>
                     <button id="modalSubmitOrder" class="btn btn-warning w-100 mt-3">Оформить заказ</button>
@@ -287,7 +301,7 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
             const totalSpan = document.getElementById('modalTotal');
             if (!cartDiv) return;
             if (currentCart.length === 0) {
-                cartDiv.innerHTML = '<p class="text-center">Корзина пуста</p>';
+                cartDiv.innerHTML = '<p class="text-center" style="color:white;">Корзина пуста</p>';
                 if (totalSpan) totalSpan.innerText = '0';
                 return;
             }
@@ -297,9 +311,9 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
                 const item = currentCart[i];
                 total += item.price * item.qty;
                 html += `
-                    <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-1">
-                        <div>${item.name} x${item.qty}</div>
-                        <div>${item.price * item.qty} ₽ <button class="btn btn-sm btn-danger remove-item" data-index="${i}">✕</button></div>
+                    <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-1" style="border-color:rgba(255,255,255,0.2);">
+                        <div style="color:white;">${item.name} x${item.qty}</div>
+                        <div style="color:white;">${item.price * item.qty} ₽ <button class="btn btn-sm btn-danger remove-item" data-index="${i}" style="background:rgba(220,60,60,0.7); border:none; color:white; border-radius:30px; padding:2px 10px;">✕</button></div>
                     </div>
                 `;
             }
@@ -340,7 +354,10 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
             try {
                 const resp = await fetch('/api/orders/create/', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
                     body: JSON.stringify({ table_id: currentTableId, items, guest_count: guestCount })
                 });
                 const data = await resp.json();
