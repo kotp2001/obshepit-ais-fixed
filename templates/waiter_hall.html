@@ -166,7 +166,7 @@ async function loadOrders() {
     } catch (err) { console.error(err); }
 }
 
-// ========== ОПЛАТА (с проверкой URL) ==========
+// ========== ОПЛАТА ==========
 function openPaymentWindow(orderId) {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1050; display:flex; justify-content:center; align-items:center;';
@@ -195,11 +195,9 @@ function openPaymentWindow(orderId) {
         const csrfToken = getCSRFToken();
 
         // ВАЖНО: Укажите правильный URL для оплаты!
-        // Попробуйте один из вариантов, раскомментировав нужный.
-        // По умолчанию оставлен /api/orders/pay/ (как в оригинале).
+        // Если вы переименовали функцию в views.py на api_pay_order, используйте '/api/orders/pay/'
+        // Если оставили api_pay_fixed, используйте '/api/pay/fixed/'
         const paymentUrl = '/api/orders/pay/';   // <- ИЗМЕНИТЕ, ЕСЛИ НУЖНО
-        // const paymentUrl = '/api/pay/';
-        // const paymentUrl = '/api/orders/pay_order/';
 
         try {
             const response = await fetch(paymentUrl, {
