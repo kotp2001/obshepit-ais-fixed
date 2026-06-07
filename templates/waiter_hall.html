@@ -419,10 +419,10 @@ function openPayment(orderId) {
     currentOrderId = orderId;
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
     modal.show();
-    // Переопределяем обработчик кнопки, чтобы он не дублировался
-    const confirmBtn = document.getElementById('confirm-pay-btn');
-    const newBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+    // Пересоздаём кнопку, чтобы обработчик не дублировался
+    const oldBtn = document.getElementById('confirm-pay-btn');
+    const newBtn = oldBtn.cloneNode(true);
+    oldBtn.parentNode.replaceChild(newBtn, oldBtn);
     newBtn.id = 'confirm-pay-btn';
     newBtn.onclick = () => confirmPayment(orderId);
 }
@@ -445,7 +445,7 @@ async function confirmPayment(orderId) {
         }
     } catch(e) {
         console.error(e);
-        alert('Ошибка соединения с сервером. Проверьте, что бэкенд работает и функция оплаты доступна по адресу /api/pay-fixed/');
+        alert('Ошибка соединения с сервером. Проверьте, что бэкенд доступен по адресу /api/pay-fixed/ и функция помечена @csrf_exempt');
     }
 }
 
