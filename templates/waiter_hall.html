@@ -4,6 +4,7 @@
 {% block extra_css %}
 <style>
     /* Специфичные стили для зала (не трогают фон и плашки) */
+    /* Уменьшаем отступы для компактности */
     .container.py-4 {
         padding-top: 0.75rem !important;
         padding-bottom: 0.75rem !important;
@@ -27,12 +28,6 @@
         flex-direction: column;
         align-items: center;
         gap: 8px;
-    }
-    .table-card:hover {
-        transform: translateY(-6px);
-        border-color: #ffd700;
-        box-shadow: 0 20px 30px -8px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
-        background: rgba(20, 28, 55, 0.8);
     }
     .table-icon { font-size: 28px; color: #ffd700; }
     .table-number { font-size: 20px; font-weight: 700; color: white; }
@@ -67,10 +62,6 @@
         transition: 0.15s;
         border: 1px solid rgba(255,255,255,0.1);
     }
-    .dish-item:hover {
-        border-color: #ffd700;
-        background: rgba(50, 55, 95, 0.8);
-    }
     .cart-item {
         background: rgba(20, 25, 55, 0.6);
         border-radius: 12px;
@@ -89,13 +80,11 @@
         padding: 8px 16px;
         transition: 0.2s;
     }
-    .btn-gold:hover {
-        background: #ffed66;
-        transform: scale(1.02);
-    }
+    /* Для footer - уменьшаем отступ сверху */
     footer.footer, .footer {
         margin-top: 16px !important;
     }
+    /* Адаптив */
     @media (max-width: 900px) {
         .hall-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     }
@@ -430,45 +419,45 @@ async function submitOrder() {
     } catch(e) { alert('Ошибка сети: ' + e.message); }
 }
 
-// ========== ОПЛАТА (исправленная, с правильным URL) ==========
+// ОПЛАТА (Взято из 1-го файла для корректной работы)
 function openPayment(orderId) {
     currentOrderId = orderId;
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
     modal.show();
-    // Клонируем кнопку, чтобы избежать накопления обработчиков
-    const confirmBtn = document.getElementById('confirm-pay-btn');
-    const newBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+    // Убираем старый обработчик, чтобы не было дублей при повторном открытии
+    const btn = document.getElementById('confirm-pay-btn');
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
     newBtn.id = 'confirm-pay-btn';
     newBtn.onclick = () => confirmPayment(orderId);
 }
 
 async function confirmPayment(orderId) {
     const method = document.getElementById('payment-method').value;
-    console.log(`→ Отправка оплаты заказа #${orderId}, метод: ${method}`);
+    console.log(`Оплата заказа ${orderId}, метод ${method}`);
     try {
-        const resp = await fetch('/api/pay-fixed/', {   // ПРАВИЛЬНЫЙ URL (не /api/orders/pay/)
+        const resp = await fetch('/api/pay-fixed/', { // Рабочий эндпоинт из 1-го файла
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ order_id: orderId, payment_method: method })
         });
         const data = await resp.json();
-        console.log('← Ответ сервера:', data);
+        console.log('Ответ:', data);
         if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('paymentModal'))?.hide();
+            bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
             await showReceipt(orderId, method);
             await loadTables();
             alert('Оплата прошла успешно!');
         } else {
-            alert('Ошибка оплаты: ' + (data.error || 'неизвестная ошибка'));
+            alert('Ошибка оплаты: ' + data.error);
         }
     } catch(e) {
-        console.error('Ошибка при запросе оплаты:', e);
+        console.error(e);
         alert('Ошибка соединения: ' + e.message);
     }
 }
 
-// Чек
+// Чек (Оставлен красивый стиль из 2-го файла)
 async function showReceipt(orderId, forcedMethod) {
     try {
         const resp = await fetch(`/api/orders/receipt/${orderId}/`);
