@@ -549,3 +549,26 @@ def admin_backup_restore(request, filename):
     except Exception as e:
         return HttpResponse(f'Ошибка: {str(e)}', status=500)
     return redirect('/backup/')
+  @csrf_exempt
+def api_pay_fixed(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Метод не разрешён'})
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+        payment_method = data.get('payment_method')
+        if not order_id:
+            return JsonResponse({'success': False, 'error': 'Не указан ID заказа'})
+        order = Order.objects.get(id=order_id)
+        if order.status == 'paid':
+            return JsonResponse({'success': False, 'error': 'Заказ уже оплачен'})
+        order.status = 'paid'
+        order.payment_method = payment_method
+        order.save()
+        order.table.status = 'free'
+        order.table.save()
+        return JsonResponse({'success': True, 'order_id': order.id})
+    except Order.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Заказ не найден'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
