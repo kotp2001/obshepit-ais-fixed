@@ -17,6 +17,7 @@ def get_client_ip(request):
     return xff.split(',')[0].strip() if xff else request.META.get('REMOTE_ADDR', '127.0.0.1')
 
 def log_action(request, action, description=''):
+    """Запись в журнал действий"""
     try:
         user = request.user if request.user.is_authenticated else None
         ActionLog.objects.create(
@@ -85,6 +86,7 @@ def api_login(request):
         password = body.get('password', '').strip()
         ip       = get_client_ip(request)
 
+        # Проверка блокировки
         try:
             attempt = LoginAttempt.objects.get(username=username, ip_address=ip)
             if attempt.blocked_until and datetime.now() < attempt.blocked_until:
@@ -102,18 +104,22 @@ def api_login(request):
 
         if user is not None:
             login(request, user)
+            # Сброс счётчика при успехе
             if attempt:
                 attempt.attempts = 0
                 attempt.blocked_until = None
                 attempt.save()
+
             role = 'staff'
             if user.is_superuser:
                 role = 'admin'
             elif hasattr(user, 'profile') and user.profile.role:
                 role = user.profile.role
+
             log_action(request, 'login', f'Вход: {username} (роль: {role})')
             return JsonResponse({'success': True, 'role': role, 'username': user.username})
         else:
+            # Увеличиваем счётчик неудач
             MAX_ATTEMPTS = 5
             BLOCK_MINUTES = 15
             if attempt:
@@ -123,11 +129,13 @@ def api_login(request):
                 attempt.save()
             else:
                 LoginAttempt.objects.create(username=username, ip_address=ip, attempts=1)
+
             remaining_attempts = MAX_ATTEMPTS - (attempt.attempts if attempt else 1)
             msg = 'Неверный логин или пароль.'
             if remaining_attempts > 0:
                 msg += f' Осталось попыток: {remaining_attempts}'
             return JsonResponse({'success': False, 'error': msg})
+
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
@@ -218,19 +226,12 @@ def api_active_orders(request):
     for order in orders:
         items = [{'id': i.id, 'dish_name': i.dish.name, 'quantity': i.quantity, 'status': i.status}
                  for i in order.items.all()]
-        waiter_name = 'Не указан'
-        if order.waiter:
-            try:
-                waiter_name = order.waiter.first_name or order.waiter.username
-            except Exception:
-                waiter_name = order.waiter.username
         data.append({
             'id': order.id,
             'table_number': order.table.number,
-            'created_at': (order.created_at + timedelta(hours=0)).strftime('%H:%M') if order.created_at else '',
+            'created_at': order.created_at.strftime('%H:%M') if order.created_at else '',
             'status': order.status,
             'items': items,
-            'waiter_name': waiter_name,
         })
     return JsonResponse({'success': True, 'data': data})
 
@@ -281,45 +282,26 @@ def api_take_order(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
-# ========== ФУНКЦИЯ ОПЛАТЫ (ТОЛЬКО ОДНА, ИСПРАВЛЕННАЯ) ==========
 @csrf_exempt
-def api_pay_fixed(request):
-    """Оплата заказа – принимает POST: {order_id, payment_method}"""
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Only POST allowed'}, status=405)
+@require_http_methods(["POST"])
+def api_pay_order(request):
     try:
-        data = json.loads(request.body)
-        order_id = data.get('order_id')
-        payment_method = data.get('payment_method')
-        if not order_id:
-            return JsonResponse({'success': False, 'error': 'Не указан ID заказа'})
-
-        allowed_methods = ['cash', 'card', 'qr']
-        if payment_method not in allowed_methods:
-            return JsonResponse({'success': False, 'error': 'Неверный способ оплаты'}, status=400)
-
-        order = Order.objects.get(id=order_id)
-        if order.status == 'paid':
-            return JsonResponse({'success': False, 'error': 'Заказ уже оплачен'})
-
-        order.status = 'paid'
-        order.payment_method = payment_method
+        body   = json.loads(request.body)
+        order  = Order.objects.get(id=body.get('order_id'))
+        order.status         = 'paid'
+        order.payment_method = body.get('payment_method')
         order.save()
         order.table.status = 'free'
         order.table.save()
 
-        log_action(request, 'pay_order', f'Заказ #{order.id}, {order.payment_method}')
-        try:
-            generate_receipt_pdf(order)
-        except:
-            pass
+        # Генерация чека
+        generate_receipt_pdf(order)
 
-        return JsonResponse({'success': True, 'order_id': order.id})
-
-    except Order.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Заказ не найден'}, status=404)
+        log_action(request, 'pay_order',
+                   f'Заказ #{order.id}, {float(order.total_amount):.2f} руб., {order.payment_method}')
+        return JsonResponse({'success': True})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 @require_http_methods(["GET"])
 def api_order_receipt(request, order_id):
@@ -349,6 +331,7 @@ def api_order_receipt(request, order_id):
 
 @require_http_methods(["GET"])
 def download_receipt(request, receipt_id):
+    """Скачать чек"""
     try:
         receipt = Receipt.objects.get(id=receipt_id)
         if receipt.pdf_file:
@@ -444,6 +427,7 @@ def api_maintenance_logs_add(request):
 
 @require_http_methods(["GET"])
 def api_action_logs(request):
+    """Последние 50 действий для отображения в Admin"""
     logs = ActionLog.objects.select_related('user').order_by('-timestamp')[:50]
     data = [{
         'id': l.id,
@@ -455,10 +439,15 @@ def api_action_logs(request):
     } for l in logs]
     return JsonResponse({'success': True, 'data': data})
 
-# ── АВТО-БЭКАП ENDPOINT ─────────────────────────────────────────
+# ── АВТО-БЭКАП ENDPOINT (для cron-job.org) ──────────────────────
 
 @require_http_methods(["GET", "POST"])
 def auto_backup_trigger(request):
+    """
+    Endpoint для автоматического резервного копирования.
+    Вызывается внешним сервисом (cron-job.org) раз в сутки.
+    Защищён секретным ключом в GET-параметре: ?key=SECRET
+    """
     secret = os.environ.get('BACKUP_SECRET_KEY', 'obshepit-backup-2026')
     if request.GET.get('key') != secret:
         return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
@@ -471,6 +460,8 @@ def auto_backup_trigger(request):
 
         backup_dir = '/tmp/backups'
         os.makedirs(backup_dir, exist_ok=True)
+
+        # Удаляем копии старше 30 дней
         cutoff = datetime.now() - timedelta(days=30)
         for fname in os.listdir(backup_dir):
             fpath = os.path.join(backup_dir, fname)
@@ -490,10 +481,12 @@ def auto_backup_trigger(request):
         ], env=env, capture_output=True, text=True, timeout=60)
 
         if result.returncode == 0:
+            # Убираем psql-команды
             with open(backup_file, 'r', encoding='utf-8', errors='replace') as f:
                 lines = f.readlines()
             with open(backup_file, 'w', encoding='utf-8') as f:
                 f.writelines(l for l in lines if not l.startswith('\\'))
+
             log_action(request, 'create_backup', f'Авто-бэкап: auto_backup_{timestamp}.sql')
             return JsonResponse({'success': True, 'file': f'auto_backup_{timestamp}.sql'})
         else:
@@ -501,87 +494,35 @@ def auto_backup_trigger(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-# ── РАЗБЛОКИРОВКА И СМЕНА ПАРОЛЯ ────────────────────────────────
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def api_unblock_user(request):
-    try:
-        if not request.user.is_authenticated or not request.user.is_superuser:
-            return JsonResponse({'success': False, 'error': 'Нет прав'}, status=403)
-        body    = json.loads(request.body)
-        username = body.get('username', '').strip()
-        LoginAttempt.objects.filter(username=username).update(attempts=0, blocked_until=None)
-        log_action(request, 'other', f'Разблокирован пользователь: {username}')
-        return JsonResponse({'success': True, 'message': f'Пользователь {username} разблокирован'})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def api_change_password(request):
-    try:
-        body     = json.loads(request.body)
-        username = body.get('username', '').strip()
-        old_pass = body.get('old_password', '').strip()
-        new_pass = body.get('new_password', '').strip()
-
-        if len(new_pass) < 6:
-            return JsonResponse({'success': False, 'error': 'Пароль должен быть не менее 6 символов'})
-
-        from django.contrib.auth import authenticate
-        user = authenticate(request, username=username, password=old_pass)
-        if not user:
-            return JsonResponse({'success': False, 'error': 'Неверный текущий пароль'})
-
-        user.set_password(new_pass)
-        user.save()
-        from django.contrib.auth import update_session_auth_hash
-        update_session_auth_hash(request, user)
-        log_action(request, 'other', f'Смена пароля: {username}')
-        return JsonResponse({'success': True, 'message': 'Пароль успешно изменён'})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
-
-@require_http_methods(["GET"])
-def api_blocked_users(request):
-    if not request.user.is_authenticated or not request.user.is_superuser:
-        return JsonResponse({'success': False, 'error': 'Нет прав'}, status=403)
-    from datetime import datetime
-    now = datetime.now()
-    blocked = LoginAttempt.objects.filter(blocked_until__gt=now)
-    data = [{
-        'username': b.username,
-        'attempts': b.attempts,
-        'blocked_until': b.blocked_until.strftime('%H:%M:%S') if b.blocked_until else '',
-        'ip': b.ip_address or '',
-    } for b in blocked]
-    return JsonResponse({'success': True, 'data': data})
-
-# ── РЕЗЕРВНОЕ КОПИРОВАНИЕ (VIEWS) ───────────────────────────────
+# ── РЕЗЕРВНОЕ КОПИРОВАНИЕ ────────────────────────────────────────
 
 @login_required(login_url="/")
 def admin_backup(request):
     if not (request.user.is_staff or request.user.is_superuser):
         return redirect('/')
+
     backup_dir = '/tmp/backups'
     os.makedirs(backup_dir, exist_ok=True)
     message = None
     error   = None
+
     if request.method == 'POST':
         try:
             from django.conf import settings as djsettings
             db = djsettings.DATABASES['default']
             if 'HOST' not in db or not db.get('HOST'):
                 raise Exception('Настройки БД не найдены')
+
             timestamp   = datetime.now().strftime('%Y%m%d_%H%M%S')
             backup_file = os.path.join(backup_dir, f'backup_{timestamp}.sql')
             env = os.environ.copy()
             env['PGPASSWORD'] = db.get('PASSWORD', '')
+
             result = subprocess.run([
                 'pg_dump', '-h', db['HOST'], '-p', str(db.get('PORT') or '5432'),
                 '-U', db['USER'], '-d', db['NAME'], '-f', backup_file, '--no-password'
             ], env=env, capture_output=True, text=True, timeout=60)
+
             if result.returncode == 0:
                 with open(backup_file, 'r', encoding='utf-8', errors='replace') as f:
                     lines = f.readlines()
@@ -594,6 +535,7 @@ def admin_backup(request):
         except Exception as e:
             error = f'Ошибка: {str(e)}'
         return redirect('/backup/')
+
     backups = []
     for fname in sorted(os.listdir(backup_dir), reverse=True):
         fpath = os.path.join(backup_dir, fname)
