@@ -283,29 +283,7 @@ def api_take_order(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def api_pay_order(request):
-    try:
-        data = json.loads(request.body)
-        order = Order.objects.get(id=data.get('order_id'))
-        if order.status == 'paid':
-            return JsonResponse({'success': False, 'error': 'Заказ уже оплачен'})
-        order.status = 'paid'
-        order.payment_method = data.get('payment_method')
-        order.save()
-        order.table.status = 'free'
-        order.table.save()
-        try:
-            generate_receipt_pdf(order)
-        except:
-            pass
-        log_action(request, 'pay_order', f'Заказ #{order.id}, {float(order.total_amount):.2f} руб., {order.payment_method}')
-        return JsonResponse({'success': True})
-    except Order.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Заказ не найден'})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+
 
 @require_http_methods(["GET"])
 def api_order_receipt(request, order_id):
