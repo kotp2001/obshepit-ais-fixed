@@ -3,6 +3,49 @@
 
 {% block extra_css %}
 <style>
+    /* Ваш фон – звёздное небо (переопределяем фон base.html) */
+    body {
+        background: radial-gradient(ellipse at 30% 20%, #0a0f2a, #02030a) !important;
+        position: relative;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+    }
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        background-image: 
+            radial-gradient(2px 2px at 15% 30%, #fff, rgba(0,0,0,0)),
+            radial-gradient(3px 3px at 75% 45%, #ffeaa7, rgba(0,0,0,0)),
+            radial-gradient(1px 1px at 92% 18%, #fff, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 8% 85%, #ffd966, rgba(0,0,0,0)),
+            radial-gradient(1px 1px at 45% 95%, #fff, rgba(0,0,0,0)),
+            radial-gradient(3px 3px at 63% 22%, #f9f3d9, rgba(0,0,0,0)),
+            radial-gradient(1px 1px at 32% 68%, #fff, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 88% 77%, #ffd700, rgba(0,0,0,0)),
+            radial-gradient(1px 1px at 5% 55%, #fff, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 50% 12%, #ffecb3, rgba(0,0,0,0));
+        background-repeat: no-repeat;
+        background-size: 200px 200px, 300px 300px, 150px 150px, 250px 250px, 180px 180px, 220px 220px, 120px 120px, 280px 280px, 140px 140px, 260px 260px;
+        opacity: 0.8;
+        animation: starsGlow 4s infinite alternate;
+    }
+    @keyframes starsGlow {
+        0% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    /* Чтобы контент был поверх звёзд */
+    .card, .modal-content, #ready-orders-list > div {
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Остальные стили для зала (сетка 4 колонки, карточки и т.д.) */
     .hall-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
