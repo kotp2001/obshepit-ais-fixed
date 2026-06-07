@@ -1,0 +1,35 @@
+{% extends 'admin/base_site.html' %}
+{% block title %}Резервное копирование{% endblock %}
+{% block content %}
+<div style="padding: 20px;">
+    <h1 style="color: #ffd700;">Резервное копирование</h1>
+    
+    <div style="background: rgba(30,30,70,0.4); border-radius: 15px; padding: 20px; margin-bottom: 20px;">
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" style="background: #ffd700; color: #1a1a4a; border: none; border-radius: 20px; padding: 10px 20px;">Создать копию</button>
+        </form>
+    </div>
+    
+    <div style="background: rgba(30,30,70,0.4); border-radius: 15px; padding: 20px;">
+        <h2 style="color: #ffd700;">Список копий</h2>
+        <table style="width: 100%; color: white;">
+            <tr><th>Имя</th><th>Дата</th><th>Размер</th><th>Действия</th</tr>
+            {% for b in backups %}
+            <tr>
+                <td>{{ b.name }}</td>
+                <td>{{ b.date }}</td>
+                <td>{{ b.size }} KB</td>
+                <td>
+                    <a href="/backup-list/download/{{ b.name }}/" style="color: #ffd700;">Скачать</a>
+                    <a href="/backup-list/restore/{{ b.name }}/" style="color: #ffc107;" onclick="return confirm('Восстановить?')">Восстановить</a>
+                    <a href="/backup-list/delete/{{ b.name }}/" style="color: #ff6b6b;" onclick="return confirm('Удалить?')">Удалить</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">Нет копий</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endblock %}

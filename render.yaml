@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: obshepit-ais
+    runtime: image
+    repo: https://github.com/kotp2001/obshepit-ais
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: obshepit-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
