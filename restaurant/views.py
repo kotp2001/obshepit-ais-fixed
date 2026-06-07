@@ -284,22 +284,16 @@ def api_take_order(request):
 @require_http_methods(["POST"])
 def api_pay_order(request):
     try:
-        body   = json.loads(request.body)
-        order  = Order.objects.get(id=body.get('order_id'))
-        order.status         = 'paid'
-        order.payment_method = body.get('payment_method')
+        data = json.loads(request.body)
+        order = Order.objects.get(id=data.get('order_id'))
+        order.status = 'paid'
+        order.payment_method = data.get('payment_method')
         order.save()
         order.table.status = 'free'
         order.table.save()
-
-        # Генерация чека
-        generate_receipt_pdf(order)
-
-        log_action(request, 'pay_order',
-                   f'Заказ #{order.id}, {float(order.total_amount):.2f} руб., {order.payment_method}')
         return JsonResponse({'success': True})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        return JsonResponse({'success': False, 'error': str(e)})
 
 @require_http_methods(["GET"])
 def api_order_receipt(request, order_id):
