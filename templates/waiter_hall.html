@@ -3,105 +3,24 @@
 
 {% block extra_css %}
 <style>
-    /* Специфичные стили для зала – не дублируют фон и плашки */
-    .container.py-4 {
-        padding-top: 0.75rem !important;
-        padding-bottom: 0.75rem !important;
-    }
-    .hall-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        margin-bottom: 16px;
-    }
-    .table-card {
-        background: rgba(15, 20, 45, 0.65);
-        backdrop-filter: blur(4px);
-        border-radius: 20px;
-        padding: 16px 12px;
-        text-align: center;
-        transition: all 0.25s ease;
-        border: 1px solid rgba(255, 215, 0, 0.3);
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-    }
-    .table-card:hover {
-        transform: translateY(-6px);
-        border-color: #ffd700;
-        box-shadow: 0 20px 30px -8px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
-        background: rgba(20, 28, 55, 0.8);
-    }
+    .container.py-4 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+    .hall-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+    .table-card { background: rgba(15,20,45,0.65); backdrop-filter: blur(4px); border-radius: 20px; padding: 16px 12px; text-align: center; transition: all 0.25s ease; border: 1px solid rgba(255,215,0,0.3); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .table-card:hover { transform: translateY(-6px); border-color: #ffd700; box-shadow: 0 20px 30px -8px rgba(0,0,0,0.5), 0 0 15px rgba(255,215,0,0.3); background: rgba(20,28,55,0.8); }
     .table-icon { font-size: 28px; color: #ffd700; }
     .table-number { font-size: 20px; font-weight: 700; color: white; }
     .table-seats { font-size: 12px; color: rgba(255,255,255,0.6); }
-    .table-status {
-        font-size: 11px;
-        font-weight: 600;
-        padding: 3px 12px;
-        border-radius: 40px;
-        background: rgba(0,0,0,0.5);
-        border: 1px solid;
-        width: fit-content;
-    }
-    .orders-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 12px;
-        margin-top: 8px;
-    }
-    .order-card {
-        background: rgba(10, 12, 32, 0.7);
-        backdrop-filter: blur(4px);
-        border-radius: 16px;
-        padding: 12px;
-        border: 1px solid rgba(255,215,0,0.25);
-    }
-    .dish-item {
-        background: rgba(30, 35, 70, 0.7);
-        border-radius: 14px;
-        padding: 10px;
-        cursor: pointer;
-        transition: 0.15s;
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-    .dish-item:hover {
-        border-color: #ffd700;
-        background: rgba(50, 55, 95, 0.8);
-    }
-    .cart-item {
-        background: rgba(20, 25, 55, 0.6);
-        border-radius: 12px;
-        padding: 8px;
-        margin-bottom: 6px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .btn-gold {
-        background: #ffd700;
-        color: #0a0f2a;
-        font-weight: 700;
-        border: none;
-        border-radius: 40px;
-        padding: 8px 16px;
-        transition: 0.2s;
-    }
-    .btn-gold:hover {
-        background: #ffed66;
-        transform: scale(1.02);
-    }
-    footer.footer, .footer {
-        margin-top: 16px !important;
-    }
-    @media (max-width: 900px) {
-        .hall-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    }
-    @media (max-width: 500px) {
-        .hall-grid { grid-template-columns: 1fr; }
-    }
+    .table-status { font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 40px; background: rgba(0,0,0,0.5); border: 1px solid; width: fit-content; }
+    .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 8px; }
+    .order-card { background: rgba(10,12,32,0.7); backdrop-filter: blur(4px); border-radius: 16px; padding: 12px; border: 1px solid rgba(255,215,0,0.25); }
+    .dish-item { background: rgba(30,35,70,0.7); border-radius: 14px; padding: 10px; cursor: pointer; transition: 0.15s; border: 1px solid rgba(255,255,255,0.1); }
+    .dish-item:hover { border-color: #ffd700; background: rgba(50,55,95,0.8); }
+    .cart-item { background: rgba(20,25,55,0.6); border-radius: 12px; padding: 8px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .btn-gold { background: #ffd700; color: #0a0f2a; font-weight: 700; border: none; border-radius: 40px; padding: 8px 16px; transition: 0.2s; }
+    .btn-gold:hover { background: #ffed66; transform: scale(1.02); }
+    footer.footer, .footer { margin-top: 16px !important; }
+    @media (max-width: 900px) { .hall-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+    @media (max-width: 500px) { .hall-grid { grid-template-columns: 1fr; } }
 </style>
 {% endblock %}
 
@@ -115,7 +34,6 @@
     </button>
 </div>
 
-<!-- Сетка столов (4 колонки) -->
 <div id="hall-container" class="hall-grid">
     <div class="text-center" style="grid-column:1/-1; padding:30px;">
         <div class="spinner-border text-warning" role="status"></div>
@@ -123,7 +41,6 @@
     </div>
 </div>
 
-<!-- Блок активных заказов -->
 <div class="mt-3">
     <h5 style="color:#ffd700; margin-bottom: 12px; font-size: 1.25rem;"><i class="fas fa-bell me-2"></i>Блюда готовы / ожидают оплаты</h5>
     <div id="ready-orders-list" class="orders-grid">
@@ -131,10 +48,8 @@
     </div>
 </div>
 
-<!-- Контейнер для модального окна заказа -->
 <div id="order-modal-container"></div>
 
-<!-- Модальное окно оплаты -->
 <div class="modal fade" id="paymentModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -155,20 +70,13 @@
     </div>
 </div>
 
-<!-- КРАСИВЫЙ ТЁМНЫЙ ЧЕК (в стиле сайта) -->
 <div class="modal fade" id="receiptModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content" style="background: rgba(10, 12, 32, 0.95); backdrop-filter: blur(12px); border: 2px solid #ffd700; border-radius: 24px; color: #f0f0f0; font-family: 'Segoe UI', monospace;">
-            <div class="modal-header" style="border-bottom: 1px solid rgba(255,215,0,0.3);">
-                <h5 class="modal-title w-100 text-center" style="color:#ffd700;">🧾 ЧЕК ОПЛАТЫ</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="receipt-content" style="padding: 20px; text-align: center;">
-                <!-- содержимое чека будет вставлено через JS -->
-            </div>
-            <div class="modal-footer justify-content-center" style="border-top: 1px solid rgba(255,215,0,0.3);">
-                <button class="btn btn-gold btn-sm" onclick="window.print()">🖨️ Печать</button>
-                <button class="btn btn-outline-warning btn-sm" data-bs-dismiss="modal">Закрыть</button>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:white; color:#0a0f2a; border-radius: 24px; font-family: monospace;">
+            <div class="modal-body" id="receipt-content" style="padding:20px;"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button class="btn btn-warning" onclick="window.print()">🖨️ Печать</button>
             </div>
         </div>
     </div>
@@ -189,7 +97,6 @@ const STATUS = {
     'paid':    { label: 'Оплачен',   color: '#ffd700', bg: 'rgba(255,215,0,0.2)',   border: '#ffd700' },
 };
 
-// Загрузка столов
 async function loadTables() {
     try {
         const resp = await fetch('/api/tables/');
@@ -236,7 +143,6 @@ async function loadTables() {
     }
 }
 
-// Активные заказы
 async function loadActiveOrders() {
     try {
         const resp = await fetch('/api/orders/active/');
@@ -270,7 +176,6 @@ async function loadActiveOrders() {
     } catch(e) { console.error(e); }
 }
 
-// Открыть модалку заказа
 async function openOrderModal(tableId, tableNumber, tableSeats) {
     currentTableId = tableId;
     currentTableSeats = tableSeats || 8;
@@ -356,7 +261,6 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
     }
 }
 
-// Корзина
 function addToCart(id, name, price) {
     const existing = currentCart.find(i => i.id === id);
     if (existing) existing.qty++;
@@ -392,7 +296,6 @@ function updateCart() {
     if (totalEl) totalEl.innerText = total + ' ₽';
 }
 
-// Оформление заказа
 async function submitOrder() {
     if (!currentCart.length) { alert('Добавьте блюда в корзину'); return; }
     let guestCount = parseInt(document.getElementById('guest-count')?.value) || 1;
@@ -421,7 +324,6 @@ async function submitOrder() {
     } catch(e) { alert('Ошибка сети: ' + e.message); }
 }
 
-// Оплата
 function openPayment(orderId) {
     currentOrderId = orderId;
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
@@ -458,7 +360,6 @@ async function confirmPayment(orderId) {
     }
 }
 
-// КРАСИВЫЙ ТЁМНЫЙ ЧЕК
 async function showReceipt(orderId, forcedMethod) {
     try {
         const resp = await fetch(`/api/orders/receipt/${orderId}/`);
@@ -468,24 +369,22 @@ async function showReceipt(orderId, forcedMethod) {
         const payment = forcedMethod ? (labels[forcedMethod] || forcedMethod) : data.data.payment_method;
         const order = data.data;
         const itemsHtml = order.items.map(i => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:13px; border-bottom: 1px dashed rgba(255,215,0,0.3); padding-bottom:4px;">
-                <span>${i.name} x${i.quantity}</span><span style="color:#ffd700;">${i.total} ₽</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+                <span>${i.name} x${i.quantity}</span><span>${i.total} ₽</span>
             </div>
         `).join('');
         document.getElementById('receipt-content').innerHTML = `
-            <div style="margin-bottom: 12px;">
+            <div style="text-align:center; margin-bottom:12px;">
                 <div style="font-size:18px; font-weight:700;">АИС «Общепит»</div>
-                <div style="font-size:10px; opacity:0.7;">Чек № ${order.order_id}</div>
+                <div style="font-size:10px;">Чек № ${order.order_id}</div>
             </div>
             <div style="margin-bottom:8px; font-size:11px;">Стол ${order.table_number} | ${order.created_at}</div>
-            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 8px; margin: 10px 0;">
-                ${itemsHtml}
+            <div style="border-top:1px dashed #ccc; border-bottom:1px dashed #ccc; padding:6px 0; margin-bottom:8px;">${itemsHtml}</div>
+            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:16px; margin-bottom:6px;">
+                <span>ИТОГО:</span><span>${order.total} ₽</span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:16px; margin: 8px 0;">
-                <span>ИТОГО:</span><span style="color:#ffd700;">${order.total} ₽</span>
-            </div>
-            <div style="font-size:12px;">Оплата: ${payment}</div>
-            <div style="margin-top:12px; font-size:10px;">⭐ Спасибо за визит! ⭐</div>
+            <div style="font-size:11px;">Оплата: ${payment}</div>
+            <div style="text-align:center; margin-top:12px; font-size:10px;">Спасибо за визит!</div>
         `;
         new bootstrap.Modal(document.getElementById('receiptModal')).show();
     } catch(e) {
@@ -502,7 +401,6 @@ function addHours(timeStr, hours) {
     return String(h).padStart(2,'0') + ':' + parts[1];
 }
 
-// Запуск и автообновление
 loadTables();
 setInterval(loadTables, 30000);
 </script>
