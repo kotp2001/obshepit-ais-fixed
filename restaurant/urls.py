@@ -37,7 +37,6 @@ urlpatterns = [
     path('api/maintenance-logs/',       views.api_maintenance_logs,    name='api_maintenance_logs'),
     path('api/maintenance-logs/add/',   views.api_maintenance_logs_add,name='api_maintenance_logs_add'),
 
-
     # Разблокировка / смена пароля
     path('api/unblock-user/',    views.api_unblock_user,   name='api_unblock_user'),
     path('api/change-password/', views.api_change_password, name='api_change_password'),
@@ -51,11 +50,8 @@ urlpatterns = [
 
     # Авто-бэкап endpoint (для cron-job.org)
     path('api/auto-backup/', views.auto_backup_trigger, name='auto_backup_trigger'),
+
     # Экспорт Excel
     path('export/orders/',  export_orders_excel,  name='export_orders'),
     path('export/popular/', export_popular_excel,  name='export_popular'),
-     # ... другие ваши пути
-    path('api/orders/active/', views.active_orders, name='active_orders'),
-    path('api/orders/pay/', views.pay_order, name='pay_order'),
-    path('api/orders/receipt/<int:order_id>/', views.order_receipt, name='order_receipt'),
 ]
