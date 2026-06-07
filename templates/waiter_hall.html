@@ -87,6 +87,12 @@
 
 {% block extra_js %}
 <script>
+// Проверка наличия Bootstrap
+if (typeof bootstrap === 'undefined') {
+    console.error('Bootstrap не загружен!');
+    alert('Ошибка загрузки библиотек. Обновите страницу.');
+}
+
 let currentTableId = null;
 let currentTableSeats = 8;
 let currentCart = [];
@@ -100,18 +106,24 @@ const STATUS = {
 };
 
 // --------------------------------------------------------------
-//  Утилита: безопасное закрытие модалки и удаление backdrop
+//  Полное удаление всех backdrop (экстренная очистка)
 // --------------------------------------------------------------
-function safeHideModal(modalElementId) {
-    const modalEl = document.getElementById(modalElementId);
-    if (modalEl) {
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-    }
-    // Удаляем все backdrop вручную (на случай, если hide не сработал)
+function forceRemoveBackdrops() {
     document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
     document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
+}
+
+// --------------------------------------------------------------
+//  Безопасное закрытие модалки
+// --------------------------------------------------------------
+function safeHideModal(modalElementId) {
+    const modalEl = document.getElementById(modalElementId);
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+    }
+    forceRemoveBackdrops();
 }
 
 // --------------------------------------------------------------
@@ -273,20 +285,22 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
         container.innerHTML = modalHtml;
         updateCart();
         const modalEl = document.getElementById('orderModal');
-        const modal = new bootstrap.Modal(modalEl);
-        modalEl.addEventListener('click', e => {
-            const dishDiv = e.target.closest('.dish-item');
-            if (dishDiv) {
-                addToCart(parseInt(dishDiv.dataset.id), dishDiv.dataset.name, parseFloat(dishDiv.dataset.price));
-            }
-        });
-        modalEl.addEventListener('hidden.bs.modal', () => {
-            container.innerHTML = '';
-            // дополнительно убираем backdrop
-            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-            document.body.classList.remove('modal-open');
-        });
-        modal.show();
+        if (typeof bootstrap !== 'undefined') {
+            const modal = new bootstrap.Modal(modalEl);
+            modalEl.addEventListener('click', e => {
+                const dishDiv = e.target.closest('.dish-item');
+                if (dishDiv) {
+                    addToCart(parseInt(dishDiv.dataset.id), dishDiv.dataset.name, parseFloat(dishDiv.dataset.price));
+                }
+            });
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                container.innerHTML = '';
+                forceRemoveBackdrops();
+            });
+            modal.show();
+        } else {
+            alert('Ошибка: Bootstrap не загружен');
+        }
     } catch(err) {
         alert('Ошибка: ' + err.message);
         safeHideModal('orderModal');
@@ -294,7 +308,7 @@ async function openOrderModal(tableId, tableNumber, tableSeats) {
 }
 
 // --------------------------------------------------------------
-//  Корзина (уменьшение количества вместо полного удаления)
+//  Корзина (уменьшение количества)
 // --------------------------------------------------------------
 function addToCart(id, name, price) {
     const existing = currentCart.find(i => i.id === id);
@@ -371,13 +385,15 @@ async function submitOrder() {
 }
 
 // --------------------------------------------------------------
-//  ОПЛАТА (исправленная, через /api/pay-fixed/, с защитой от дублей)
+//  ОПЛАТА (через /api/pay-fixed/)
 // --------------------------------------------------------------
 function openPayment(orderId) {
     currentOrderId = orderId;
-    // Удаляем все backdrop перед открытием на всякий случай
-    document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-    document.body.classList.remove('modal-open');
+    forceRemoveBackdrops();  // чистим перед открытием
+    if (typeof bootstrap === 'undefined') {
+        alert('Ошибка загрузки Bootstrap');
+        return;
+    }
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
     modal.show();
     const oldBtn = document.getElementById('confirm-pay-btn');
@@ -414,7 +430,7 @@ async function confirmPayment(orderId) {
 }
 
 // --------------------------------------------------------------
-//  Чек (красивый, тёмная тема)
+//  Чек
 // --------------------------------------------------------------
 async function showReceipt(orderId, forcedMethod) {
     try {
@@ -442,8 +458,12 @@ async function showReceipt(orderId, forcedMethod) {
             <div style="font-size:11px;">Оплата: ${payment}</div>
             <div style="text-align:center; margin-top:12px; font-size:10px;">Спасибо за визит!</div>
         `;
-        const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
-        receiptModal.show();
+        if (typeof bootstrap !== 'undefined') {
+            const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
+            receiptModal.show();
+        } else {
+            alert('Чек: ' + document.getElementById('receipt-content').innerText);
+        }
     } catch(e) {
         console.error(e);
         alert('Не удалось загрузить чек, но оплата прошла.');
@@ -451,7 +471,7 @@ async function showReceipt(orderId, forcedMethod) {
 }
 
 // --------------------------------------------------------------
-//  Время (исправленная версия, парсит любую строку)
+//  Время
 // --------------------------------------------------------------
 function addHours(timeStr, hours) {
     if (!timeStr) return '';
