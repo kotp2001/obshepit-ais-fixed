@@ -174,6 +174,7 @@ let currentTableId = null;
 let currentTableSeats = 8;
 let currentCart = [];
 let currentOrderId = null;
+let isPaying = false; // флаг для предотвращения повторной оплаты
 
 const STATUS = {
     'new':     { label: 'Новый',     color: '#6ab0ff', bg: 'rgba(80,130,250,0.2)',  border: '#6ab0ff' },
@@ -419,13 +420,19 @@ function openPayment(orderId) {
     currentOrderId = orderId;
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
     modal.show();
-    document.getElementById('confirm-pay-btn').onclick = () => confirmPayment(orderId);
+    // Убираем старый обработчик и вешаем новый, чтобы избежать дублирования
+    const confirmBtn = document.getElementById('confirm-pay-btn');
+    const newBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+    newBtn.id = 'confirm-pay-btn';
+    newBtn.onclick = () => confirmPayment(orderId);
 }
 
 async function confirmPayment(orderId) {
+    if (isPaying) return;
+    isPaying = true;
     const method = document.getElementById('payment-method').value;
     try {
-        // Исправленный URL – используем /api/pay-fixed/
         const resp = await fetch('/api/pay-fixed/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -439,7 +446,12 @@ async function confirmPayment(orderId) {
         } else {
             alert('Ошибка оплаты: ' + data.error);
         }
-    } catch(e) { alert('Ошибка: ' + e.message); }
+    } catch(e) {
+        console.error(e);
+        alert('Ошибка соединения с сервером. Убедитесь, что сервер работает и функция оплаты помечена @csrf_exempt');
+    } finally {
+        isPaying = false;
+    }
 }
 
 async function showReceipt(orderId, forcedMethod) {
