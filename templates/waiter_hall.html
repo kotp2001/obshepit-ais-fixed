@@ -74,6 +74,7 @@ async function loadTables() {
         for (let t of data.data) {
             const free = t.status === 'free';
             const statusLabel = free ? 'Свободен' : (t.status === 'occupied' ? 'Занят' : 'Забронирован');
+            // Используем стили bootstrap с белым текстом
             const bgClass = free ? 'bg-success bg-opacity-25' : (t.status === 'occupied' ? 'bg-danger bg-opacity-25' : 'bg-warning bg-opacity-25');
             const borderClass = free ? 'border-success' : (t.status === 'occupied' ? 'border-danger' : 'border-warning');
             html += `
@@ -207,7 +208,7 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
             }
             menuHtml += `</div>`;
         }
-        // Создаём оверлей
+        // Создаём оверлей (чтобы не зависеть от Bootstrap модалок)
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1050; display:flex; justify-content:center; align-items:center;';
         const modalDiv = document.createElement('div');
@@ -237,6 +238,7 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
         modalDiv.querySelector('.close-modal').onclick = () => overlay.remove();
         modalDiv.querySelector('#modalCancel').onclick = () => overlay.remove();
 
+        // Корзина
         function renderCart() {
             const cartDiv = document.getElementById('modalCart');
             const totalSpan = document.getElementById('modalTotal');
@@ -288,6 +290,7 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
         attachAddHandlers();
         renderCart();
 
+        // Оформление заказа
         modalDiv.querySelector('#modalSubmitOrder').onclick = async () => {
             if (currentCart.length === 0) { alert('Добавьте блюда в корзину'); return; }
             const guestCount = parseInt(document.getElementById('modalGuestCount').value);
@@ -313,11 +316,16 @@ async function openOrderWindow(tableId, tableNumber, maxSeats) {
     }
 }
 
-// ==================== ОПЛАТА И ЧЕК ====================
+// ==================== ОПЛАТА И ЧЕК (ГЛАВНОЕ ИСПРАВЛЕНИЕ) ====================
 async function openPayment(orderId) {
     const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
     modal.show();
-    document.getElementById('confirmPayBtn').onclick = () => confirmPayment(orderId);
+    // Убираем старый обработчик, чтобы не накапливались
+    const confirmBtn = document.getElementById('confirmPayBtn');
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    newConfirmBtn.id = 'confirmPayBtn';
+    newConfirmBtn.onclick = () => confirmPayment(orderId);
 }
 
 async function confirmPayment(orderId) {
@@ -332,11 +340,13 @@ async function confirmPayment(orderId) {
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
             await showReceipt(orderId, method);
-            await loadTables();
+            await loadTables(); // обновляем столы и заказы
         } else {
             alert('Ошибка оплаты: ' + data.error);
         }
-    } catch (err) { alert('Ошибка: ' + err.message); }
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
 }
 
 async function showReceipt(orderId, forcedMethod) {
