@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django import forms
-from .models import Category, Dish, Table, Order, OrderItem, Booking, MaintenanceLog, Profile, LoginAttempt
+from .models import Category, Dish, Table, Order, OrderItem, MaintenanceLog, Profile
 
 # ========== ПРОФИЛЬ (INLINE) ==========
 class ProfileInline(admin.StackedInline):
@@ -107,27 +107,9 @@ class OrderItemAdmin(admin.ModelAdmin):
     list_display = ['order', 'dish', 'quantity', 'price', 'status']
     list_filter = ['status']
 
-# ========== БРОНИРОВАНИЯ ==========
-@admin.register(Booking)
-class BookingAdmin(admin.ModelAdmin):
-    list_display = ['guest_name', 'table', 'booking_date', 'booking_time', 'guests_count', 'status']
-    list_filter = ['status', 'booking_date']
-    search_fields = ['guest_name', 'guest_phone']
-
 # ========== ЖУРНАЛ ТО (без поля Подпись) ==========
 @admin.register(MaintenanceLog)
 class MaintenanceLogAdmin(admin.ModelAdmin):
     list_display = ['date', 'work_performed', 'performed_by', 'created_at']
     list_filter = ['date']
     search_fields = ['work_performed', 'performed_by']
-
-# ========== ЖУРНАЛ ПОПЫТОК ВХОДА (для разблокировки) ==========
-@admin.register(LoginAttempt)
-class LoginAttemptAdmin(admin.ModelAdmin):
-    list_display = ['username', 'ip_address', 'attempts', 'blocked_until']
-    actions = ['unblock_users']
-
-    def unblock_users(self, request, queryset):
-        updated = queryset.update(attempts=0, blocked_until=None)
-        self.message_user(request, f'Разблокировано {updated} пользователей.')
-    unblock_users.short_description = 'Снять блокировку (сбросить попытки)'
