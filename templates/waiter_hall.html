@@ -123,13 +123,12 @@
         border-color: rgba(255,255,255,0.2) !important;
     }
 
-    /* Стили для статусов блюд (у официанта) */
+    /* Стили для статусов блюд (для официанта) */
     .order-item-line {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 6px;
-        list-style: none;
     }
     .order-item-name {
         font-weight: normal;
@@ -140,13 +139,11 @@
         border-radius: 20px;
         font-size: 0.7rem;
         font-weight: 600;
-        background-color: #6c757d;
-        color: white;
         white-space: nowrap;
     }
-    .status-pending { background-color: #17a2b8; }
+    .status-pending { background-color: #17a2b8; color: white; }
     .status-cooking { background-color: #ffc107; color: black; }
-    .status-ready { background-color: #28a745; }
+    .status-ready { background-color: #28a745; color: white; }
 </style>
 
 <div class="card mb-4">
@@ -249,7 +246,7 @@ async function loadOrders() {
             
             let itemsList = '';
             if (order.items && order.items.length) {
-                itemsList = '<ul style="list-style: none; padding-left: 0; margin-bottom: 0;">';
+                itemsList = '<ul class="small mb-2" style="list-style: none; padding-left: 0;">';
                 for (let it of order.items) {
                     let statusClass = '';
                     let statusText = '';
