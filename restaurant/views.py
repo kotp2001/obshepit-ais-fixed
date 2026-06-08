@@ -65,33 +65,14 @@ def generate_receipt_pdf(order):
 
 # ── СТРАНИЦЫ ────────────────────────────────────────────────────
 
-def landing(request):
-    return render(request, 'landing.html')
-
-def admin_panel(request):
-    return render(request, 'admin_panel.html')
-
-def waiter_hall(request):
-    return render(request, 'waiter_hall.html')
-
-def kitchen_view(request):
-    return render(request, 'kitchen.html')
-
-def reports_view(request):
-    return render(request, 'reports.html')
-
-def help_page(request):
-    return render(request, 'help.html')
-
-def docs_page(request):
-    return render(request, 'docs.html')
-
-def maintenance_log_page(request):
-    return render(request, 'maintenance_log.html')
-
-def action_logs_view(request):
-    """Страница просмотра журнала действий"""
-    return render(request, 'action_logs.html')
+def landing(request):         return render(request, 'landing.html')
+def admin_panel(request):     return render(request, 'admin_panel.html')
+def waiter_hall(request):     return render(request, 'waiter_hall.html')
+def kitchen_view(request):    return render(request, 'kitchen.html')
+def reports_view(request):    return render(request, 'reports.html')
+def help_page(request):       return render(request, 'help.html')
+def docs_page(request):       return render(request, 'docs.html')
+def maintenance_log_page(request): return render(request, 'maintenance_log.html')
 
 # ── АВТОРИЗАЦИЯ ─────────────────────────────────────────────────
 
@@ -300,6 +281,7 @@ def api_take_order(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
+# ========== ФУНКЦИЯ ОПЛАТЫ (ЕДИНСТВЕННАЯ, ИСПРАВЛЕННАЯ) ==========
 @csrf_exempt
 def api_pay_fixed(request):
     """Оплата заказа – принимает POST: {order_id, payment_method}"""
@@ -333,6 +315,7 @@ def api_pay_fixed(request):
             pass
 
         return JsonResponse({'success': True, 'order_id': order.id})
+
     except Order.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Заказ не найден'}, status=404)
     except Exception as e:
@@ -564,6 +547,7 @@ def api_change_password(request):
 def api_blocked_users(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return JsonResponse({'success': False, 'error': 'Нет прав'}, status=403)
+    from datetime import datetime
     now = datetime.now()
     blocked = LoginAttempt.objects.filter(blocked_until__gt=now)
     data = [{
