@@ -104,28 +104,45 @@
     }
 
     /* ===== ВСЕ ЭЛЕМЕНТЫ КОРЗИНЫ — ТОЛЬКО БЕЛЫЙ ТЕКСТ ===== */
-    .text-muted,                /* "Нет активных заказов" */
-    #modalCart p,               /* "Корзина пуста" */
-    .cart-column label,         /* "Количество гостей (макс. …)" */
-    .cart-total,                /* "Итого:" */
-    #modalTotal,                /* сумма */
-    #modalGuestCount,           /* поле ввода количества гостей (цифры) */
-    #modalSubmitOrder,          /* кнопка "Оформить заказ" */
-    #modalCancel,               /* кнопка "Отмена" */
-    .cart-column h5,            /* заголовок "Корзина" */
-    .cart-column .form-control, /* всё поле ввода (фон тёмный, текст белый) */
+    .text-muted,
+    #modalCart p,
+    .cart-column label,
+    .cart-total,
+    #modalTotal,
+    #modalGuestCount,
+    #modalSubmitOrder,
+    #modalCancel,
+    .cart-column h5,
+    .cart-column .form-control,
     #modalGuestCount::placeholder {
         color: white !important;
     }
-    /* Дополнительно: фон поля ввода тёмный, чтобы белый текст читался */
     .cart-column .form-control,
     #modalGuestCount {
         background-color: rgba(50,50,100,0.8) !important;
         border-color: rgba(255,255,255,0.2) !important;
     }
-    /* Убираем внутренние тени и стрелки (опционально) */
-    #modalGuestCount {
-        color: white !important;
+
+    /* Стили для статусов блюд (для официанта) */
+    .order-item-status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+    .status-pending {
+        background-color: #17a2b8;
+        color: white;
+    }
+    .status-cooking {
+        background-color: #ffc107;
+        color: black;
+    }
+    .status-ready {
+        background-color: #28a745;
+        color: white;
     }
 </style>
 
@@ -226,14 +243,25 @@ async function loadOrders() {
             else if (order.status === 'cooking') statusBadge = '<span class="badge bg-warning text-dark">Готовится</span>';
             else if (order.status === 'ready') statusBadge = '<span class="badge bg-success">Готов</span>';
             else statusBadge = `<span class="badge bg-secondary">${order.status}</span>`;
+            
+            // Формируем список блюд со статусами
             let itemsList = '';
             if (order.items && order.items.length) {
                 itemsList = '<ul class="small mb-2">';
-                for (let it of order.items) itemsList += `<li>${it.dish_name} x${it.quantity}</li>`;
+                for (let it of order.items) {
+                    let statusClass = '';
+                    let statusText = '';
+                    if (it.status === 'pending') { statusClass = 'status-pending'; statusText = 'Ожидает'; }
+                    else if (it.status === 'cooking') { statusClass = 'status-cooking'; statusText = 'Готовится'; }
+                    else if (it.status === 'ready') { statusClass = 'status-ready'; statusText = 'Готов'; }
+                    else { statusClass = 'status-pending'; statusText = it.status; }
+                    itemsList += `<li>${it.dish_name} x${it.quantity} <span class="order-item-status ${statusClass}">${statusText}</span></li>`;
+                }
                 itemsList += '</ul>';
             } else {
                 itemsList = '<p class="small text-muted">Нет позиций</p>';
             }
+            
             const payButton = order.status === 'ready'
                 ? `<button class="btn btn-warning w-100 mt-2 pay-order-btn" data-order-id="${order.id}">Принять оплату</button>`
                 : '';
