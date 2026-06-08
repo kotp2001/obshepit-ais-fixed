@@ -89,29 +89,42 @@
     }
     .btn-submit {
         background: #e6c200;
-        color: #1a1a4a;
         border: none;
         border-radius: 30px;
         padding: 8px;
         font-weight: bold;
+        color: white !important;
     }
     .btn-cancel {
         background: #555;
-        color: white;
         border: none;
         border-radius: 30px;
         padding: 8px;
+        color: white !important;
     }
 
-    /* === ЕДИНСТВЕННЫЕ ИЗМЕНЕНИЯ: ТОЛЬКО БЕЛЫЙ ТЕКСТ ДЛЯ УКАЗАННЫХ ЭЛЕМЕНТОВ === */
-    .text-muted,          /* "Нет активных заказов" */
-    #modalCart p,         /* "Корзина пуста" */
-    .cart-column label,   /* "Количество гостей (макс. …)" */
-    .cart-total,          /* "Итого:" */
-    #modalTotal,          /* сумма */
-    #modalGuestCount,     /* поле ввода количества гостей */
-    #modalSubmitOrder,    /* кнопка "Оформить заказ" */
-    #modalCancel {        /* кнопка "Отмена" */
+    /* ===== ВСЕ ЭЛЕМЕНТЫ КОРЗИНЫ — ТОЛЬКО БЕЛЫЙ ТЕКСТ ===== */
+    .text-muted,                /* "Нет активных заказов" */
+    #modalCart p,               /* "Корзина пуста" */
+    .cart-column label,         /* "Количество гостей (макс. …)" */
+    .cart-total,                /* "Итого:" */
+    #modalTotal,                /* сумма */
+    #modalGuestCount,           /* поле ввода количества гостей (цифры) */
+    #modalSubmitOrder,          /* кнопка "Оформить заказ" */
+    #modalCancel,               /* кнопка "Отмена" */
+    .cart-column h5,            /* заголовок "Корзина" */
+    .cart-column .form-control, /* всё поле ввода (фон тёмный, текст белый) */
+    #modalGuestCount::placeholder {
+        color: white !important;
+    }
+    /* Дополнительно: фон поля ввода тёмный, чтобы белый текст читался */
+    .cart-column .form-control,
+    #modalGuestCount {
+        background-color: rgba(50,50,100,0.8) !important;
+        border-color: rgba(255,255,255,0.2) !important;
+    }
+    /* Убираем внутренние тени и стрелки (опционально) */
+    #modalGuestCount {
         color: white !important;
     }
 </style>
