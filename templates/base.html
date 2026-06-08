@@ -12,17 +12,16 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%);
             background-attachment: fixed;
             overflow-x: hidden;
-            /* Отступы для фиксированных шапки и подвала */
-            padding-top: 70px;      /* высота navbar */
-            padding-bottom: 100px;   /* высота footer */
+            padding-top: 70px;      /* высота фиксированной шапки */
+            padding-bottom: 100px;   /* высота фиксированного подвала */
         }
-        
+
         /* Фиксированная шапка */
         .navbar {
             position: fixed;
@@ -35,7 +34,13 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
             z-index: 1030;
         }
-        
+
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         /* Фиксированный подвал */
         .footer {
             position: fixed;
@@ -46,29 +51,25 @@
             backdrop-filter: blur(10px);
             padding: 15px;
             text-align: center;
-            color: #ffd700;
-            font-size: 13px;
             border-top: 1px solid rgba(255,255,255,0.1);
             z-index: 1030;
         }
-        
-        /* Контейнер для контента – отступы уже заданы на body */
-        .container {
-            position: relative;
-            z-index: 1;
+
+        .footer a {
+            color: #ffd700 !important;
+            text-decoration: none;
         }
-        
-        /* Остальные стили (карточки, кнопки, формы) остаются без изменений */
-        .navbar-brand {
-            display: none; /* полностью скрываем старый бренд */
+
+        .footer a:hover {
+            text-decoration: underline;
         }
-        
-        .navbar .container {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
+
+        .footer p {
+            color: #ffd700;
+            margin-bottom: 0;
         }
-        
+
+        /* Кнопки навигации */
         .btn-logout {
             background: #dc3545;
             color: white;
@@ -78,18 +79,17 @@
             font-size: 14px;
             cursor: pointer;
             transition: transform 0.1s ease;
-            margin-left: 10px;
         }
-        
+
         .btn-logout:hover {
             background: #c82333;
             transform: translateY(-1px);
         }
-        
+
         .btn-logout:active {
             transform: translateY(1px);
         }
-        
+
         .main-menu-btn {
             background: #ffd700;
             color: #1a1a4a;
@@ -99,18 +99,17 @@
             font-weight: bold;
             font-size: 14px;
             transition: all 0.1s ease;
-            margin-right: 10px;
             display: inline-block;
         }
-        
+
         .main-menu-btn:hover {
             background: #e6c200;
             transform: translateY(-1px);
             color: #1a1a4a;
             text-decoration: none;
         }
-        
-        /* Остальные стили (карточки, кнопки, формы) – копируем из вашего предыдущего base.html */
+
+        /* Общие стили для карточек, кнопок, форм */
         .card {
             background: rgba(30,30,70,0.6);
             backdrop-filter: blur(10px);
@@ -118,19 +117,19 @@
             border-radius: 15px;
             overflow: hidden;
         }
-        
+
         .card-header {
             background: rgba(20,20,50,0.8);
             border-bottom: 1px solid rgba(255,255,255,0.1);
             color: white;
             padding: 15px 20px;
         }
-        
+
         .card-body {
             color: white;
             padding: 20px;
         }
-        
+
         .btn {
             border-radius: 25px;
             padding: 8px 20px;
@@ -139,56 +138,56 @@
             border: none;
             cursor: pointer;
         }
-        
+
         .btn:active {
             transform: scale(0.97);
         }
-        
+
         .btn-warning {
             background: #ffd700;
             color: #1a1a4a;
         }
-        
+
         .btn-warning:hover {
             background: #e6c200;
             transform: translateY(-1px);
         }
-        
+
         .btn-primary {
             background: #1a1a4a;
             color: white;
         }
-        
+
         .btn-primary:hover {
             background: #2a2a5a;
             transform: translateY(-1px);
         }
-        
+
         .btn-success {
             background: #2a5a2a;
             color: white;
         }
-        
+
         .btn-success:hover {
             background: #3a6a3a;
             transform: translateY(-1px);
         }
-        
+
         .btn-danger {
             background: #dc3545;
             color: white;
         }
-        
+
         .btn-danger:hover {
             background: #c82333;
             transform: translateY(-1px);
         }
-        
+
         .btn-secondary {
             background: rgba(100,100,140,0.8);
             color: white;
         }
-        
+
         .form-control {
             background: rgba(50,50,100,0.8);
             border: 1px solid rgba(255,255,255,0.2);
@@ -196,7 +195,7 @@
             border-radius: 25px;
             padding: 10px 15px;
         }
-        
+
         .form-control:focus {
             background: rgba(60,60,110,0.9);
             border-color: #ffd700;
@@ -204,48 +203,48 @@
             outline: none;
             box-shadow: 0 0 5px rgba(255,215,0,0.3);
         }
-        
+
         .modal-content {
             background: rgba(20,20,60,0.95) !important;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,215,0,0.3);
         }
-        
+
         .modal-header {
             border-bottom: 1px solid rgba(255,255,255,0.2);
         }
-        
+
         .modal-body {
             color: white;
         }
-        
+
         .modal-body .form-label {
             color: white;
         }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         .fade-in {
             animation: fadeIn 0.4s ease forwards;
         }
-        
+
         ::-webkit-scrollbar {
             width: 8px;
         }
-        
+
         ::-webkit-scrollbar-track {
             background: rgba(30,30,70,0.5);
             border-radius: 10px;
         }
-        
+
         ::-webkit-scrollbar-thumb {
             background: #ffd700;
             border-radius: 10px;
         }
-        
+
         /* Звёздное небо (фиксированное) */
         .stars {
             position: fixed;
@@ -256,7 +255,7 @@
             pointer-events: none;
             z-index: 0;
         }
-        
+
         .star {
             position: absolute;
             background: white;
@@ -264,7 +263,7 @@
             opacity: 0;
             animation: twinkle 3s ease-in-out infinite;
         }
-        
+
         @keyframes twinkle {
             0%, 100% { opacity: 0; transform: scale(1); }
             50% { opacity: 1; transform: scale(1.2); }
@@ -274,13 +273,11 @@
 </head>
 <body>
     <div class="stars" id="stars"></div>
-    
+
     <nav class="navbar">
         <div class="container">
-            <div>
-                <a href="/admin-panel/" id="mainMenuBtn" class="main-menu-btn" style="display: none;">Главное меню</a>
-                <button class="btn-logout" onclick="logout()" id="logout-btn" style="display: none;">Выйти</button>
-            </div>
+            <a href="/admin-panel/" id="mainMenuBtn" class="main-menu-btn" style="display: none;">Главное меню</a>
+            <button class="btn-logout" onclick="logout()" id="logout-btn" style="display: none;">Выйти</button>
         </div>
     </nav>
 
@@ -292,8 +289,8 @@
         <div class="container">
             <p class="mb-0">АИС "Общепит", курсовой проект, Дубровин К.С., гр. ИС-61</p>
             <p class="mb-0 mt-1" style="font-size: 11px;">
-                <a href="/help/">Руководство пользователя</a> | 
-                <a href="/docs/">Регламенты</a> | 
+                <a href="/help/">Руководство пользователя</a> |
+                <a href="/docs/">Регламенты</a> |
                 <a href="/maintenance-log/">Журнал ТО</a> |
                 <a href="https://forms.yandex.ru/u/69f11c7990fa7b3c1459172e" target="_blank">Обратная связь</a>
             </p>
@@ -317,14 +314,13 @@
             }
         }
         createStars();
-        
+
         function checkAuth() {
             const role = localStorage.getItem('user_role');
             const logoutBtn = document.getElementById('logout-btn');
             const mainMenuBtn = document.getElementById('mainMenuBtn');
             if (role) {
                 logoutBtn.style.display = 'block';
-                // Показываем кнопку "Главное меню" только для администратора
                 if (role === 'admin') {
                     mainMenuBtn.style.display = 'inline-block';
                 } else {
@@ -332,13 +328,13 @@
                 }
             }
         }
-        
+
         function logout() {
             localStorage.removeItem('user_role');
             localStorage.removeItem('user_name');
             window.location.href = '/';
         }
-        
+
         checkAuth();
     </script>
     {% block extra_js %}{% endblock %}
