@@ -39,11 +39,10 @@
                             <th>Дата</th>
                             <th>Проведенная работа</th>
                             <th>Выполнил</th>
-                            <th>Подпись</th>
                         </tr>
                     </thead>
                     <tbody id="log-table-body">
-                        <tr><td colspan="4" class="text-center">Загрузка...</td></tr>
+                        <tr><td colspan="3" class="text-center">Загрузка...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -59,20 +58,19 @@
             if (data.success) {
                 const tbody = document.getElementById('log-table-body');
                 if (data.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-center">Нет записей</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="3" class="text-center">Нет записей</td></tr>';
                 } else {
                     tbody.innerHTML = data.data.map(log => `
                         <tr>
                             <td>${log.date}</td>
                             <td>${log.work_performed}</td>
                             <td>${log.performed_by}</td>
-                            <td>${log.signature || '—'}</td>
                         </tr>
                     `).join('');
                 }
             }
         } catch (error) {
-            document.getElementById('log-table-body').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Ошибка загрузки</td></tr>';
+            document.getElementById('log-table-body').innerHTML = '<tr><td colspan="3" class="text-center text-danger">Ошибка загрузки</td></tr>';
         }
     }
     

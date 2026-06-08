@@ -36,8 +36,8 @@
         background: rgba(60,60,110,0.6);
     }
     .btn-add {
-        background: #28a745;
-        color: white;
+        background: #3d6b4f;
+        color: #eafff0;
         padding: 8px 20px;
         border-radius: 25px;
         text-decoration: none;
@@ -46,7 +46,7 @@
         transition: 0.1s ease;
     }
     .btn-add:hover {
-        background: #218838;
+        background: #4a8060;
         transform: translateY(-1px);
         color: white;
     }
@@ -264,11 +264,6 @@
         for (let cb of checkboxes) cb.checked = this.checked;
     });
 
-    // Сворачивание фильтра при загрузке
-    
-    
-    });
-
     // ── Фильтр: свернуть/развернуть ──
     document.addEventListener('DOMContentLoaded', function() {
         var fb = document.getElementById('changelist-filter');
@@ -282,6 +277,5 @@
             });
         });
     });
-
     </script>
 {% endblock %}

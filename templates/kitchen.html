@@ -54,6 +54,7 @@
                                         <span class="badge bg-light text-dark">Стол ${order.table_number}</span>
                                     </div>
                                     <small style="color: white;">Создан: ${addHours(order.created_at, 2)}</small>
+                                    <small style="color: rgba(255,255,255,0.7); display:block;">Официант: ${order.waiter_name || 'Не указан'}${order.waiter_role ? ' (' + order.waiter_role + ')' : ''}</small>
                                 </div>
                                 <div class="card-body">
                                     <ul class="list-group list-group-flush" style="background: transparent;">

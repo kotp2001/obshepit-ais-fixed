@@ -127,7 +127,8 @@ class OrderAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     inlines        = [OrderItemInline]
     readonly_fields = []
-    fields         = ['table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method', 'guest_count']
+    # Сумма не редактируется вручную — считается автоматически по позициям заказа
+    fields         = ['table', 'waiter', 'created_at', 'status', 'payment_method', 'guest_count']
 
     def get_changeform_initial_data(self, request):
         from datetime import datetime
@@ -144,6 +145,15 @@ class OrderAdmin(admin.ModelAdmin):
         if not obj.waiter_id:
             obj.waiter = request.user
         super().save_model(request, obj, form, change)
+
+    def save_related(self, request, form, formsets, change):
+        """После сохранения позиций пересчитываем сумму заказа автоматически."""
+        super().save_related(request, form, formsets, change)
+        order = form.instance
+        total = sum((i.price or 0) * (i.quantity or 0) for i in order.items.all())
+        if order.total_amount != total:
+            order.total_amount = total
+            order.save(update_fields=['total_amount'])
 
 
 # ===== ПОЗИЦИИ ЗАКАЗА (отдельно) =====
@@ -210,8 +220,20 @@ class ReceiptAdmin(admin.ModelAdmin):
 # ===== ПОПЫТКИ ВХОДА =====
 @admin.register(LoginAttempt)
 class LoginAttemptAdmin(admin.ModelAdmin):
-    list_display  = ['username', 'ip_address', 'attempts', 'blocked_until', 'last_attempt']
+    list_display  = ['username', 'ip_address', 'attempts', 'blocked_until', 'last_attempt', 'is_blocked']
     list_filter   = ['last_attempt']
     search_fields = ['username', 'ip_address']
     readonly_fields = ['username', 'ip_address', 'last_attempt']
     ordering      = ['-last_attempt']
+    actions       = ['unblock_users']
+
+    def is_blocked(self, obj):
+        from django.utils import timezone
+        return bool(obj.blocked_until and obj.blocked_until > timezone.now())
+    is_blocked.boolean = True
+    is_blocked.short_description = 'Заблокирован'
+
+    @admin.action(description='Снять блокировку (сбросить 15-минутное ожидание)')
+    def unblock_users(self, request, queryset):
+        updated = queryset.update(attempts=0, blocked_until=None)
+        self.message_user(request, f'Разблокировано пользователей: {updated}.')

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class Category(models.Model):
     name  = models.CharField(max_length=100, verbose_name='Название')
@@ -56,7 +57,7 @@ class Order(models.Model):
 
     table          = models.ForeignKey(Table, on_delete=models.CASCADE, related_name='orders', verbose_name='Стол')
     waiter         = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Официант')
-    created_at     = models.DateTimeField(verbose_name='Создан', blank=True, null=True)
+    created_at     = models.DateTimeField(default=timezone.now, verbose_name='Создан', blank=True)
     updated_at     = models.DateTimeField(auto_now=True, verbose_name='Обновлён')
     status         = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new', verbose_name='Статус')
     total_amount   = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Сумма')

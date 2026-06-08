@@ -1,41 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Вход в систему
-<!-- Модал смены пароля -->
-<div class="modal fade" id="changePasswordModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="background:rgba(15,15,50,0.98);border:1px solid rgba(255,215,0,0.3);border-radius:16px;">
-            <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                <h5 style="color:#ffd700;margin:0;"><i class="fas fa-key me-2"></i>Смена пароля</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" style="padding:24px;">
-                <div id="cp-error" style="display:none;color:#f87171;background:rgba(220,60,60,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;"></div>
-                <div id="cp-success" style="display:none;color:#5de8a0;background:rgba(40,180,100,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;"></div>
-                <div class="mb-3">
-                    <label style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:6px;display:block;">Логин</label>
-                    <input type="text" id="cp-username" class="form-control" placeholder="Ваш логин"
-                        style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;">
-                </div>
-                <div class="mb-3">
-                    <label style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:6px;display:block;">Текущий пароль</label>
-                    <input type="password" id="cp-old" class="form-control" placeholder="Текущий пароль"
-                        style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;">
-                </div>
-                <div class="mb-4">
-                    <label style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:6px;display:block;">Новый пароль</label>
-                    <input type="password" id="cp-new" class="form-control" placeholder="Не менее 6 символов"
-                        style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;">
-                </div>
-                <button onclick="doChangePassword()" class="btn w-100"
-                    style="background:#ffd700;color:#1a1a4a;font-weight:700;border-radius:12px;padding:10px;">
-                    <i class="fas fa-save me-2"></i>Сохранить новый пароль
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-{% endblock %}
+{% block title %}Вход в систему{% endblock %}
 {% block content %}
 <div class="fade-in">
     <div class="row justify-content-center">
@@ -63,7 +27,45 @@
                         <input type="password" id="login-password" class="form-control" placeholder="Введите пароль">
                     </div>
                     <button class="btn btn-warning w-100" onclick="employeeLogin()" style="background: #ffd700; color: #1a1a4a;">Войти</button>
+                    <div class="text-center mt-3">
+                        <a href="#" onclick="openChangePassword();return false;" style="color:#ffd700;text-decoration:none;font-size:14px;">Сменить пароль</a>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно смены пароля -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:rgba(15,15,50,0.98);border:1px solid rgba(255,215,0,0.3);border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                <h5 style="color:#ffd700;margin:0;">Смена пароля</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:24px;">
+                <div id="cp-error" style="display:none;color:#f87171;background:rgba(220,60,60,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;"></div>
+                <div id="cp-success" style="display:none;color:#5de8a0;background:rgba(40,180,100,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;"></div>
+                <div class="mb-3">
+                    <label style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:6px;display:block;">Логин</label>
+                    <input type="text" id="cp-username" class="form-control" placeholder="Ваш логин"
+                        style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;">
+                </div>
+                <div class="mb-3">
+                    <label style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:6px;display:block;">Текущий пароль</label>
+                    <input type="password" id="cp-old" class="form-control" placeholder="Текущий пароль"
+                        style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;">
+                </div>
+                <div class="mb-4">
+                    <label style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:6px;display:block;">Новый пароль</label>
+                    <input type="password" id="cp-new" class="form-control" placeholder="Не менее 6 символов"
+                        style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;">
+                </div>
+                <button onclick="doChangePassword()" class="btn w-100"
+                    style="background:#ffd700;color:#1a1a4a;font-weight:700;border-radius:12px;padding:10px;">
+                    Сохранить новый пароль
+                </button>
             </div>
         </div>
     </div>
@@ -114,6 +116,52 @@
         setTimeout(() => {
             errorDiv.style.display = 'none';
         }, 3000);
+    }
+
+    let cpModal = null;
+    function openChangePassword() {
+        document.getElementById('cp-error').style.display = 'none';
+        document.getElementById('cp-success').style.display = 'none';
+        const uname = document.getElementById('login-username').value;
+        if (uname) document.getElementById('cp-username').value = uname;
+        cpModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+        cpModal.show();
+    }
+
+    async function doChangePassword() {
+        const username = document.getElementById('cp-username').value.trim();
+        const oldPass  = document.getElementById('cp-old').value.trim();
+        const newPass  = document.getElementById('cp-new').value.trim();
+        const errBox   = document.getElementById('cp-error');
+        const okBox    = document.getElementById('cp-success');
+        errBox.style.display = 'none';
+        okBox.style.display = 'none';
+
+        if (!username || !oldPass || !newPass) {
+            errBox.innerText = 'Заполните все поля';
+            errBox.style.display = 'block';
+            return;
+        }
+        try {
+            const resp = await fetch('/api/change-password/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: username, old_password: oldPass, new_password: newPass})
+            });
+            const data = await resp.json();
+            if (data.success) {
+                okBox.innerText = data.message || 'Пароль успешно изменён';
+                okBox.style.display = 'block';
+                document.getElementById('cp-old').value = '';
+                document.getElementById('cp-new').value = '';
+            } else {
+                errBox.innerText = data.error || 'Не удалось сменить пароль';
+                errBox.style.display = 'block';
+            }
+        } catch (e) {
+            errBox.innerText = 'Ошибка соединения с сервером';
+            errBox.style.display = 'block';
+        }
     }
 </script>
 {% endblock %}

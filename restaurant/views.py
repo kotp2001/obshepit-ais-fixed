@@ -187,6 +187,9 @@ def api_create_order(request):
             current_time = datetime.now()
 
         order = Order(table=table, status='new', guest_count=guest_count, created_at=current_time)
+        # Привязываем заказ к текущему сотруднику (официант/администратор)
+        if request.user.is_authenticated:
+            order.waiter = request.user
         order.save()
 
         total = Decimal('0')
@@ -218,12 +221,20 @@ def api_active_orders(request):
     for order in orders:
         items = [{'id': i.id, 'dish_name': i.dish.name, 'quantity': i.quantity, 'status': i.status}
                  for i in order.items.all()]
+        # Имя и роль сотрудника, оформившего заказ
         waiter_name = 'Не указан'
+        waiter_role = ''
         if order.waiter:
             try:
-                role = order.waiter.profile.role
-                fn = order.waiter.first_name or order.waiter.username
-                waiter_name = fn
+                if order.waiter.is_superuser:
+                    waiter_name = 'admin'
+                    waiter_role = 'Администратор'
+                else:
+                    waiter_name = order.waiter.first_name or order.waiter.username
+                    try:
+                        waiter_role = order.waiter.profile.get_role_display()
+                    except Exception:
+                        waiter_role = ''
             except Exception:
                 waiter_name = order.waiter.username
         data.append({
@@ -233,6 +244,7 @@ def api_active_orders(request):
             'status': order.status,
             'items': items,
             'waiter_name': waiter_name,
+            'waiter_role': waiter_role,
         })
     return JsonResponse({'success': True, 'data': data})
 

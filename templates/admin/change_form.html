@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 {% load i18n admin_urls static admin_modify %}
 
-{% block title %}{% if add %}Добавление{% else %}Редактирование{% endif %} {{ opts.verbose_name }} | АИС Общепит
+{% block title %}{% if add %}Добавление{% else %}Редактирование{% endif %} {{ opts.verbose_name }} | АИС Общепит{% endblock %}
+
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Автопересчёт суммы заказа
@@ -26,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     recalcTotal();
 
-    // Скрываем поля комментариев и подписи
+    // Скрываем поля комментариев и подписи (везде убираем комментарии)
     document.querySelectorAll('.field-comment, .field-signature').forEach(function(el) {
         var row = el.closest('.form-row') || el.closest('td') || el.closest('th');
         if (row) row.style.display = 'none';
@@ -35,7 +37,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var inner = cell.querySelector('[name*="-comment"], [name*="-signature"]');
         if (inner) {
             cell.style.display = 'none';
-            // Скрываем заголовок той же колонки
             var table = cell.closest('table');
             if (table) {
                 var idx = Array.from(cell.parentNode.children).indexOf(cell);
@@ -46,33 +47,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-<style>
-.admin-change-form input[type="text"],
-.admin-change-form input[type="number"],
-.admin-change-form input[type="email"],
-.admin-change-form input[type="url"],
-.admin-change-form input[type="date"],
-.admin-change-form input[type="time"],
-.admin-change-form textarea {
-    background: #ffffff !important;
-    color: #0a0a2a !important;
-    border: 1px solid rgba(255,215,0,0.4) !important;
-    border-radius: 10px !important;
-    padding: 8px 12px !important;
-}
-.inline-group input[type="text"],
-.inline-group input[type="number"] {
-    background: #ffffff !important;
-    color: #0a0a2a !important;
-    border: 1px solid rgba(255,215,0,0.3) !important;
-    border-radius: 6px !important;
-    padding: 4px 8px !important;
-}
-</style>
 {% endblock %}
 
 {% block extra_css %}
 <style>
+    .admin-change-form input[type="text"],
+    .admin-change-form input[type="number"],
+    .admin-change-form input[type="email"],
+    .admin-change-form input[type="url"],
+    .admin-change-form input[type="date"],
+    .admin-change-form input[type="time"],
+    .admin-change-form textarea {
+        background: #ffffff !important;
+        color: #0a0a2a !important;
+        border: 1px solid rgba(255,215,0,0.4) !important;
+        border-radius: 10px !important;
+        padding: 8px 12px !important;
+    }
+    .inline-group input[type="text"],
+    .inline-group input[type="number"] {
+        background: #ffffff !important;
+        color: #0a0a2a !important;
+        border: 1px solid rgba(255,215,0,0.3) !important;
+        border-radius: 6px !important;
+        padding: 4px 8px !important;
+    }
     .admin-change-form {
         background: rgba(30,30,70,0.4);
         backdrop-filter: blur(10px);

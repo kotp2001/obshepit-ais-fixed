@@ -304,8 +304,8 @@
                 '<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(240,70,70,0.1);border:1px solid rgba(240,70,70,0.3);border-radius:10px;padding:10px 16px;margin-bottom:8px;">' +
                 '<div><span style="color:#f87171;font-weight:600;">' + u.username + '</span>' +
                 '<span style="color:rgba(255,255,255,0.5);font-size:12px;margin-left:12px;">Попыток: ' + u.attempts + ' | До: ' + u.blocked_until + '</span></div>' +
-                '<button onclick="unblockUser('' + u.username + '')" style="background:#ffd700;color:#1a1a4a;border:none;border-radius:10px;padding:5px 14px;font-weight:700;font-size:12px;cursor:pointer;">' +
-                '<i class="fas fa-unlock me-1"></i>Разблокировать</button>' +
+                '<button onclick="unblockUser(\'' + u.username + '\')" style="background:#ffd700;color:#1a1a4a;border:none;border-radius:10px;padding:5px 14px;font-weight:700;font-size:12px;cursor:pointer;">' +
+                'Разблокировать</button>' +
                 '</div>'
             ).join('');
         } catch(e) { console.error(e); }
