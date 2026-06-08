@@ -13,60 +13,60 @@
             box-sizing: border-box;
         }
         
-        html, body {
-            height: 100%;
-        }
-        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%);
-            background-attachment: fixed;  /* <-- главное изменение: фон фиксирован и не обрывается */
-            position: relative;
+            background-attachment: fixed;
             overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
+            /* Отступы для фиксированных шапки и подвала */
+            padding-top: 70px;      /* высота navbar */
+            padding-bottom: 100px;   /* высота footer */
         }
         
-        .stars {
+        /* Фиксированная шапка */
+        .navbar {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-        }
-        
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            opacity: 0;
-            animation: twinkle 3s ease-in-out infinite;
-        }
-        
-        @keyframes twinkle {
-            0%, 100% { opacity: 0; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.2); }
-        }
-        
-        .container {
-            position: relative;
-            z-index: 1;
-            flex: 1 0 auto;
-        }
-        
-        .navbar {
-            background: rgba(20,20,50,0.9);
+            background: rgba(20,20,50,0.95);
             backdrop-filter: blur(10px);
             padding: 12px 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            z-index: 1030;
         }
         
+        /* Фиксированный подвал */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(20,20,50,0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            text-align: center;
+            color: #ffd700;
+            font-size: 13px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            z-index: 1030;
+        }
+        
+        /* Контейнер для контента – отступы уже заданы на body */
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Остальные стили (карточки, кнопки, формы) остаются без изменений */
         .navbar-brand {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #ffd700 !important;
+            display: none; /* полностью скрываем старый бренд */
+        }
+        
+        .navbar .container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
         }
         
         .btn-logout {
@@ -78,6 +78,7 @@
             font-size: 14px;
             cursor: pointer;
             transition: transform 0.1s ease;
+            margin-left: 10px;
         }
         
         .btn-logout:hover {
@@ -89,6 +90,27 @@
             transform: translateY(1px);
         }
         
+        .main-menu-btn {
+            background: #ffd700;
+            color: #1a1a4a;
+            padding: 6px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.1s ease;
+            margin-right: 10px;
+            display: inline-block;
+        }
+        
+        .main-menu-btn:hover {
+            background: #e6c200;
+            transform: translateY(-1px);
+            color: #1a1a4a;
+            text-decoration: none;
+        }
+        
+        /* Остальные стили (карточки, кнопки, формы) – копируем из вашего предыдущего base.html */
         .card {
             background: rgba(30,30,70,0.6);
             backdrop-filter: blur(10px);
@@ -183,26 +205,6 @@
             box-shadow: 0 0 5px rgba(255,215,0,0.3);
         }
         
-        .footer {
-            background: rgba(20,20,50,0.8);
-            margin-top: 40px;
-            padding: 15px;
-            text-align: center;
-            color: #ffd700;
-            font-size: 13px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            flex-shrink: 0;
-        }
-        
-        .footer a {
-            color: #ffd700;
-            text-decoration: none;
-        }
-        
-        .footer a:hover {
-            text-decoration: underline;
-        }
-        
         .modal-content {
             background: rgba(20,20,60,0.95) !important;
             backdrop-filter: blur(10px);
@@ -244,21 +246,28 @@
             border-radius: 10px;
         }
         
-        .admin-card {
-            transition: none;
-            cursor: pointer;
+        /* Звёздное небо (фиксированное) */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
         }
         
-        .admin-card:hover {
-            transform: none;
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle 3s ease-in-out infinite;
         }
         
-        .admin-card .card-body {
-            transition: none;
-        }
-        
-        .admin-card:hover .card-body {
-            background: rgba(50,50,100,0.7);
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -268,10 +277,8 @@
     
     <nav class="navbar">
         <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-utensils"></i> АИС Общепит
-            </a>
             <div>
+                <a href="/admin-panel/" id="mainMenuBtn" class="main-menu-btn" style="display: none;">Главное меню</a>
                 <button class="btn-logout" onclick="logout()" id="logout-btn" style="display: none;">Выйти</button>
             </div>
         </div>
@@ -314,8 +321,15 @@
         function checkAuth() {
             const role = localStorage.getItem('user_role');
             const logoutBtn = document.getElementById('logout-btn');
+            const mainMenuBtn = document.getElementById('mainMenuBtn');
             if (role) {
                 logoutBtn.style.display = 'block';
+                // Показываем кнопку "Главное меню" только для администратора
+                if (role === 'admin') {
+                    mainMenuBtn.style.display = 'inline-block';
+                } else {
+                    mainMenuBtn.style.display = 'none';
+                }
             }
         }
         
