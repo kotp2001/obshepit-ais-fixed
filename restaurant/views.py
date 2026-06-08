@@ -221,7 +221,9 @@ def api_active_orders(request):
         waiter_name = 'Не указан'
         if order.waiter:
             try:
-                waiter_name = order.waiter.first_name or order.waiter.username
+                role = order.waiter.profile.role
+                fn = order.waiter.first_name or order.waiter.username
+                waiter_name = fn
             except Exception:
                 waiter_name = order.waiter.username
         data.append({
@@ -281,45 +283,29 @@ def api_take_order(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
-# ========== ФУНКЦИЯ ОПЛАТЫ (ЕДИНСТВЕННАЯ, ИСПРАВЛЕННАЯ) ==========
 @csrf_exempt
-def api_pay_fixed(request):
-    """Оплата заказа – принимает POST: {order_id, payment_method}"""
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Only POST allowed'}, status=405)
+@require_http_methods(["POST"])
+def api_pay_order(request):
     try:
         data = json.loads(request.body)
-        order_id = data.get('order_id')
-        payment_method = data.get('payment_method')
-        if not order_id:
-            return JsonResponse({'success': False, 'error': 'Не указан ID заказа'})
-
-        allowed_methods = ['cash', 'card', 'qr']
-        if payment_method not in allowed_methods:
-            return JsonResponse({'success': False, 'error': 'Неверный способ оплаты'}, status=400)
-
-        order = Order.objects.get(id=order_id)
+        order = Order.objects.get(id=data.get('order_id'))
         if order.status == 'paid':
             return JsonResponse({'success': False, 'error': 'Заказ уже оплачен'})
-
         order.status = 'paid'
-        order.payment_method = payment_method
+        order.payment_method = data.get('payment_method')
         order.save()
         order.table.status = 'free'
         order.table.save()
-
-        log_action(request, 'pay_order', f'Заказ #{order.id}, {order.payment_method}')
         try:
             generate_receipt_pdf(order)
         except:
             pass
-
-        return JsonResponse({'success': True, 'order_id': order.id})
-
+        log_action(request, 'pay_order', f'Заказ #{order.id}, {float(order.total_amount):.2f} руб., {order.payment_method}')
+        return JsonResponse({'success': True})
     except Order.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Заказ не найден'}, status=404)
+        return JsonResponse({'success': False, 'error': 'Заказ не найден'})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        return JsonResponse({'success': False, 'error': str(e)})
 
 @require_http_methods(["GET"])
 def api_order_receipt(request, order_id):
@@ -648,3 +634,34 @@ def admin_backup_restore(request, filename):
     except Exception as e:
         return HttpResponse(f'Ошибка: {str(e)}', status=500)
     return redirect('/backup/')
+
+# ========== НОВАЯ ПРОСТАЯ ОПЛАТА (ГАРАНТИРОВАННО РАБОТАЕТ) ==========
+@csrf_exempt
+def api_pay_fixed(request):
+    """Упрощённая оплата заказа. Принимает POST с JSON: {"order_id": 123, "payment_method": "cash"}"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Only POST allowed'}, status=405)
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+        payment_method = data.get('payment_method')
+        if not order_id:
+            return JsonResponse({'success': False, 'error': 'Не указан ID заказа'})
+        order = Order.objects.get(id=order_id)
+        if order.status == 'paid':
+            return JsonResponse({'success': False, 'error': 'Заказ уже оплачен'})
+        order.status = 'paid'
+        order.payment_method = payment_method
+        order.save()
+        order.table.status = 'free'
+        order.table.save()
+        # Пытаемся создать чек (если упадёт, не страшно)
+        try:
+            generate_receipt_pdf(order)
+        except:
+            pass
+        return JsonResponse({'success': True, 'order_id': order.id})
+    except Order.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Заказ не найден'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
