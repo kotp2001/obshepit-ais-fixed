@@ -123,27 +123,30 @@
         border-color: rgba(255,255,255,0.2) !important;
     }
 
-    /* Стили для статусов блюд (для официанта) */
+    /* Стили для статусов блюд (у официанта) */
+    .order-item-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        list-style: none;
+    }
+    .order-item-name {
+        font-weight: normal;
+    }
     .order-item-status {
         display: inline-block;
         padding: 2px 8px;
         border-radius: 20px;
         font-size: 0.7rem;
         font-weight: 600;
-        margin-left: 8px;
-    }
-    .status-pending {
-        background-color: #17a2b8;
+        background-color: #6c757d;
         color: white;
+        white-space: nowrap;
     }
-    .status-cooking {
-        background-color: #ffc107;
-        color: black;
-    }
-    .status-ready {
-        background-color: #28a745;
-        color: white;
-    }
+    .status-pending { background-color: #17a2b8; }
+    .status-cooking { background-color: #ffc107; color: black; }
+    .status-ready { background-color: #28a745; }
 </style>
 
 <div class="card mb-4">
@@ -244,10 +247,9 @@ async function loadOrders() {
             else if (order.status === 'ready') statusBadge = '<span class="badge bg-success">Готов</span>';
             else statusBadge = `<span class="badge bg-secondary">${order.status}</span>`;
             
-            // Формируем список блюд со статусами
             let itemsList = '';
             if (order.items && order.items.length) {
-                itemsList = '<ul class="small mb-2">';
+                itemsList = '<ul style="list-style: none; padding-left: 0; margin-bottom: 0;">';
                 for (let it of order.items) {
                     let statusClass = '';
                     let statusText = '';
@@ -255,7 +257,12 @@ async function loadOrders() {
                     else if (it.status === 'cooking') { statusClass = 'status-cooking'; statusText = 'Готовится'; }
                     else if (it.status === 'ready') { statusClass = 'status-ready'; statusText = 'Готов'; }
                     else { statusClass = 'status-pending'; statusText = it.status; }
-                    itemsList += `<li>${it.dish_name} x${it.quantity} <span class="order-item-status ${statusClass}">${statusText}</span></li>`;
+                    itemsList += `
+                        <li class="order-item-line">
+                            <span class="order-item-name">${it.dish_name} x${it.quantity}</span>
+                            <span class="order-item-status ${statusClass}">${statusText}</span>
+                        </li>
+                    `;
                 }
                 itemsList += '</ul>';
             } else {
