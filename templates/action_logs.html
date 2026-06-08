@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Журнал действий{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0">Журнал действий пользователей</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-dark table-striped">
+                <thead>
+                    <tr>
+                        <th>Дата и время</th>
+                        <th>Пользователь</th>
+                        <th>Действие</th>
+                        <th>Описание</th>
+                        <th>IP-адрес</th>
+                    </tr>
+                </thead>
+                <tbody id="logs-table">
+                    <tr><td colspan="5" class="text-center">Загрузка...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadLogs() {
+    try {
+        const resp = await fetch('/api/action-logs/');
+        const data = await resp.json();
+        const tbody = document.getElementById('logs-table');
+        if (data.success && data.data.length) {
+            tbody.innerHTML = data.data.map(log => `
+                <tr>
+                    <td>${log.timestamp}</td>
+                    <td>${log.user}</td>
+                    <td>${log.action}</td>
+                    <td>${log.description}</td>
+                    <td>${log.ip}</td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Нет записей</td></tr>';
+        }
+    } catch (err) {
+        document.getElementById('logs-table').innerHTML = '<tr><td colspan="5" class="text-danger">Ошибка загрузки</td></tr>';
+    }
+}
+loadLogs();
+</script>
+{% endblock %}
