@@ -23,7 +23,7 @@
 </div>
 
 <style>
-    /* Убираем жёлтую обводку при фокусе */
+    /* Убираем жёлтую обводку */
     .btn:focus, .btn:focus-visible, button:focus, button:focus-visible,
     input:focus, select:focus, textarea:focus {
         outline: none !important;
@@ -35,7 +35,7 @@
         overflow-y: auto;
         padding-right: 5px;
     }
-    /* Цвет текста в корзине – всегда белый */
+    /* Белый текст в корзине */
     #cart-items, .cart-item, .cart-item div, .cart-item span {
         color: white !important;
     }
@@ -49,35 +49,37 @@
     let currentTableNumber = null;
     let currentCart = [];
     
+    // ========== СТОЛЫ ==========
     async function loadTables() {
         try {
             const response = await fetch('/api/tables/');
             const data = await response.json();
+            console.log('Tables loaded:', data);
             
             if (data.success && data.data) {
                 let html = '<div class="row">';
                 for (const table of data.data) {
                     let bgColor = '';
                     let statusText = '';
-                    let clickHandler = '';
+                    let clickAttr = '';
                     
                     if (table.status === 'free') {
                         bgColor = 'rgba(40,90,40,0.7)';
                         statusText = 'Свободен';
-                        clickHandler = `onclick="openOrderModal(${table.id}, ${table.number})" style="cursor: pointer;"`;
+                        clickAttr = `data-table-id="${table.id}" data-table-number="${table.number}" style="cursor: pointer;"`;
                     } else if (table.status === 'occupied') {
                         bgColor = 'rgba(140,40,40,0.7)';
                         statusText = 'Занят';
-                        clickHandler = 'style="cursor: not-allowed; opacity: 0.6;"';
+                        clickAttr = `style="cursor: not-allowed; opacity: 0.6;"`;
                     } else {
                         bgColor = 'rgba(140,100,30,0.7)';
                         statusText = 'Забронирован';
-                        clickHandler = 'style="cursor: not-allowed; opacity: 0.6;"';
+                        clickAttr = `style="cursor: not-allowed; opacity: 0.6;"`;
                     }
                     
                     html += `
                         <div class="col-md-3 mb-3">
-                            <div class="card text-center" style="background: ${bgColor};" ${clickHandler}>
+                            <div class="card text-center table-card" style="background: ${bgColor};" ${clickAttr}>
                                 <div class="card-body">
                                     <i class="fas fa-chair fa-2x mb-2" style="color: #ffd700;"></i>
                                     <h3 style="color: white;">Стол ${table.number}</h3>
@@ -90,13 +92,28 @@
                 }
                 html += '</div>';
                 document.getElementById('hall-container').innerHTML = html;
+                
+                // Навешиваем обработчики на свободные столы
+                document.querySelectorAll('.table-card').forEach(card => {
+                    const isFree = card.style.cursor === 'pointer';
+                    if (isFree) {
+                        const tableId = parseInt(card.getAttribute('data-table-id'));
+                        const tableNumber = parseInt(card.getAttribute('data-table-number'));
+                        card.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openOrderModal(tableId, tableNumber);
+                        });
+                    }
+                });
             }
             await loadReadyOrders();
         } catch (error) {
+            console.error(error);
             document.getElementById('hall-container').innerHTML = '<p class="text-center text-danger">Ошибка загрузки столов</p>';
         }
     }
     
+    // ========== ГОТОВЫЕ ЗАКАЗЫ ==========
     async function loadReadyOrders() {
         try {
             const response = await fetch('/api/orders/active/');
@@ -115,16 +132,23 @@
                                 <div class="card-body">
                                     <h5 style="color: #ffd700;">Заказ для стола ${order.table_number}</h5>
                                     <p style="color: white;">Создан: ${order.created_at}</p>
-                                    <button class="btn btn-warning btn-sm" onclick="takeOrder(${order.id})">Забрать заказ</button>
+                                    <button class="btn btn-warning btn-sm take-order-btn" data-order-id="${order.id}">Забрать заказ</button>
                                 </div>
                             </div>
                         </div>
                     `;
                 }
                 document.getElementById('ready-orders-list').innerHTML = html;
+                // Навешиваем обработчики на кнопки "Забрать заказ"
+                document.querySelectorAll('.take-order-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const orderId = parseInt(btn.getAttribute('data-order-id'));
+                        takeOrder(orderId);
+                    });
+                });
             }
         } catch (error) {
-            console.error('Error:', error);
+            console.error(error);
         }
     }
     
@@ -142,6 +166,7 @@
         }
     }
     
+    // ========== ОПЛАТА ==========
     async function showPaymentModal(orderId) {
         const receiptResponse = await fetch(`/api/orders/receipt/${orderId}/`);
         const receiptData = await receiptResponse.json();
@@ -164,7 +189,7 @@
                                         <option value="qr">QR-код</option>
                                     </select>
                                 </div>
-                                <button class="btn btn-warning w-100" onclick="confirmPayment(${orderId})">Оплатить</button>
+                                <button class="btn btn-warning w-100" id="confirm-payment-btn">Оплатить</button>
                             </div>
                         </div>
                     </div>
@@ -174,20 +199,18 @@
             if (oldModal) oldModal.remove();
             document.body.insertAdjacentHTML('beforeend', modalHtml);
             const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+            document.getElementById('confirm-payment-btn').addEventListener('click', async () => {
+                const paymentMethod = document.getElementById('payment-method').value;
+                await fetch('/api/orders/pay/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({order_id: orderId, payment_method: paymentMethod})
+                });
+                modal.hide();
+                showReceipt(orderId);
+            });
             modal.show();
         }
-    }
-    
-    async function confirmPayment(orderId) {
-        const paymentMethod = document.getElementById('payment-method').value;
-        await fetch('/api/orders/pay/', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({order_id: orderId, payment_method: paymentMethod})
-        });
-        const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
-        if (modal) modal.hide();
-        showReceipt(orderId);
     }
     
     async function showReceipt(orderId) {
@@ -221,8 +244,8 @@
                                 <p>Спасибо за заказ!</p>
                                 <p>Приходите ещё</p>
                                 <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
-                                    <button class="btn btn-primary btn-sm" onclick="printReceipt()">Распечатать чек</button>
-                                    <button class="btn btn-success btn-sm" onclick="downloadReceiptPDF()">Скачать PDF</button>
+                                    <button class="btn btn-primary btn-sm" id="print-btn">Распечатать чек</button>
+                                    <button class="btn btn-success btn-sm" id="pdf-btn">Скачать PDF</button>
                                     <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Закрыть</button>
                                 </div>
                             </div>
@@ -233,47 +256,34 @@
             const oldReceipt = document.getElementById('receiptModal');
             if (oldReceipt) oldReceipt.remove();
             document.body.insertAdjacentHTML('beforeend', receiptHtml);
-            
-            window.printReceipt = function() {
-                const printContent = document.getElementById('receiptContent').cloneNode(true);
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
-                    <html><head><title>Чек АИС Общепит</title>
-                    <style>body { font-family: monospace; text-align: center; padding: 20px; }</style>
-                    </head><body>${printContent.innerHTML}</body></html>
-                `);
-                printWindow.document.close();
-                printWindow.print();
-            };
-            
-            window.downloadReceiptPDF = function() {
-                const printContent = document.getElementById('receiptContent').cloneNode(true);
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
-                    <html><head><title>Чек АИС Общепит</title>
-                    <style>
-                        body { font-family: monospace; text-align: center; padding: 20px; }
-                        button { display: none; }
-                    </style>
-                    </head><body>${printContent.innerHTML}</body></html>
-                `);
-                printWindow.document.close();
-                printWindow.print();
-            };
-            
             const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+            
+            document.getElementById('print-btn').addEventListener('click', () => {
+                const printContent = document.getElementById('receiptContent').cloneNode(true);
+                const win = window.open('', '_blank');
+                win.document.write(`<html><head><title>Чек АИС Общепит</title><style>body{font-family:monospace;text-align:center;padding:20px;}</style></head><body>${printContent.innerHTML}</body></html>`);
+                win.document.close();
+                win.print();
+            });
+            document.getElementById('pdf-btn').addEventListener('click', () => {
+                const printContent = document.getElementById('receiptContent').cloneNode(true);
+                const win = window.open('', '_blank');
+                win.document.write(`<html><head><title>Чек АИС Общепит</title><style>body{font-family:monospace;text-align:center;padding:20px;} button{display:none;}</style></head><body>${printContent.innerHTML}</body></html>`);
+                win.document.close();
+                win.print();
+            });
             modal.show();
             loadTables();
         }
     }
     
+    // ========== СОЗДАНИЕ ЗАКАЗА (МОДАЛКА + МЕНЮ + КОРЗИНА) ==========
     function openOrderModal(tableId, tableNumber) {
         currentTableId = tableId;
         currentTableNumber = tableNumber;
         currentCart = [];
-        updateCartDisplay();
-        loadMenu();
         
+        // Сначала создаём модалку
         const modalHtml = `
             <div class="modal fade" id="orderModal" tabindex="-1">
                 <div class="modal-dialog modal-xl">
@@ -284,7 +294,9 @@
                         </div>
                         <div class="modal-body">
                             <div class="row">
-                                <div class="col-md-7" id="menu-container" style="max-height: 400px; overflow-y: auto;"></div>
+                                <div class="col-md-7">
+                                    <div id="menu-container" style="max-height: 400px; overflow-y: auto;"></div>
+                                </div>
                                 <div class="col-md-5">
                                     <div style="background: rgba(30,30,80,0.8); border-radius: 10px; padding: 15px;">
                                         <h5 style="color: #ffd700;">Корзина</h5>
@@ -299,7 +311,7 @@
                                             <input type="number" id="guest-count" class="form-control" value="2" min="1" max="20">
                                         </div>
                                         <div class="mt-3 d-grid gap-2">
-                                            <button class="btn btn-warning" onclick="submitOrder()">Оформить заказ</button>
+                                            <button class="btn btn-warning" id="submit-order-btn">Оформить заказ</button>
                                             <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                                         </div>
                                     </div>
@@ -313,6 +325,14 @@
         const oldModal = document.getElementById('orderModal');
         if (oldModal) oldModal.remove();
         document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Теперь элементы существуют, можно обновлять корзину и загружать меню
+        updateCartDisplay();
+        loadMenu();
+        
+        // Кнопка "Оформить заказ" через addEventListener
+        document.getElementById('submit-order-btn').addEventListener('click', submitOrder);
+        
         const modal = new bootstrap.Modal(document.getElementById('orderModal'));
         modal.show();
     }
@@ -339,7 +359,7 @@
                                         <strong style="color: white;">${dish.name}</strong>
                                         <div style="color: #ffd700;">${dish.price} ₽</div>
                                     </div>
-                                    <button class="btn btn-sm btn-success" onclick="addToCart(${dish.id}, '${dish.name}', ${dish.price})">+</button>
+                                    <button class="btn btn-sm btn-success add-to-cart-btn" data-dish-id="${dish.id}" data-dish-name="${dish.name}" data-dish-price="${dish.price}">+</button>
                                 </div>
                             </div>
                         </div>
@@ -348,20 +368,34 @@
                 html += '</div>';
             }
             document.getElementById('menu-container').innerHTML = html;
+            
+            // Навешиваем обработчики на кнопки "Добавить"
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(btn.getAttribute('data-dish-id'));
+                    const name = btn.getAttribute('data-dish-name');
+                    const price = parseInt(btn.getAttribute('data-dish-price'));
+                    addToCart(id, name, price);
+                    // Визуальный фидбек
+                    btn.innerHTML = '✓';
+                    setTimeout(() => { btn.innerHTML = '+'; }, 500);
+                });
+            });
         }
     }
     
-    window.addToCart = function(id, name, price) {
+    function addToCart(id, name, price) {
         const existing = currentCart.find(item => item.id === id);
         if (existing) existing.quantity++;
         else currentCart.push({id, name, price, quantity: 1});
         updateCartDisplay();
-        const btn = event.target;
-        btn.innerHTML = '✓';
-        setTimeout(() => { btn.innerHTML = '+'; }, 500);
-    };
+    }
     
     function updateCartDisplay() {
+        const cartDiv = document.getElementById('cart-items');
+        const totalSpan = document.getElementById('total');
+        if (!cartDiv || !totalSpan) return;
+        
         let total = 0;
         let html = '';
         if (currentCart.length === 0) {
@@ -373,19 +407,23 @@
                 html += `
                     <div class="d-flex justify-content-between mb-2 cart-item" style="color: white;">
                         <div style="color: white;">${item.name} x${item.quantity}</div>
-                        <div style="color: white;">${itemTotal} ₽ <button class="btn btn-sm btn-danger" onclick="removeFromCart(${idx})">Удалить</button></div>
+                        <div style="color: white;">${itemTotal} ₽ <button class="btn btn-sm btn-danger remove-item" data-index="${idx}">Удалить</button></div>
                     </div>
                 `;
             });
         }
-        document.getElementById('cart-items').innerHTML = html;
-        document.getElementById('total').innerHTML = total + ' ₽';
+        cartDiv.innerHTML = html;
+        totalSpan.innerText = total + ' ₽';
+        
+        // Обработчики удаления
+        document.querySelectorAll('.remove-item').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.getAttribute('data-index'));
+                currentCart.splice(idx, 1);
+                updateCartDisplay();
+            });
+        });
     }
-    
-    window.removeFromCart = function(index) {
-        currentCart.splice(index, 1);
-        updateCartDisplay();
-    };
     
     async function submitOrder() {
         if (currentCart.length === 0) {
@@ -410,6 +448,7 @@
         }
     }
     
+    // Запуск
     loadTables();
     setInterval(loadTables, 10000);
 </script>
