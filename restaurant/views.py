@@ -1,3 +1,7 @@
+import os
+import base64
+from github import Github
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse, Http404, FileResponse
 from django.views.decorators.csrf import csrf_exempt
