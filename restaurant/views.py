@@ -14,6 +14,36 @@ from decimal import Decimal
 from .models import (Category, Dish, Table, Order, OrderItem,
                      MaintenanceLog, Profile, ActionLog, Receipt, LoginAttempt)
 
+def upload_backup_to_github(file_path, filename):
+    """Загружает файл бекапа в приватный репозиторий GitHub"""
+    token = os.environ.get('GITHUB_TOKEN')
+    repo_name = os.environ.get('GITHUB_BACKUP_REPO')
+    if not token or not repo_name:
+        print("GitHub credentials not set, backup NOT uploaded")
+        return False
+
+    g = Github(token)
+    repo = g.get_repo(repo_name)
+    remote_path = f"backups/{filename}"
+
+    with open(file_path, 'rb') as f:
+        content = base64.b64encode(f.read()).decode()
+
+    try:
+        # Пробуем создать новый файл
+        repo.create_file(remote_path, f"Auto backup {filename}", content, branch="main")
+        print(f"✅ Uploaded {filename} to GitHub")
+    except Exception as e:
+        # Если файл с таким именем уже существует, обновляем его
+        try:
+            contents = repo.get_contents(remote_path, ref="main")
+            repo.update_file(contents.path, f"Update backup {filename}", content, contents.sha, branch="main")
+            print(f"🔄 Updated {filename} on GitHub")
+        except Exception as e2:
+            print(f"❌ Failed to upload to GitHub: {e2}")
+            return False
+    return True
+
 # ── ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ─────────────────────────────────────
 
 def get_client_ip(request):
