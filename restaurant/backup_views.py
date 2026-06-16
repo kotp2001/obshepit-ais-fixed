@@ -1,74 +1,130 @@
+import os
+import subprocess
+import zipfile
+from datetime import datetime
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, Http404
 from django.contrib.admin.views.decorators import staff_member_required
-import os
-import shutil
-from datetime import datetime
+from django.conf import settings
+from django.contrib import messages
+
+BACKUP_DIR = os.path.join(settings.BASE_DIR, 'backups')
+
+def ensure_backup_dir():
+    if not os.path.exists(BACKUP_DIR):
+        os.makedirs(BACKUP_DIR)
 
 @staff_member_required
 def backup_list(request):
-    backup_dir = 'backups'
+    """Отображает список всех резервных копий."""
+    ensure_backup_dir()
     backups = []
-    
-    if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir)
-    
-    if request.method == 'POST':
-        db_path = 'db.sqlite3'
-        if os.path.exists(db_path):
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            backup_path = os.path.join(backup_dir, f'db_backup_{timestamp}.sqlite3')
-            shutil.copy2(db_path, backup_path)
-        return redirect('/backup-list/')
-    
-    if os.path.exists(backup_dir):
-        for file in os.listdir(backup_dir):
-            if file.endswith('.sqlite3'):
-                file_path = os.path.join(backup_dir, file)
-                stat = os.stat(file_path)
-                backups.append({
-                    'name': file,
-                    'date': datetime.fromtimestamp(stat.st_ctime).strftime('%Y-%m-%d %H:%M:%S'),
-                    'size': round(stat.st_size / 1024, 2)
-                })
-        backups.sort(key=lambda x: x['date'], reverse=True)
-    
+    for fname in sorted(os.listdir(BACKUP_DIR), reverse=True):
+        if fname.endswith('.sql') or fname.endswith('.zip'):
+            fpath = os.path.join(BACKUP_DIR, fname)
+            stat = os.stat(fpath)
+            backups.append({
+                'name': fname,
+                'date': datetime.fromtimestamp(stat.st_mtime).strftime('%d.%m.%Y %H:%M'),
+                'size': round(stat.st_size / 1024, 1)
+            })
     return render(request, 'backup_list.html', {'backups': backups})
 
 @staff_member_required
+def backup_create(request):
+    """Создает новую резервную копию базы данных PostgreSQL."""
+    if request.method != 'POST':
+        return redirect('backup:backup_list')
+
+    ensure_backup_dir()
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'backup_{timestamp}.sql'
+    filepath = os.path.join(BACKUP_DIR, filename)
+
+    db = settings.DATABASES['default']
+    env = os.environ.copy()
+    env['PGPASSWORD'] = db.get('PASSWORD', '')
+
+    try:
+        result = subprocess.run([
+            'pg_dump', '-h', db['HOST'], '-p', str(db.get('PORT', 5432)),
+            '-U', db['USER'], '-d', db['NAME'], '-f', filepath, '--no-password'
+        ], env=env, capture_output=True, text=True, timeout=60)
+        if result.returncode == 0:
+            messages.success(request, f'Резервная копия {filename} успешно создана.')
+            # Загружаем в GitHub, если функция есть
+            try:
+                from .views import upload_backup_to_github
+                upload_backup_to_github(filepath, filename)
+            except ImportError:
+                pass
+        else:
+            messages.error(request, f'Ошибка создания бэкапа: {result.stderr[:200]}')
+    except Exception as e:
+        messages.error(request, f'Ошибка: {str(e)}')
+    return redirect('backup:backup_list')
+
+@staff_member_required
 def backup_download(request, filename):
-    backup_dir = 'backups'
-    safe_filename = os.path.basename(filename)
-    file_path = os.path.join(backup_dir, safe_filename)
-    
-    if not os.path.exists(file_path):
+    """Скачивает файл резервной копии."""
+    ensure_backup_dir()
+    safe_name = os.path.basename(filename)
+    filepath = os.path.join(BACKUP_DIR, safe_name)
+    if not os.path.exists(filepath):
         raise Http404("Файл не найден")
-    
-    with open(file_path, 'rb') as f:
+    with open(filepath, 'rb') as f:
         response = HttpResponse(f.read(), content_type='application/octet-stream')
-        response['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
+        response['Content-Disposition'] = f'attachment; filename="{safe_name}"'
         return response
 
 @staff_member_required
 def backup_restore(request, filename):
-    backup_dir = 'backups'
-    safe_filename = os.path.basename(filename)
-    backup_path = os.path.join(backup_dir, safe_filename)
-    db_path = 'db.sqlite3'
-    
-    if not os.path.exists(backup_path):
+    """Восстанавливает базу данных из выбранной резервной копии."""
+    ensure_backup_dir()
+    safe_name = os.path.basename(filename)
+    filepath = os.path.join(BACKUP_DIR, safe_name)
+    if not os.path.exists(filepath):
         raise Http404("Файл не найден")
-    
-    shutil.copy2(backup_path, db_path)
-    return redirect('/backup-list/')
+
+    db = settings.DATABASES['default']
+    env = os.environ.copy()
+    env['PGPASSWORD'] = db.get('PASSWORD', '')
+
+    try:
+        result = subprocess.run([
+            'psql', '-h', db['HOST'], '-p', str(db.get('PORT', 5432)),
+            '-U', db['USER'], '-d', db['NAME'], '-f', filepath, '--no-password'
+        ], env=env, capture_output=True, text=True, timeout=120)
+        if result.returncode != 0:
+            messages.error(request, f'Ошибка восстановления: {result.stderr[:200]}')
+        else:
+            messages.success(request, f'База данных успешно восстановлена из {filename}.')
+    except Exception as e:
+        messages.error(request, f'Ошибка: {str(e)}')
+    return redirect('backup:backup_list')
 
 @staff_member_required
 def backup_delete(request, filename):
-    backup_dir = 'backups'
-    safe_filename = os.path.basename(filename)
-    file_path = os.path.join(backup_dir, safe_filename)
-    
-    if os.path.exists(file_path):
-        os.remove(file_path)
-    
-    return redirect('/backup-list/')
+    """Удаляет файл резервной копии."""
+    ensure_backup_dir()
+    safe_name = os.path.basename(filename)
+    filepath = os.path.join(BACKUP_DIR, safe_name)
+    if os.path.exists(filepath):
+        os.remove(filepath)
+        messages.success(request, f'Файл {filename} удален.')
+    return redirect('backup:backup_list')
+
+@staff_member_required
+def backup_upload(request):
+    """Загружает файл резервной копии на сервер."""
+    if request.method == 'POST' and request.FILES.get('backup_file'):
+        uploaded_file = request.FILES['backup_file']
+        ensure_backup_dir()
+        filepath = os.path.join(BACKUP_DIR, uploaded_file.name)
+        with open(filepath, 'wb+') as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+        messages.success(request, f'Файл {uploaded_file.name} успешно загружен.')
+    else:
+        messages.error(request, 'Пожалуйста, выберите файл для загрузки.')
+    return redirect('backup:backup_list')
