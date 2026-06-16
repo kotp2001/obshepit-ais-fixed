@@ -111,3 +111,5 @@ LOGOUT_REDIRECT_URL = '/'
 
 BACKUP_SECRET_KEY = os.environ.get('BACKUP_SECRET_KEY', 'obshepit-backup-2026')
 
+LOGIN_URL = '/'
+
