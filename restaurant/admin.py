@@ -23,21 +23,20 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ['username', 'email']
     list_editable = ['is_staff', 'is_active']
     actions = None  # Убираем массовые действия
-    
+
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Личные данные', {'fields': ('first_name', 'last_name', 'email')}),
         ('Права доступа', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Важные даты', {'fields': ('last_login', 'date_joined')}),
     )
-    
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
             'fields': ('username', 'password1', 'password2', 'role'),
         }),
     )
-    
+
     def get_role(self, obj):
         try:
             return obj.profile.get_role_display()
@@ -52,17 +51,19 @@ admin.site.register(User, CustomUserAdmin)
 
 
 # ===== КАТЕГОРИИ =====
+
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'order']      # <-- Убрали 'icon'
+    list_display = ['id', 'name', 'order']  # Убрали 'icon'
     list_editable = ['name', 'order']
     search_fields = ['name']
     ordering = ['order']
     fields = ['name', 'order']
-    actions = None                              # <-- Убрали массовые действия
+    actions = None
 
 
 # ===== БЛЮДА =====
+
 @admin.register(Dish)
 class DishAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'category', 'price', 'is_available']
@@ -73,6 +74,7 @@ class DishAdmin(admin.ModelAdmin):
 
 
 # ===== СТОЛЫ =====
+
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
     list_display = ['number', 'seats', 'status']
@@ -83,12 +85,14 @@ class TableAdmin(admin.ModelAdmin):
 
 
 # ===== ПОЗИЦИИ ЗАКАЗА (инлайн) =====
+
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
     fields = ['dish', 'quantity', 'price', 'status']
     readonly_fields = []
     show_change_link = True
+    can_delete = True
 
 
 class OrderAdminForm(forms.ModelForm):
@@ -114,6 +118,7 @@ class OrderAdminForm(forms.ModelForm):
 
 
 # ===== ЗАКАЗЫ =====
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     form = OrderAdminForm
@@ -153,6 +158,7 @@ class OrderAdmin(admin.ModelAdmin):
 
 
 # ===== ПОЗИЦИИ ЗАКАЗА (отдельно) =====
+
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ['id', 'order', 'dish', 'quantity', 'price', 'status']
@@ -164,6 +170,7 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 
 # ===== ЖУРНАЛ ТО =====
+
 @admin.register(MaintenanceLog)
 class MaintenanceLogAdmin(admin.ModelAdmin):
     list_display = ['id', 'date', 'work_performed', 'performed_by', 'created_at']
@@ -192,8 +199,10 @@ class ActionLogAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
     def has_change_permission(self, request, obj=None):
         return False
+
     def has_delete_permission(self, request, obj=None):
         return True
 
@@ -227,7 +236,7 @@ class LoginAttemptAdmin(admin.ModelAdmin):
     search_fields = ['username', 'ip_address']
     readonly_fields = ['username', 'ip_address', 'last_attempt']
     ordering = ['-last_attempt']
-    actions = ['unblock_users']  # Это действие оставляем, т.к. оно нужно администратору
+    actions = ['unblock_users']
 
     def is_blocked(self, obj):
         from django.utils import timezone
