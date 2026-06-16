@@ -50,16 +50,17 @@ admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 
 
-# ===== КАТЕГОРИИ =====
+# ===== КАТЕГОРИИ (УБРАНА ИКОНКА, ВСЁ НА РУССКОМ) =====
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'order']  # Убрали 'icon'
-    list_editable = ['name', 'order']
+    list_display = ['id', 'name', 'order']  # Иконка УБРАНА
+    list_display_links = ['id', 'name']
+    list_editable = ['order']
     search_fields = ['name']
     ordering = ['order']
     fields = ['name', 'order']
-    actions = None
+    actions = None  # Убираем "Действие: --- Выполнить"
 
 
 # ===== БЛЮДА =====
@@ -67,21 +68,36 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Dish)
 class DishAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'category', 'price', 'is_available']
+    list_display_links = ['id', 'name']
     list_editable = ['price', 'is_available']
     search_fields = ['name']
     fields = ['name', 'category', 'price', 'is_available']
     actions = None
 
 
-# ===== СТОЛЫ =====
+# ===== СТОЛЫ (ВСЁ НА РУССКОМ) =====
 
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
-    list_display = ['number', 'seats', 'status']
-    list_editable = ['status', 'seats']
+    list_display = ['number', 'seats', 'get_status_display']
+    list_display_links = ['number']
+    list_editable = ['seats']
     ordering = ['number']
     fields = ['number', 'seats']
     actions = None
+    
+    # Переименовываем столбцы
+    number.short_description = 'Номер'
+    seats.short_description = 'Мест'
+    
+    def get_status_display(self, obj):
+        status_map = {
+            'free': 'Свободен',
+            'occupied': 'Занят',
+            'reserved': 'Забронирован',
+        }
+        return status_map.get(obj.status, obj.status)
+    get_status_display.short_description = 'Статус'
 
 
 # ===== ПОЗИЦИИ ЗАКАЗА (инлайн) =====
@@ -89,10 +105,20 @@ class TableAdmin(admin.ModelAdmin):
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    fields = ['dish', 'quantity', 'price', 'status']
+    fields = ['dish', 'quantity', 'price', 'get_status_display']
     readonly_fields = []
     show_change_link = True
     can_delete = True
+    
+    def get_status_display(self, obj):
+        status_map = {
+            'pending': 'В очереди',
+            'cooking': 'Готовится',
+            'ready': 'Готов',
+            'served': 'Подано',
+        }
+        return status_map.get(obj.status, obj.status)
+    get_status_display.short_description = 'Статус'
 
 
 class OrderAdminForm(forms.ModelForm):
@@ -117,20 +143,52 @@ class OrderAdminForm(forms.ModelForm):
         return val
 
 
-# ===== ЗАКАЗЫ =====
+# ===== ЗАКАЗЫ (ВСЁ НА РУССКОМ) =====
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     form = OrderAdminForm
-    list_display = ['id', 'table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method']
-    list_filter = []
-    list_editable = ['status']
+    list_display = ['id', 'get_table_display', 'get_waiter_display', 'created_at', 'get_status_display', 'total_amount', 'get_payment_display']
+    list_display_links = ['id']
+    list_editable = []
     search_fields = ['id', 'table__number']
     date_hierarchy = 'created_at'
     inlines = [OrderItemInline]
     readonly_fields = []
     fields = ['table', 'waiter', 'created_at', 'status', 'payment_method', 'guest_count']
     actions = None
+    
+    def get_table_display(self, obj):
+        return f'Стол {obj.table.number} ({obj.table.seats} мест)'
+    get_table_display.short_description = 'Стол'
+    
+    def get_waiter_display(self, obj):
+        if obj.waiter:
+            return obj.waiter.username
+        return 'Не назначен'
+    get_waiter_display.short_description = 'Официант'
+    
+    def get_status_display(self, obj):
+        status_map = {
+            'new': 'Новый',
+            'cooking': 'Готовится',
+            'ready': 'Готов',
+            'served': 'Подано',
+            'paid': 'Оплачен',
+            'cancelled': 'Отменён',
+        }
+        return status_map.get(obj.status, obj.status)
+    get_status_display.short_description = 'Статус'
+    
+    def get_payment_display(self, obj):
+        if obj.payment_method == 'cash':
+            return 'Наличные'
+        elif obj.payment_method == 'card':
+            return 'Карта'
+        elif obj.payment_method == 'qr':
+            return 'QR-код'
+        return 'Ожидается'
+    get_payment_display.short_description = 'Оплата'
 
     def get_changeform_initial_data(self, request):
         from datetime import datetime
@@ -161,12 +219,22 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ['id', 'order', 'dish', 'quantity', 'price', 'status']
-    list_filter = []
-    list_editable = ['quantity', 'price', 'status']
+    list_display = ['id', 'order', 'dish', 'quantity', 'price', 'get_status_display']
+    list_display_links = ['id']
+    list_editable = ['quantity', 'price']
     search_fields = ['dish__name', 'order__id']
     readonly_fields = []
     actions = None
+    
+    def get_status_display(self, obj):
+        status_map = {
+            'pending': 'В очереди',
+            'cooking': 'Готовится',
+            'ready': 'Готов',
+            'served': 'Подано',
+        }
+        return status_map.get(obj.status, obj.status)
+    get_status_display.short_description = 'Статус'
 
 
 # ===== ЖУРНАЛ ТО =====
@@ -174,6 +242,7 @@ class OrderItemAdmin(admin.ModelAdmin):
 @admin.register(MaintenanceLog)
 class MaintenanceLogAdmin(admin.ModelAdmin):
     list_display = ['id', 'date', 'work_performed', 'performed_by', 'created_at']
+    list_display_links = ['id']
     list_filter = []
     search_fields = ['work_performed', 'performed_by']
     fields = ['date', 'work_performed', 'performed_by']
@@ -191,6 +260,7 @@ admin.site.index_title = 'Панель управления'
 @admin.register(ActionLog)
 class ActionLogAdmin(admin.ModelAdmin):
     list_display = ['id', 'timestamp', 'user', 'action', 'description', 'ip_address']
+    list_display_links = ['id']
     list_filter = []
     search_fields = ['user__username', 'description', 'ip_address']
     readonly_fields = ['user', 'action', 'description', 'ip_address', 'timestamp']
@@ -219,6 +289,7 @@ class ActionLogAdmin(admin.ModelAdmin):
 @admin.register(Receipt)
 class ReceiptAdmin(admin.ModelAdmin):
     list_display = ['id', 'order', 'total', 'payment_method', 'created_at']
+    list_display_links = ['id']
     list_filter = []
     readonly_fields = ['order', 'pdf_file', 'created_at', 'total', 'payment_method']
     ordering = ['-created_at']
@@ -232,6 +303,7 @@ class ReceiptAdmin(admin.ModelAdmin):
 @admin.register(LoginAttempt)
 class LoginAttemptAdmin(admin.ModelAdmin):
     list_display = ['username', 'ip_address', 'attempts', 'blocked_until', 'last_attempt', 'is_blocked']
+    list_display_links = ['username']
     list_filter = []
     search_fields = ['username', 'ip_address']
     readonly_fields = ['username', 'ip_address', 'last_attempt']
