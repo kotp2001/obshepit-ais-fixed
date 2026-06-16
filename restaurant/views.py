@@ -1,6 +1,7 @@
 import os
 import base64
 import subprocess
+import shutil
 from datetime import datetime, timedelta
 from decimal import Decimal
 import json
@@ -93,11 +94,9 @@ def upload_backup_to_github(file_path, filename):
         content = base64.b64encode(f.read()).decode()
 
     try:
-        # Пробуем создать новый файл
         repo.create_file(remote_path, f"Auto backup {filename}", content, branch="main")
         print(f"✅ Uploaded {filename} to GitHub")
     except Exception as e:
-        # Если файл с таким именем уже существует, обновляем его
         try:
             contents = repo.get_contents(remote_path, ref="main")
             repo.update_file(contents.path, f"Update backup {filename}", content, contents.sha, branch="main")
@@ -122,7 +121,6 @@ def _run_pg_dump(backup_file_path):
     ]
     result = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=60)
     if result.returncode == 0:
-        # Почистим файл от мета-команд (строк начинающихся с '\')
         with open(backup_file_path, 'r', encoding='utf-8', errors='replace') as f:
             lines = f.readlines()
         with open(backup_file_path, 'w', encoding='utf-8') as f:
@@ -568,10 +566,8 @@ def auto_backup_trigger(request):
     if not success:
         return JsonResponse({'success': False, 'error': err})
 
-    # Загружаем в GitHub
     upload_backup_to_github(backup_file, f'auto_backup_{timestamp}.sql')
 
-    # Удаляем старые файлы из /tmp/backups (старше 30 дней)
     cutoff = datetime.now() - timedelta(days=30)
     for fname in os.listdir(backup_dir):
         fpath = os.path.join(backup_dir, fname)
@@ -660,9 +656,7 @@ def admin_backup(request):
         if not success:
             return HttpResponse(f'Ошибка создания бэкапа: {err}', status=500)
 
-        # Загружаем в GitHub
         upload_backup_to_github(backup_file, f'backup_{timestamp}.sql')
-
         log_action(request, 'create_backup', f'Ручной бэкап: backup_{timestamp}.sql')
         return redirect('/backup/')
 
@@ -754,3 +748,109 @@ def api_pay_fixed(request):
         return JsonResponse({'success': False, 'error': 'Заказ не найден'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# ------------------------------------------------------------
+# НОВЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С БЭКАПАМИ (ПОСТОЯННОЕ ХРАНЕНИЕ)
+# ------------------------------------------------------------
+BACKUP_DIR = os.path.join(settings.BASE_DIR, 'backups')
+
+def ensure_backup_dir():
+    if not os.path.exists(BACKUP_DIR):
+        os.makedirs(BACKUP_DIR)
+
+@login_required
+def backup_list(request):
+    """Список всех резервных копий"""
+    ensure_backup_dir()
+    backups = []
+    for fname in sorted(os.listdir(BACKUP_DIR), reverse=True):
+        if fname.endswith('.sql'):
+            fpath = os.path.join(BACKUP_DIR, fname)
+            stat = os.stat(fpath)
+            backups.append({
+                'name': fname,
+                'date': datetime.fromtimestamp(stat.st_mtime).strftime('%d.%m.%Y %H:%M'),
+                'size': round(stat.st_size / 1024, 1)
+            })
+    return render(request, 'backup_list.html', {'backups': backups})
+
+@login_required
+def backup_create(request):
+    """Создание новой резервной копии"""
+    if request.method != 'POST':
+        return redirect('backup:backup_list')
+    
+    ensure_backup_dir()
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'backup_{timestamp}.sql'
+    filepath = os.path.join(BACKUP_DIR, filename)
+    
+    db = settings.DATABASES['default']
+    env = os.environ.copy()
+    env['PGPASSWORD'] = db.get('PASSWORD', '')
+    
+    result = subprocess.run([
+        'pg_dump', '-h', db['HOST'], '-p', str(db.get('PORT') or '5432'),
+        '-U', db['USER'], '-d', db['NAME'], '-f', filepath, '--no-password'
+    ], env=env, capture_output=True, text=True, timeout=60)
+    
+    if result.returncode == 0:
+        with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+            lines = f.readlines()
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.writelines(l for l in lines if not l.startswith('\\'))
+        
+        upload_backup_to_github(filepath, filename)
+        log_action(request, 'create_backup', f'Ручной бэкап: {filename}')
+    else:
+        return HttpResponse(f'Ошибка создания бэкапа: {result.stderr[:300]}', status=500)
+    
+    return redirect('backup:backup_list')
+
+@login_required
+def backup_download(request, filename):
+    """Скачать резервную копию"""
+    ensure_backup_dir()
+    safe_name = os.path.basename(filename)
+    filepath = os.path.join(BACKUP_DIR, safe_name)
+    if not os.path.exists(filepath):
+        raise Http404("Файл не найден")
+    with open(filepath, 'rb') as f:
+        resp = HttpResponse(f.read(), content_type='application/octet-stream')
+        resp['Content-Disposition'] = f'attachment; filename="{safe_name}"'
+        return resp
+
+@login_required
+def backup_restore(request, filename):
+    """Восстановить из резервной копии"""
+    ensure_backup_dir()
+    safe_name = os.path.basename(filename)
+    filepath = os.path.join(BACKUP_DIR, safe_name)
+    if not os.path.exists(filepath):
+        raise Http404("Файл не найден")
+    
+    db = settings.DATABASES['default']
+    env = os.environ.copy()
+    env['PGPASSWORD'] = db.get('PASSWORD', '')
+    
+    result = subprocess.run([
+        'psql', '-h', db['HOST'], '-p', str(db.get('PORT') or '5432'),
+        '-U', db['USER'], '-d', db['NAME'], '-f', filepath, '--no-password'
+    ], env=env, capture_output=True, text=True, timeout=120)
+    
+    if result.returncode != 0:
+        return HttpResponse(f'Ошибка восстановления: {result.stderr[:500]}', status=500)
+    
+    log_action(request, 'restore_backup', f'Восстановление из: {filename}')
+    return redirect('backup:backup_list')
+
+@login_required
+def backup_delete(request, filename):
+    """Удалить резервную копию"""
+    ensure_backup_dir()
+    safe_name = os.path.basename(filename)
+    filepath = os.path.join(BACKUP_DIR, safe_name)
+    if os.path.exists(filepath):
+        os.remove(filepath)
+    return redirect('backup:backup_list')
