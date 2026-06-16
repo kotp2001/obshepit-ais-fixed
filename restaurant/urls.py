@@ -61,7 +61,4 @@ urlpatterns = [
 
     # Запасной эндпоинт оплаты
     path('api/pay-fixed/', views.api_pay_fixed, name='api_pay_fixed'),
-
-    # Резервное копирование (подключаем приложение backup_urls)
-    path('backup/', include('restaurant.backup_urls')),
 ]

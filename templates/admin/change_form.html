@@ -55,23 +55,37 @@ document.addEventListener('DOMContentLoaded', function() {
     .admin-change-form input[type="number"],
     .admin-change-form input[type="email"],
     .admin-change-form input[type="url"],
+    .admin-change-form input[type="password"],
     .admin-change-form input[type="date"],
     .admin-change-form input[type="time"],
-    .admin-change-form textarea {
-        background: #ffffff !important;
-        color: #0a0a2a !important;
+    .admin-change-form textarea,
+    .admin-change-form select {
+        background: rgba(20,20,50,0.85) !important;
+        color: #ffffff !important;
         border: 1px solid rgba(255,215,0,0.4) !important;
         border-radius: 10px !important;
         padding: 8px 12px !important;
     }
+    .admin-change-form input::placeholder,
+    .admin-change-form textarea::placeholder { color: rgba(255,255,255,0.5) !important; }
+    .admin-change-form select option { background: #1a1a4a; color: #fff; }
     .inline-group input[type="text"],
-    .inline-group input[type="number"] {
-        background: #ffffff !important;
-        color: #0a0a2a !important;
+    .inline-group input[type="number"],
+    .inline-group select,
+    .inline-group textarea {
+        background: rgba(20,20,50,0.85) !important;
+        color: #ffffff !important;
         border: 1px solid rgba(255,215,0,0.3) !important;
         border-radius: 6px !important;
         padding: 4px 8px !important;
     }
+    /* Поле «номер стола»: только ручной ввод, без стрелок-«ползунка» */
+    .admin-change-form .field-number input::-webkit-outer-spin-button,
+    .admin-change-form .field-number input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    .admin-change-form .field-number input { -moz-appearance: textfield; }
     .admin-change-form {
         background: rgba(30,30,70,0.4);
         backdrop-filter: blur(10px);

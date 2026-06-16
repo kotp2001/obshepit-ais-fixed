@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load i18n admin_urls admin_extras %}
+
+{% block title %}Журнал действий | АИС Общепит{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-table-container {
+        background: rgba(30,30,70,0.4);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+        overflow-x: auto;
+    }
+    .admin-table { width: 100%; border-collapse: collapse; background: rgba(30,30,70,0.3); border-radius: 15px; overflow: hidden; }
+    .admin-table th { background: rgba(26,26,74,0.9); color: #ffd700; padding: 12px 15px; font-weight: 600; text-align: left; white-space: nowrap; }
+    .admin-table td { background: rgba(40,40,90,0.4); color: white; padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .admin-table tr:hover td { background: rgba(60,60,110,0.6); }
+    .search-bar { background: rgba(50,50,100,0.8); border: 1px solid #ffd700; border-radius: 20px; padding: 8px 15px; color: white; width: 250px; }
+    .button { background: #ffd700; color: #1a1a4a; border: none; border-radius: 25px; padding: 6px 15px; cursor: pointer; transition: 0.1s ease; }
+    .button:hover { background: #e6c200; transform: translateY(-1px); }
+    .pagination { margin-top: 20px; text-align: center; }
+    .pagination .step-links a { color: #ffd700; margin: 0 8px; text-decoration: none; }
+    .pagination .current { color: white; margin: 0 8px; }
+    .filter-sidebar { background: rgba(20,20,50,0.7); backdrop-filter: blur(10px); border-radius: 15px; padding: 15px; margin-bottom: 20px; }
+    .filter-sidebar h3 { color: #ffd700; margin-top: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Журнал действий</h4>
+        </div>
+        <div class="card-body">
+            {% if cl.search_fields %}
+            <div class="filter-sidebar">
+                <h3>Поиск</h3>
+                <form method="get" action="">
+                    <input type="text" name="q" value="{{ cl.query }}" class="search-bar" placeholder="Поиск по пользователю, описанию, IP...">
+                    <button type="submit" class="button">Найти</button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            {% for field_name in cl.list_display %}
+                                <th>{% admin_col_label cl field_name %}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for obj in cl.result_list %}
+                        <tr>
+                            {% for field_name in cl.list_display %}
+                                <td>{% admin_col_value cl obj field_name %}</td>
+                            {% endfor %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="{{ cl.list_display|length }}" class="text-center">Нет записей</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination">
+                <span class="step-links">
+                    {% if cl.paginator.num_pages > 1 %}
+                        {% if cl.page_num > 1 %}
+                            <a href="?{% if cl.query %}q={{ cl.query }}&amp;{% endif %}p={{ cl.page_num|add:'-1' }}">‹ Назад</a>
+                        {% endif %}
+                        <span class="current">
+                            Страница {{ cl.page_num }} из {{ cl.paginator.num_pages }} (всего {{ cl.result_count }})
+                        </span>
+                        {% if cl.page_num < cl.paginator.num_pages %}
+                            <a href="?{% if cl.query %}q={{ cl.query }}&amp;{% endif %}p={{ cl.page_num|add:'1' }}">Вперёд ›</a>
+                        {% endif %}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

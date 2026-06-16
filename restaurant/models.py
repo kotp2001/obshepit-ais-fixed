@@ -180,3 +180,31 @@ class LoginAttempt(models.Model):
 
     def __str__(self):
         return f'{self.username} — {self.attempts} попыток'
+
+
+class DatabaseBackup(models.Model):
+    """Резервная копия операционных данных, хранится прямо в БД (а не в файловой
+    системе) — поэтому копии не пропадают при перезапуске/передеплое на Render."""
+    name          = models.CharField(max_length=200, verbose_name='Название')
+    created_at    = models.DateTimeField(auto_now_add=True, verbose_name='Создана')
+    data          = models.TextField(verbose_name='Данные (JSON)')
+    size          = models.IntegerField(default=0, verbose_name='Размер, байт')
+    records_count = models.IntegerField(default=0, verbose_name='Записей в копии')
+    fmt           = models.CharField(max_length=10, default='json', verbose_name='Формат')
+    note          = models.CharField(max_length=300, blank=True, verbose_name='Комментарий')
+
+    class Meta:
+        verbose_name        = 'Резервная копия'
+        verbose_name_plural = 'Резервные копии'
+        ordering            = ['-created_at']
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def size_kb(self):
+        return round(self.size / 1024, 1)
+
+    @property
+    def is_restorable(self):
+        return self.fmt == 'json'
