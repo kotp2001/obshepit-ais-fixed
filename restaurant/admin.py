@@ -22,7 +22,7 @@ class CustomUserAdmin(UserAdmin):
     list_filter = []
     search_fields = ['username', 'email']
     list_editable = ['is_staff', 'is_active']
-    actions = None  # Убираем массовые действия
+    actions = None
 
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
@@ -50,17 +50,17 @@ admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 
 
-# ===== КАТЕГОРИИ (УБРАНА ИКОНКА, ВСЁ НА РУССКОМ) =====
+# ===== КАТЕГОРИИ =====
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'order']  # Иконка УБРАНА
+    list_display = ['id', 'name', 'order']
     list_display_links = ['id', 'name']
     list_editable = ['order']
     search_fields = ['name']
     ordering = ['order']
     fields = ['name', 'order']
-    actions = None  # Убираем "Действие: --- Выполнить"
+    actions = None
 
 
 # ===== БЛЮДА =====
@@ -75,7 +75,7 @@ class DishAdmin(admin.ModelAdmin):
     actions = None
 
 
-# ===== СТОЛЫ (ВСЁ НА РУССКОМ) =====
+# ===== СТОЛЫ (исправлено: методы для заголовков) =====
 
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
@@ -85,11 +85,15 @@ class TableAdmin(admin.ModelAdmin):
     ordering = ['number']
     fields = ['number', 'seats']
     actions = None
-    
-    # Переименовываем столбцы
+
+    def number(self, obj):
+        return obj.number
     number.short_description = 'Номер'
+
+    def seats(self, obj):
+        return obj.seats
     seats.short_description = 'Мест'
-    
+
     def get_status_display(self, obj):
         status_map = {
             'free': 'Свободен',
@@ -109,7 +113,7 @@ class OrderItemInline(admin.TabularInline):
     readonly_fields = []
     show_change_link = True
     can_delete = True
-    
+
     def get_status_display(self, obj):
         status_map = {
             'pending': 'В очереди',
@@ -143,7 +147,7 @@ class OrderAdminForm(forms.ModelForm):
         return val
 
 
-# ===== ЗАКАЗЫ (ВСЁ НА РУССКОМ) =====
+# ===== ЗАКАЗЫ =====
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -157,17 +161,17 @@ class OrderAdmin(admin.ModelAdmin):
     readonly_fields = []
     fields = ['table', 'waiter', 'created_at', 'status', 'payment_method', 'guest_count']
     actions = None
-    
+
     def get_table_display(self, obj):
         return f'Стол {obj.table.number} ({obj.table.seats} мест)'
     get_table_display.short_description = 'Стол'
-    
+
     def get_waiter_display(self, obj):
         if obj.waiter:
             return obj.waiter.username
         return 'Не назначен'
     get_waiter_display.short_description = 'Официант'
-    
+
     def get_status_display(self, obj):
         status_map = {
             'new': 'Новый',
@@ -179,7 +183,7 @@ class OrderAdmin(admin.ModelAdmin):
         }
         return status_map.get(obj.status, obj.status)
     get_status_display.short_description = 'Статус'
-    
+
     def get_payment_display(self, obj):
         if obj.payment_method == 'cash':
             return 'Наличные'
@@ -225,7 +229,7 @@ class OrderItemAdmin(admin.ModelAdmin):
     search_fields = ['dish__name', 'order__id']
     readonly_fields = []
     actions = None
-    
+
     def get_status_display(self, obj):
         status_map = {
             'pending': 'В очереди',
