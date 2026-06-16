@@ -18,24 +18,25 @@ class ProfileInline(admin.StackedInline):
 
 class CustomUserAdmin(UserAdmin):
     inlines = [ProfileInline]
-    list_display  = ['username', 'first_name', 'last_name', 'email', 'get_role', 'is_staff', 'is_active']
-    list_filter = []   # Убираем все фильтры
-    search_fields = ['username', 'email', 'first_name', 'last_name']
+    list_display = ['id', 'username', 'get_role', 'is_staff', 'is_active']
+    list_filter = []
+    search_fields = ['username', 'email']
     list_editable = ['is_staff', 'is_active']
-
+    
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Личные данные', {'fields': ('first_name', 'last_name', 'email')}),
         ('Права доступа', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Важные даты', {'fields': ('last_login', 'date_joined')}),
     )
+    
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'password1', 'password2', 'first_name', 'last_name', 'email', 'is_staff'),
+            'fields': ('username', 'password1', 'password2', 'role'),
         }),
     )
-
+    
     def get_role(self, obj):
         try:
             return obj.profile.get_role_display()
@@ -53,37 +54,39 @@ admin.site.register(User, CustomUserAdmin)
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display  = ['id', 'name', 'icon', 'order']
-    list_editable = ['name', 'icon', 'order']
+    list_display = ['id', 'name', 'order']
+    list_editable = ['name', 'order']
     search_fields = ['name']
-    ordering      = ['order']
+    ordering = ['order']
+    fields = ['name', 'order']
 
 
 # ===== БЛЮДА =====
 
 @admin.register(Dish)
 class DishAdmin(admin.ModelAdmin):
-    list_display  = ['id', 'name', 'category', 'price', 'is_available', 'weight']
+    list_display = ['id', 'name', 'category', 'price', 'is_available']
     list_editable = ['price', 'is_available']
-    search_fields = ['name', 'description']
-    fields        = ['name', 'category', 'description', 'price', 'weight', 'calories', 'image_url', 'is_available']
+    search_fields = ['name']
+    fields = ['name', 'category', 'price', 'is_available']
 
 
 # ===== СТОЛЫ =====
 
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
-    list_display  = ['number', 'seats', 'status']
+    list_display = ['number', 'seats', 'status']
     list_editable = ['status', 'seats']
-    ordering      = ['number']
+    ordering = ['number']
+    fields = ['number', 'seats']
 
 
 # ===== ПОЗИЦИИ ЗАКАЗА (инлайн) =====
 
 class OrderItemInline(admin.TabularInline):
-    model   = OrderItem
-    extra   = 0
-    fields  = ['dish', 'quantity', 'price', 'status']
+    model = OrderItem
+    extra = 0
+    fields = ['dish', 'quantity', 'price', 'status']
     readonly_fields = []
     show_change_link = True
 
@@ -100,7 +103,7 @@ class OrderAdminForm(forms.ModelForm):
     )
 
     class Meta:
-        model = __import__('restaurant.models', fromlist=['Order']).Order
+        model = Order
         fields = '__all__'
 
     def clean_created_at(self):
@@ -115,13 +118,14 @@ class OrderAdminForm(forms.ModelForm):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     form = OrderAdminForm
-    list_display   = ['id', 'table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method']
-    list_editable  = ['status']
-    search_fields  = ['id', 'table__number']
+    list_display = ['id', 'table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method']
+    list_filter = []
+    list_editable = ['status']
+    search_fields = ['id', 'table__number']
     date_hierarchy = 'created_at'
-    inlines        = [OrderItemInline]
+    inlines = [OrderItemInline]
     readonly_fields = []
-    fields         = ['table', 'waiter', 'created_at', 'status', 'payment_method', 'guest_count']
+    fields = ['table', 'waiter', 'created_at', 'status', 'payment_method', 'guest_count']
 
     def get_changeform_initial_data(self, request):
         from datetime import datetime
@@ -152,7 +156,8 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display  = ['id', 'order', 'dish', 'quantity', 'price', 'status']
+    list_display = ['id', 'order', 'dish', 'quantity', 'price', 'status']
+    list_filter = []
     list_editable = ['quantity', 'price', 'status']
     search_fields = ['dish__name', 'order__id']
     readonly_fields = []
@@ -162,29 +167,34 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 @admin.register(MaintenanceLog)
 class MaintenanceLogAdmin(admin.ModelAdmin):
-    list_display  = ['id', 'date', 'work_performed', 'performed_by', 'created_at']
+    list_display = ['id', 'date', 'work_performed', 'performed_by', 'created_at']
+    list_filter = []
     search_fields = ['work_performed', 'performed_by']
-    fields        = ['date', 'work_performed', 'performed_by']
+    fields = ['date', 'work_performed', 'performed_by']
     readonly_fields = []
 
 
 # ===== КАСТОМИЗАЦИЯ DJANGO ADMIN =====
-admin.site.site_header  = 'АИС «Общепит»'
-admin.site.site_title   = 'АИС Общепит'
-admin.site.index_title  = 'Панель управления'
+admin.site.site_header = 'АИС «Общепит»'
+admin.site.site_title = 'АИС Общепит'
+admin.site.index_title = 'Панель управления'
 
 
 # ===== ЖУРНАЛ ДЕЙСТВИЙ =====
 @admin.register(ActionLog)
 class ActionLogAdmin(admin.ModelAdmin):
-    list_display  = ['timestamp', 'user', 'action', 'description', 'ip_address']
+    list_display = ['id', 'timestamp', 'user', 'action', 'description', 'ip_address']
+    list_filter = []
     search_fields = ['user__username', 'description', 'ip_address']
     readonly_fields = ['user', 'action', 'description', 'ip_address', 'timestamp']
-    ordering      = ['-timestamp']
+    ordering = ['-timestamp']
 
-    def has_add_permission(self, request):    return False
-    def has_change_permission(self, request, obj=None): return False
-    def has_delete_permission(self, request, obj=None): return True
+    def has_add_permission(self, request):
+        return False
+    def has_change_permission(self, request, obj=None):
+        return False
+    def has_delete_permission(self, request, obj=None):
+        return True
 
     def add_view(self, request, form_url='', extra_context=None):
         from django.http import HttpResponseForbidden
@@ -198,21 +208,24 @@ class ActionLogAdmin(admin.ModelAdmin):
 # ===== ЧЕКИ =====
 @admin.register(Receipt)
 class ReceiptAdmin(admin.ModelAdmin):
-    list_display  = ['id', 'order', 'total', 'payment_method', 'created_at']
+    list_display = ['id', 'order', 'total', 'payment_method', 'created_at']
+    list_filter = []
     readonly_fields = ['order', 'pdf_file', 'created_at', 'total', 'payment_method']
-    ordering      = ['-created_at']
+    ordering = ['-created_at']
 
-    def has_add_permission(self, request):    return False
+    def has_add_permission(self, request):
+        return False
 
 
 # ===== ПОПЫТКИ ВХОДА =====
 @admin.register(LoginAttempt)
 class LoginAttemptAdmin(admin.ModelAdmin):
-    list_display  = ['username', 'ip_address', 'attempts', 'blocked_until', 'last_attempt', 'is_blocked']
+    list_display = ['username', 'ip_address', 'attempts', 'blocked_until', 'last_attempt', 'is_blocked']
+    list_filter = []
     search_fields = ['username', 'ip_address']
     readonly_fields = ['username', 'ip_address', 'last_attempt']
-    ordering      = ['-last_attempt']
-    actions       = ['unblock_users']
+    ordering = ['-last_attempt']
+    actions = ['unblock_users']
 
     def is_blocked(self, obj):
         from django.utils import timezone
