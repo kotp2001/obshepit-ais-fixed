@@ -19,7 +19,7 @@ class ProfileInline(admin.StackedInline):
 class CustomUserAdmin(UserAdmin):
     inlines = [ProfileInline]
     list_display  = ['username', 'first_name', 'last_name', 'email', 'get_role', 'is_staff', 'is_active']
-    # list_filter удалён
+    list_filter = []   # Убираем все фильтры
     search_fields = ['username', 'email', 'first_name', 'last_name']
     list_editable = ['is_staff', 'is_active']
 
@@ -64,7 +64,6 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Dish)
 class DishAdmin(admin.ModelAdmin):
     list_display  = ['id', 'name', 'category', 'price', 'is_available', 'weight']
-    # list_filter удалён
     list_editable = ['price', 'is_available']
     search_fields = ['name', 'description']
     fields        = ['name', 'category', 'description', 'price', 'weight', 'calories', 'image_url', 'is_available']
@@ -75,7 +74,6 @@ class DishAdmin(admin.ModelAdmin):
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
     list_display  = ['number', 'seats', 'status']
-    # list_filter удалён
     list_editable = ['status', 'seats']
     ordering      = ['number']
 
@@ -91,7 +89,6 @@ class OrderItemInline(admin.TabularInline):
 
 
 class OrderAdminForm(forms.ModelForm):
-    """Форма заказа — created_at всегда имеет значение"""
     created_at = forms.SplitDateTimeField(
         widget=forms.SplitDateTimeWidget(
             date_attrs={'type': 'date'},
@@ -119,7 +116,6 @@ class OrderAdminForm(forms.ModelForm):
 class OrderAdmin(admin.ModelAdmin):
     form = OrderAdminForm
     list_display   = ['id', 'table', 'waiter', 'created_at', 'status', 'total_amount', 'payment_method']
-    # list_filter удалён
     list_editable  = ['status']
     search_fields  = ['id', 'table__number']
     date_hierarchy = 'created_at'
@@ -157,7 +153,6 @@ class OrderAdmin(admin.ModelAdmin):
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display  = ['id', 'order', 'dish', 'quantity', 'price', 'status']
-    # list_filter удалён
     list_editable = ['quantity', 'price', 'status']
     search_fields = ['dish__name', 'order__id']
     readonly_fields = []
@@ -168,7 +163,6 @@ class OrderItemAdmin(admin.ModelAdmin):
 @admin.register(MaintenanceLog)
 class MaintenanceLogAdmin(admin.ModelAdmin):
     list_display  = ['id', 'date', 'work_performed', 'performed_by', 'created_at']
-    # list_filter удалён
     search_fields = ['work_performed', 'performed_by']
     fields        = ['date', 'work_performed', 'performed_by']
     readonly_fields = []
@@ -184,7 +178,6 @@ admin.site.index_title  = 'Панель управления'
 @admin.register(ActionLog)
 class ActionLogAdmin(admin.ModelAdmin):
     list_display  = ['timestamp', 'user', 'action', 'description', 'ip_address']
-    # list_filter удалён
     search_fields = ['user__username', 'description', 'ip_address']
     readonly_fields = ['user', 'action', 'description', 'ip_address', 'timestamp']
     ordering      = ['-timestamp']
@@ -206,7 +199,6 @@ class ActionLogAdmin(admin.ModelAdmin):
 @admin.register(Receipt)
 class ReceiptAdmin(admin.ModelAdmin):
     list_display  = ['id', 'order', 'total', 'payment_method', 'created_at']
-    # list_filter удалён
     readonly_fields = ['order', 'pdf_file', 'created_at', 'total', 'payment_method']
     ordering      = ['-created_at']
 
@@ -217,7 +209,6 @@ class ReceiptAdmin(admin.ModelAdmin):
 @admin.register(LoginAttempt)
 class LoginAttemptAdmin(admin.ModelAdmin):
     list_display  = ['username', 'ip_address', 'attempts', 'blocked_until', 'last_attempt', 'is_blocked']
-    # list_filter удалён
     search_fields = ['username', 'ip_address']
     readonly_fields = ['username', 'ip_address', 'last_attempt']
     ordering      = ['-last_attempt']
