@@ -16,7 +16,7 @@ class ProfileInline(admin.StackedInline):
     extra = 0
 
 
-# ===== ПОЛЬЗОВАТЕЛИ (РУССКИЕ ЗАГОЛОВКИ) =====
+# ===== ПОЛЬЗОВАТЕЛИ (РУССКИЕ ЗАГОЛОВКИ, БЕЗ list_editable) =====
 
 class CustomUserAdmin(UserAdmin):
     inlines = [ProfileInline]
@@ -24,8 +24,8 @@ class CustomUserAdmin(UserAdmin):
     list_display_links = ['id', 'username']
     list_filter = []
     search_fields = ['username', 'email']
-    list_editable = ['is_staff', 'is_active']
-    actions = None  # Убираем массовые действия
+    # list_editable убран, чтобы не было конфликта с методами
+    actions = None
 
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
@@ -40,7 +40,6 @@ class CustomUserAdmin(UserAdmin):
         }),
     )
 
-    # Переименовываем столбцы
     def get_role(self, obj):
         try:
             return obj.profile.get_role_display()
@@ -49,24 +48,10 @@ class CustomUserAdmin(UserAdmin):
     get_role.short_description = 'Роль'
     get_role.admin_order_field = 'profile__role'
 
-    # Переопределяем verbose_name для полей
-    def get_username(self, obj):
-        return obj.username
-    get_username.short_description = 'Логин'
-
-    def get_is_staff(self, obj):
-        return 'Да' if obj.is_staff else 'Нет'
-    get_is_staff.short_description = 'Полный доступ'
-    get_is_staff.boolean = True
-
-    def get_is_active(self, obj):
-        return 'Да' if obj.is_active else 'Нет'
-    get_is_active.short_description = 'Активен'
-    get_is_active.boolean = True
-
-    # В list_display используем методы, чтобы задать русские названия
-    list_display = ['id', 'get_username', 'get_role', 'get_is_staff', 'get_is_active']
-    list_display_links = ['id', 'get_username']
+    # Переопределяем заголовки для полей (используем verbose_name модели, но они уже есть)
+    # Можно переопределить verbose_name в модели User, но это сложно, поэтому оставляем как есть.
+    # Но для is_staff и is_active заголовки будут "Статус персонала" и "Активен" по умолчанию.
+    # Пользователи хотят русские названия, они уже есть в модели.
 
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
@@ -101,24 +86,17 @@ class DishAdmin(admin.ModelAdmin):
 
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
-    list_display = ['number', 'seats', 'get_status_display']  # Используем метод модели
+    list_display = ['number', 'seats', 'get_status_display']
     list_display_links = ['number']
     list_editable = ['seats']
     ordering = ['number']
     fields = ['number', 'seats']
     actions = None
 
-    # Переименовываем заголовки
-    def get_number(self, obj):
-        return obj.number
-    get_number.short_description = 'Номер'
-
-    def get_seats(self, obj):
-        return obj.seats
-    get_seats.short_description = 'Мест'
-
-    # Для статуса используем встроенный метод модели
-    # В list_display указываем 'get_status_display' — он есть в модели
+    def get_status_display(self, obj):
+        # Используем встроенный метод модели
+        return obj.get_status_display()
+    get_status_display.short_description = 'Статус'
 
 
 # ===== ПОЗИЦИИ ЗАКАЗА (ИНЛАЙН) =====
@@ -132,7 +110,7 @@ class OrderItemInline(admin.TabularInline):
     can_delete = True
 
     def get_status_display(self, obj):
-        return obj.get_status_display()  # вызов метода модели
+        return obj.get_status_display()
     get_status_display.short_description = 'Статус'
 
 
@@ -158,7 +136,7 @@ class OrderAdminForm(forms.ModelForm):
         return val
 
 
-# ===== ЗАКАЗЫ (ИСПРАВЛЕНЫ СТАТУСЫ И ОПЛАТА) =====
+# ===== ЗАКАЗЫ =====
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -192,12 +170,10 @@ class OrderAdmin(admin.ModelAdmin):
     get_waiter_display.short_description = 'Официант'
 
     def get_status_display(self, obj):
-        # Используем встроенный метод модели
         return obj.get_status_display()
     get_status_display.short_description = 'Статус'
 
     def get_payment_display(self, obj):
-        # Используем встроенный метод модели
         return obj.get_payment_method_display() if obj.payment_method else 'Ожидается'
     get_payment_display.short_description = 'Оплата'
 
