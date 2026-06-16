@@ -3,6 +3,7 @@ from . import views
 from .excel import export_orders_excel, export_popular_excel
 
 urlpatterns = [
+    # Главная страница
     path('', views.landing, name='landing'),
 
     # Интерфейсы сотрудников
@@ -32,6 +33,7 @@ urlpatterns = [
     path('api/orders/mark-ready/', views.api_mark_order_ready, name='api_mark_ready'),
     path('api/orders/take/', views.api_take_order, name='api_take_order'),
     path('api/orders/pay/', views.api_pay_order, name='api_pay_order'),
+    # Исправленный путь: убран лишний слэш
     path('api/orders/receipt/<int:order_id>/', views.api_order_receipt, name='api_receipt'),
 
     # API отчёты и ТО
@@ -47,7 +49,7 @@ urlpatterns = [
     # Журнал действий
     path('api/action-logs/', views.api_action_logs, name='api_action_logs'),
 
-    # Скачать чек
+    # Скачать чек (исправленный путь)
     path('receipts/<int:receipt_id>/download/', views.download_receipt, name='download_receipt'),
 
     # Авто-бэкап
@@ -60,6 +62,6 @@ urlpatterns = [
     # Запасной эндпоинт оплаты
     path('api/pay-fixed/', views.api_pay_fixed, name='api_pay_fixed'),
 
-    # Резервное копирование
+    # Резервное копирование (подключаем приложение backup_urls)
     path('backup/', include('restaurant.backup_urls')),
 ]
