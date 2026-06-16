@@ -16,13 +16,16 @@ class ProfileInline(admin.StackedInline):
     extra = 0
 
 
+# ===== ПОЛЬЗОВАТЕЛИ (РУССКИЕ ЗАГОЛОВКИ) =====
+
 class CustomUserAdmin(UserAdmin):
     inlines = [ProfileInline]
     list_display = ['id', 'username', 'get_role', 'is_staff', 'is_active']
+    list_display_links = ['id', 'username']
     list_filter = []
     search_fields = ['username', 'email']
     list_editable = ['is_staff', 'is_active']
-    actions = None
+    actions = None  # Убираем массовые действия
 
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
@@ -37,6 +40,7 @@ class CustomUserAdmin(UserAdmin):
         }),
     )
 
+    # Переименовываем столбцы
     def get_role(self, obj):
         try:
             return obj.profile.get_role_display()
@@ -45,12 +49,30 @@ class CustomUserAdmin(UserAdmin):
     get_role.short_description = 'Роль'
     get_role.admin_order_field = 'profile__role'
 
+    # Переопределяем verbose_name для полей
+    def get_username(self, obj):
+        return obj.username
+    get_username.short_description = 'Логин'
+
+    def get_is_staff(self, obj):
+        return 'Да' if obj.is_staff else 'Нет'
+    get_is_staff.short_description = 'Полный доступ'
+    get_is_staff.boolean = True
+
+    def get_is_active(self, obj):
+        return 'Да' if obj.is_active else 'Нет'
+    get_is_active.short_description = 'Активен'
+    get_is_active.boolean = True
+
+    # В list_display используем методы, чтобы задать русские названия
+    list_display = ['id', 'get_username', 'get_role', 'get_is_staff', 'get_is_active']
+    list_display_links = ['id', 'get_username']
 
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 
 
-# ===== КАТЕГОРИИ =====
+# ===== КАТЕГОРИИ (УБРАНА ИКОНКА) =====
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -75,36 +97,31 @@ class DishAdmin(admin.ModelAdmin):
     actions = None
 
 
-# ===== СТОЛЫ (исправлено: методы для заголовков) =====
+# ===== СТОЛЫ (ИСПРАВЛЕНЫ СТАТУСЫ) =====
 
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
-    list_display = ['number', 'seats', 'get_status_display']
+    list_display = ['number', 'seats', 'get_status_display']  # Используем метод модели
     list_display_links = ['number']
     list_editable = ['seats']
     ordering = ['number']
     fields = ['number', 'seats']
     actions = None
 
-    def number(self, obj):
+    # Переименовываем заголовки
+    def get_number(self, obj):
         return obj.number
-    number.short_description = 'Номер'
+    get_number.short_description = 'Номер'
 
-    def seats(self, obj):
+    def get_seats(self, obj):
         return obj.seats
-    seats.short_description = 'Мест'
+    get_seats.short_description = 'Мест'
 
-    def get_status_display(self, obj):
-        status_map = {
-            'free': 'Свободен',
-            'occupied': 'Занят',
-            'reserved': 'Забронирован',
-        }
-        return status_map.get(obj.status, obj.status)
-    get_status_display.short_description = 'Статус'
+    # Для статуса используем встроенный метод модели
+    # В list_display указываем 'get_status_display' — он есть в модели
 
 
-# ===== ПОЗИЦИИ ЗАКАЗА (инлайн) =====
+# ===== ПОЗИЦИИ ЗАКАЗА (ИНЛАЙН) =====
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
@@ -115,13 +132,7 @@ class OrderItemInline(admin.TabularInline):
     can_delete = True
 
     def get_status_display(self, obj):
-        status_map = {
-            'pending': 'В очереди',
-            'cooking': 'Готовится',
-            'ready': 'Готов',
-            'served': 'Подано',
-        }
-        return status_map.get(obj.status, obj.status)
+        return obj.get_status_display()  # вызов метода модели
     get_status_display.short_description = 'Статус'
 
 
@@ -147,12 +158,20 @@ class OrderAdminForm(forms.ModelForm):
         return val
 
 
-# ===== ЗАКАЗЫ =====
+# ===== ЗАКАЗЫ (ИСПРАВЛЕНЫ СТАТУСЫ И ОПЛАТА) =====
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     form = OrderAdminForm
-    list_display = ['id', 'get_table_display', 'get_waiter_display', 'created_at', 'get_status_display', 'total_amount', 'get_payment_display']
+    list_display = [
+        'id',
+        'get_table_display',
+        'get_waiter_display',
+        'created_at',
+        'get_status_display',
+        'total_amount',
+        'get_payment_display'
+    ]
     list_display_links = ['id']
     list_editable = []
     search_fields = ['id', 'table__number']
@@ -173,25 +192,13 @@ class OrderAdmin(admin.ModelAdmin):
     get_waiter_display.short_description = 'Официант'
 
     def get_status_display(self, obj):
-        status_map = {
-            'new': 'Новый',
-            'cooking': 'Готовится',
-            'ready': 'Готов',
-            'served': 'Подано',
-            'paid': 'Оплачен',
-            'cancelled': 'Отменён',
-        }
-        return status_map.get(obj.status, obj.status)
+        # Используем встроенный метод модели
+        return obj.get_status_display()
     get_status_display.short_description = 'Статус'
 
     def get_payment_display(self, obj):
-        if obj.payment_method == 'cash':
-            return 'Наличные'
-        elif obj.payment_method == 'card':
-            return 'Карта'
-        elif obj.payment_method == 'qr':
-            return 'QR-код'
-        return 'Ожидается'
+        # Используем встроенный метод модели
+        return obj.get_payment_method_display() if obj.payment_method else 'Ожидается'
     get_payment_display.short_description = 'Оплата'
 
     def get_changeform_initial_data(self, request):
@@ -219,7 +226,7 @@ class OrderAdmin(admin.ModelAdmin):
             order.save(update_fields=['total_amount'])
 
 
-# ===== ПОЗИЦИИ ЗАКАЗА (отдельно) =====
+# ===== ПОЗИЦИИ ЗАКАЗА (ОТДЕЛЬНО) =====
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
@@ -231,13 +238,7 @@ class OrderItemAdmin(admin.ModelAdmin):
     actions = None
 
     def get_status_display(self, obj):
-        status_map = {
-            'pending': 'В очереди',
-            'cooking': 'Готовится',
-            'ready': 'Готов',
-            'served': 'Подано',
-        }
-        return status_map.get(obj.status, obj.status)
+        return obj.get_status_display()
     get_status_display.short_description = 'Статус'
 
 
