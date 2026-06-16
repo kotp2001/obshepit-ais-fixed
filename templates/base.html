@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* === ГЛОБАЛЬНЫЕ СТИЛИ (ЕДИНЫЙ СТИЛЬ ДЛЯ ВСЕГО САЙТА) === */
         * {
             margin: 0;
             padding: 0;
@@ -22,10 +21,11 @@
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
-            color: white;
+            padding-top: 70px;      /* отступ для фиксированной шапки */
+            padding-bottom: 100px;  /* отступ для фиксированного футера */
         }
         
-        /* Звёздное небо (фиксированное) */
+        /* Звёздное небо */
         .stars {
             position: fixed;
             top: 0;
@@ -35,6 +35,7 @@
             pointer-events: none;
             z-index: 0;
         }
+        
         .star {
             position: absolute;
             background: white;
@@ -42,6 +43,7 @@
             opacity: 0;
             animation: twinkle 3s ease-in-out infinite;
         }
+        
         @keyframes twinkle {
             0%, 100% { opacity: 0; transform: scale(1); }
             50% { opacity: 1; transform: scale(1.2); }
@@ -53,31 +55,37 @@
             flex: 1;
         }
         
-        /* Навигация (шапка) */
+        /* ===== ВЕРХНЯЯ ПЛАШКА (НАВИГАЦИЯ) — ФИКСИРОВАННАЯ ===== */
         .navbar {
-            background: rgba(20,20,50,0.9);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            background: rgba(20,20,50,0.95);
             backdrop-filter: blur(10px);
             padding: 12px 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
+        
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
         .navbar-brand {
             font-size: 1.4rem;
             font-weight: bold;
             color: #ffd700 !important;
         }
-        .btn-logout {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: transform 0.1s ease;
-        }
-        .btn-logout:hover { background: #c82333; transform: translateY(-1px); }
-        .btn-logout:active { transform: translateY(1px); }
         
+        .navbar-brand i {
+            margin-right: 8px;
+        }
+        
+        /* Кнопка "Главное меню" */
         .main-menu-btn {
             background: #ffd700;
             color: #1a1a4a;
@@ -85,17 +93,40 @@
             border-radius: 20px;
             text-decoration: none;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 0.9rem;
             transition: all 0.1s ease;
             display: inline-block;
+            border: none;
+            cursor: pointer;
         }
         .main-menu-btn:hover {
             background: #e6c200;
             transform: translateY(-1px);
             color: #1a1a4a;
         }
+        .main-menu-btn:active {
+            transform: translateY(1px);
+        }
         
-        /* Карточки */
+        .btn-logout {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        .btn-logout:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+        .btn-logout:active {
+            transform: translateY(1px);
+        }
+        
+        /* ===== КАРТОЧКИ ===== */
         .card {
             background: rgba(30,30,70,0.6);
             backdrop-filter: blur(10px);
@@ -115,7 +146,7 @@
             padding: 20px;
         }
         
-        /* Кнопки (все кнопки на сайте) */
+        /* ===== КНОПКИ ===== */
         .btn {
             border-radius: 25px;
             padding: 8px 20px;
@@ -124,7 +155,9 @@
             border: none;
             cursor: pointer;
         }
-        .btn:active { transform: scale(0.97); }
+        .btn:active {
+            transform: scale(0.97);
+        }
         .btn-warning {
             background: #ffd700;
             color: #1a1a4a;
@@ -161,12 +194,8 @@
             background: rgba(100,100,140,0.8);
             color: white;
         }
-        .btn-secondary:hover {
-            background: rgba(120,120,160,0.9);
-            transform: translateY(-1px);
-        }
         
-        /* Формы */
+        /* ===== ФОРМЫ ===== */
         .form-control {
             background: rgba(50,50,100,0.8);
             border: 1px solid rgba(255,255,255,0.2);
@@ -184,11 +213,32 @@
         .form-label {
             color: #ffd700;
         }
-        .form-control::placeholder {
-            color: rgba(255,255,255,0.5);
+        
+        /* ===== НИЖНЯЯ ПЛАШКА (ФУТЕР) — ФИКСИРОВАННАЯ ===== */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            background: rgba(20,20,50,0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 0;
+            text-align: center;
+            color: #ffd700;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        }
+        .footer a {
+            color: #ffd700;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
         }
         
-        /* Модальные окна */
+        /* ===== МОДАЛЬНЫЕ ОКНА ===== */
         .modal-content {
             background: rgba(20,20,60,0.95) !important;
             backdrop-filter: blur(10px);
@@ -204,25 +254,6 @@
             color: white;
         }
         
-        /* Футер */
-        .footer {
-            background: rgba(20,20,50,0.8);
-            margin-top: 40px;
-            padding: 15px;
-            text-align: center;
-            color: #ffd700;
-            font-size: 13px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        .footer a {
-            color: #ffd700;
-            text-decoration: none;
-        }
-        .footer a:hover {
-            text-decoration: underline;
-        }
-        
-        /* Анимации */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -231,7 +262,6 @@
             animation: fadeIn 0.4s ease forwards;
         }
         
-        /* Скроллбар */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -243,19 +273,6 @@
             background: #ffd700;
             border-radius: 10px;
         }
-        
-        /* Дополнительные утилиты */
-        .text-gold {
-            color: #ffd700;
-        }
-        .bg-dark-transparent {
-            background: rgba(0,0,0,0.3);
-        }
-        
-        /* Убираем лишние эффекты у неактивных элементов (если нужно) */
-        .no-hover:hover {
-            transform: none !important;
-        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -263,11 +280,13 @@
     <div class="stars" id="stars"></div>
     
     <nav class="navbar">
-        <div class="container d-flex justify-content-between align-items-center">
+        <div class="container">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-utensils"></i> АИС Общепит
             </a>
-            <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <!-- Кнопка "Главное меню" -->
+                <a href="/admin-panel/" class="main-menu-btn">Главное меню</a>
                 <button class="btn-logout" onclick="logout()" id="logout-btn" style="display: none;">Выйти</button>
             </div>
         </div>
@@ -279,8 +298,8 @@
 
     <div class="footer">
         <div class="container">
-            <p class="mb-0">АИС "Общепит", курсовой проект, Дубровин К.С., гр. ИС-61</p>
-            <p class="mb-0 mt-1" style="font-size: 11px;">
+            <p class="mb-0">АИС "Общепит", дипломный проект, Дубровин К.С., гр. ИС-61</p>
+            <p class="mb-0 mt-1" style="font-size: 0.8rem;">
                 <a href="/help/">Руководство пользователя</a> |
                 <a href="/docs/">Регламенты</a> |
                 <a href="/maintenance-log/">Журнал ТО</a> |
