@@ -7,7 +7,11 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-8x9y2z1w0v7u6t
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
+# ------------------------------------------------------------------
+# Установка django-unfold ПЕРВЫМ в INSTALLED_APPS
+# ------------------------------------------------------------------
 INSTALLED_APPS = [
+    'unfold',                               # <--- Добавлено (современная админка)
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -48,6 +52,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'restaurant_project.wsgi.application'
 
+# ------------------------------------------------------------------
+# Настройка базы данных (PostgreSQL через DATABASE_URL или SQLite)
+# ------------------------------------------------------------------
 import dj_database_url
 
 DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
@@ -66,7 +73,6 @@ if DATABASE_URL:
         DATABASE_URL = ''
 
 if not DATABASE_URL:
-    # Локальная разработка или билд без БД — SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -89,7 +95,6 @@ USE_TZ = False
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-# whitenoise раздаёт статику напрямую из STATICFILES_DIRS без collectstatic
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -104,5 +109,15 @@ LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/admin-panel/'
 LOGOUT_REDIRECT_URL = '/'
 
-# Секретный ключ для авто-бэкапа (переопределить в переменных окружения Render)
 BACKUP_SECRET_KEY = os.environ.get('BACKUP_SECRET_KEY', 'obshepit-backup-2026')
+
+# ------------------------------------------------------------------
+# Настройки django-unfold (современная админка)
+# ------------------------------------------------------------------
+UNFOLD = {
+    "SITE_TITLE": "АИС Общепит",
+    "SITE_HEADER": "АИС Общепит: Панель управления",
+    "SITE_ICON": None,                     # можно указать путь к иконке, например "static/admin/img/favicon.ico"
+    "THEME": "dark",                       # или "light" – тёмная тема выглядит современнее
+    # Дополнительные параметры (например, меню, логотип) можно добавить позже
+}
