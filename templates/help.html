@@ -1,41 +1,54 @@
+<!--
+    Файл: templates/help.html
+    Назначение: страница с руководством пользователя для АИС "Общепит".
+    Содержит описание функционала системы для разных ролей: администратор, официант, повар.
+    Расширяет базовый шаблон base.html.
+    Включает текстовые инструкции и плейсхолдеры для изображений.
+-->
+
+<!-- Наследуем базовый шаблон, подгружаем статику и задаём заголовок страницы -->
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Руководство пользователя{% endblock %}
+
 {% block content %}
+
+<!-- Основной контент страницы: руководство в формате Markdown-подобной разметки -->
 <div class="fade-in">
     <div class="card">
         <div class="card-header">
             <h4 class="mb-0">Руководство пользователя АИС "Общепит"</h4>
-            
+            <small>По ГОСТ 19.505-79 ЕСПД</small>
         </div>
         <div class="card-body">
+            <!-- Блок с информацией о том, где найти помощь -->
             <div class="alert alert-info mb-4" style="background: rgba(255,215,0,0.1); border: 1px solid #ffd700; color: #ffd700;">
                 <strong>Где находится помощь?</strong>
                 <p class="mb-0 mt-1" style="color: rgba(255,255,255,0.8);">Ссылка на это руководство находится в правом верхнем углу панели администратора (иконка "Помощь"). Также вы можете перейти по прямой ссылке: <code style="background: #333; padding: 2px 5px;">/help/</code></p>
             </div>
-            
-            <!-- 1. Назначение системы -->
+
+            <!-- Раздел 1: Назначение системы -->
             <h4 style="color: #ffd700; margin-top: 20px;">1. Назначение системы</h4>
             <p>АИС "Общепит" предназначена для автоматизации учёта заказов на предприятиях общественного питания (кафе, рестораны, столовые). Доступ только для сотрудников: администраторов, официантов и поваров.</p>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/system_architecture.png" alt="Архитектура системы" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 1 - Архитектура АИС "Общепит"</p>
-            </div>
-            
-            <!-- 3. Авторизация -->
+
+    
+           
+          
+       
+
+            <!-- Раздел 2: Авторизация в системе -->
             <h4 style="color: #ffd700; margin-top: 30px;">2. Авторизация в системе</h4>
             <p>Для входа в систему:</p>
             <ol>
                 <li>Откройте главную страницу сайта</li>
                 <li>Введите логин и пароль</li>
             </ol>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/login_screen.png" alt="Страница авторизации" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 2 - Страница авторизации</p>
-            </div>
-            
+
+            <!-- Плейсхолдер для изображения страницы авторизации -->
+   
+   
+
+            <!-- Таблица с тестовыми учётными записями для разных ролей -->
             <table class="table table-dark table-bordered" style="margin-top: 10px;">
                 <thead>
                     <tr>
@@ -50,15 +63,14 @@
                     <tr><td style="color: white;">Повар</td><td style="color: white;">chef</td><td style="color: white;">chef123</td></tr>
                 </tbody>
             </table>
-            
-            <!-- 4. Работа официанта -->
+
+            <!-- Раздел 3: Инструкция для официанта -->
             <h4 style="color: #ffd700; margin-top: 30px;">3. Работа официанта</h4>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/waiter_hall.png" alt="Зал ресторана" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 3 - Схема зала ресторана</p>
-            </div>
-            
+            <!-- Плейсхолдер для изображения зала ресторана -->
+      
+  
+
+            <!-- Подраздел 3.1: Приём заказа -->
             <h5>3.1. Приём заказа</h5>
             <ol>
                 <li>Войдите в систему как официант</li>
@@ -67,32 +79,29 @@
                 <li>Укажите количество гостей</li>
                 <li>Нажмите "Оформить заказ"</li>
             </ol>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/create_order.png" alt="Создание заказа" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 4 - Создание заказа</p>
-            </div>
-            
+
+            <!-- Плейсхолдер для изображения создания заказа -->
+       
+      
+
+            <!-- Подраздел 3.2: Оплата и чек -->
             <h5>3.2. Оплата и чек</h5>
             <ol>
                 <li>Когда заказ готов, нажмите "Забрать заказ"</li>
                 <li>Выберите способ оплаты: Наличные / Карта / QR-код</li>
                 <li>Нажмите "Оплатить"</li>
             </ol>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/payment.png" alt="Оплата заказа" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 5 - Выбор способа оплаты</p>
-            </div>
-            
-            <!-- 5. Работа повара -->
+
+            <!-- Плейсхолдер для изображения оплаты -->
+     
+        
+
+            <!-- Раздел 4: Инструкция для повара -->
             <h4 style="color: #ffd700; margin-top: 30px;">4. Работа повара</h4>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/kitchen_panel.png" alt="Панель повара" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 6 - Панель повара</p>
-            </div>
-            
+            <!-- Плейсхолдер для изображения панели повара -->
+
+          
+
             <ol>
                 <li>Войдите в систему как повар</li>
                 <li>В разделе "Активные заказы" вы увидите список заказов</li>
@@ -100,15 +109,13 @@
                 <li>После приготовления нажмите "Готово"</li>
                 <li>Когда все блюда готовы, нажмите "Заказ готов"</li>
             </ol>
-            
-            <!-- 6. Работа администратора -->
+
+            <!-- Раздел 5: Инструкция для администратора -->
             <h4 style="color: #ffd700; margin-top: 30px;">5. Работа администратора</h4>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/admin_panel.png" alt="Панель администратора" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 7 - Панель администратора</p>
-            </div>
-            
+            <!-- Плейсхолдер для изображения панели администратора -->
+      
+           
+
             <ol>
                 <li>Войдите в систему как администратор</li>
                 <li>В панели администратора доступны карточки:
@@ -122,16 +129,16 @@
                     </ul>
                 </li>
             </ol>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/reports.png" alt="Отчёты" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 8 - Страница отчётов</p>
-            </div>
+
+            <!-- Дополнительный раздел о журнале ТО (уже не упоминается в футере, но в руководстве может остаться) -->
+            <!-- Раздел 6: Журнал технического обслуживания удалён, так как ссылка на него убрана из футера -->
+            <!-- Раздел 7: Регламенты удалены, так как ссылка на них убрана из футера -->
         </div>
     </div>
 </div>
 
 <style>
+    /* Стили для таблицы */
     .table-dark {
         background: rgba(30,30,70,0.8);
     }
@@ -145,4 +152,5 @@
         color: #ffd700;
     }
 </style>
+
 {% endblock %}
