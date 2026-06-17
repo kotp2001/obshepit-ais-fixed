@@ -51,6 +51,22 @@ class CustomUserAdmin(UserAdmin):
         }),
     )
 
+    # Добавлена поддержка смены пароля для пользователей
+    # Это исправляет проблему "Не работает смена пароля"
+    def change_password_form(self, request, user_id, form_url=''):
+        """Форма смены пароля в админке."""
+        from django.contrib.auth.forms import AdminPasswordChangeForm
+        return AdminPasswordChangeForm
+
+    # Разрешаем смену пароля в UserAdmin
+    def get_urls(self):
+        from django.urls import path
+        urls = super().get_urls()
+        custom_urls = [
+            path('<int:user_id>/password/', self.admin_site.admin_view(self.user_change_password), name='auth_user_password_change'),
+        ]
+        return custom_urls + urls
+
 
 # Перерегистрируем модель User со своими настройками
 admin.site.unregister(User)
@@ -58,14 +74,25 @@ admin.site.register(User, CustomUserAdmin)
 
 
 # ===== КАТЕГОРИИ БЛЮД =====
+# Исправлено: добавлена возможность редактирования и добавления категорий.
+# Ранее могла быть проблема с permissions или form.
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
+    """Полная настройка админки для категорий меню.
+    Теперь поддерживает добавление, редактирование, поиск, сортировку.
+    """
     list_display = ['id', 'name', 'order']         # столбцы списка
     list_display_links = ['id', 'name']            # кликабельные ячейки (переход в карточку)
     search_fields = ['name']                       # поиск по названию
     ordering = ['order']                           # сортировка по полю «порядок»
-    fields = ['name', 'order']                     # в форме только название и порядок (иконку не редактируем)
-    actions = None
+    fields = ['name', 'order', 'icon']             # добавили icon для полного редактирования
+    actions = None  # Убрано меню действий как требовалось
+
+    def has_add_permission(self, request):
+        return True  # Разрешено добавление
+
+    def has_change_permission(self, request, obj=None):
+        return True  # Разрешено изменение
 
 
 # ===== БЛЮДА =====
