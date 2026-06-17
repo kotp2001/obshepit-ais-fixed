@@ -1,9 +1,49 @@
 {% extends 'base.html' %}
 {% block title %}Вход в систему{% endblock %}
 {% block content %}
+
+<style>
+    /* Стили для формы смены пароля */
+    .password-change-form {
+        display: none;
+        margin-top: 20px;
+        padding: 20px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(255,215,0,0.2);
+    }
+    .password-change-form.active {
+        display: block;
+    }
+    .toggle-link {
+        cursor: pointer;
+        color: #ffd700;
+        text-decoration: underline;
+    }
+    .toggle-link:hover {
+        color: #e6c200;
+    }
+    .error-message {
+        color: #ff6b6b;
+        background: rgba(255,0,0,0.1);
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        display: none;
+    }
+    .success-message {
+        color: #51cf66;
+        background: rgba(0,255,0,0.1);
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        display: none;
+    }
+</style>
+
 <div class="fade-in">
     <div class="row justify-content-center">
-        <div class="col-md-8 text-center mb-5">
+        <div class="col-md-8 text-center mb-4">
             <h1 class="display-3 fw-bold" style="color: #ffd700;">АИС Общепит</h1>
             <p class="lead text-white">Система автоматизации для ресторана, кафе, столовой</p>
             <p class="text-white">Вход только для сотрудников</p>
@@ -12,86 +52,112 @@
 
     <div class="row justify-content-center">
         <div class="col-md-4">
-            <div class="card">
+            <!-- БЛОК ВХОДА -->
+            <div class="card" id="loginBlock">
                 <div class="card-header" style="background: rgba(20,20,50,0.9); text-align: center;">
                     <h5 class="mb-0" style="color: #ffd700;">Вход в систему</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Сообщение об ошибке входа -->
                     <div id="login-error" class="alert alert-danger" style="display: none;"></div>
+                    
                     <div class="form-group mb-3">
                         <label class="form-label" style="color: white;">Логин</label>
-                        <input type="text" id="login-username" class="form-control" placeholder="Введите логин">
+                        <input type="text" id="login-username" class="form-control" placeholder="Введите логин" value="admin">
                     </div>
                     <div class="form-group mb-3">
                         <label class="form-label" style="color: white;">Пароль</label>
-                        <input type="password" id="login-password" class="form-control" placeholder="Введите пароль">
+                        <input type="password" id="login-password" class="form-control" placeholder="Введите пароль" value="admin123">
                     </div>
                     <button class="btn btn-warning w-100" onclick="employeeLogin()" style="background: #ffd700; color: #1a1a4a;">Войти</button>
+                    
                     <div class="text-center mt-3">
-                        <a href="#" onclick="openChangePassword();return false;" style="color:#ffd700;text-decoration:none;font-size:14px;">Сменить пароль</a>
+                        <span class="toggle-link" onclick="togglePasswordForm()">Сменить пароль</span>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
-<!-- Модальное окно смены пароля -->
-<div class="modal fade" id="changePasswordModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="background:rgba(15,15,50,0.98);border:1px solid rgba(255,215,0,0.3);border-radius:16px;">
-            <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                <h5 style="color:#ffd700;margin:0;">Смена пароля</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" style="padding:24px;">
-                <div id="cp-error" style="display:none;color:#f87171;background:rgba(220,60,60,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;"></div>
-                <div id="cp-success" style="display:none;color:#5de8a0;background:rgba(40,180,100,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;"></div>
-                <div class="mb-3">
-                    <label style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:6px;display:block;">Логин</label>
-                    <input type="text" id="cp-username" class="form-control" placeholder="Ваш логин"
-                        style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;">
+            <!-- БЛОК СМЕНЫ ПАРОЛЯ -->
+            <div class="card password-change-form" id="passwordChangeBlock">
+                <div class="card-header" style="background: rgba(20,20,50,0.9); text-align: center;">
+                    <h5 class="mb-0" style="color: #ffd700;">Смена пароля</h5>
                 </div>
-                <div class="mb-3">
-                    <label style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:6px;display:block;">Текущий пароль</label>
-                    <input type="password" id="cp-old" class="form-control" placeholder="Текущий пароль"
-                        style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;">
+                <div class="card-body">
+                    <!-- Сообщения об ошибке/успехе -->
+                    <div id="pass-error" class="alert alert-danger" style="display: none;"></div>
+                    <div id="pass-success" class="alert alert-success" style="display: none;"></div>
+                    
+                    <div class="form-group mb-3">
+                        <label class="form-label" style="color: white;">Логин</label>
+                        <input type="text" id="change-username" class="form-control" placeholder="Введите логин" value="admin">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label" style="color: white;">Текущий пароль</label>
+                        <input type="password" id="change-old-password" class="form-control" placeholder="Введите текущий пароль">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label" style="color: white;">Новый пароль</label>
+                        <input type="password" id="change-new-password" class="form-control" placeholder="Введите новый пароль">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label" style="color: white;">Подтверждение пароля</label>
+                        <input type="password" id="change-confirm-password" class="form-control" placeholder="Подтвердите новый пароль">
+                    </div>
+                    <button class="btn btn-success w-100" onclick="changePassword()" style="background: #28a745; color: white;">Сохранить новый пароль</button>
+                    
+                    <div class="text-center mt-3">
+                        <span class="toggle-link" onclick="togglePasswordForm()">Вернуться ко входу</span>
+                    </div>
                 </div>
-                <div class="mb-4">
-                    <label style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:6px;display:block;">Новый пароль</label>
-                    <input type="password" id="cp-new" class="form-control" placeholder="Не менее 6 символов"
-                        style="background:rgba(30,30,80,0.9);border:1px solid rgba(255,215,0,0.3);color:white;border-radius:10px;">
-                </div>
-                <button onclick="doChangePassword()" class="btn w-100"
-                    style="background:#ffd700;color:#1a1a4a;font-weight:700;border-radius:12px;padding:10px;">
-                    Сохранить новый пароль
-                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+    // ============================================================
+    // 1. ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ФОРМАМИ ВХОДА И СМЕНЫ ПАРОЛЯ
+    // ============================================================
+    function togglePasswordForm() {
+        const loginBlock = document.getElementById('loginBlock');
+        const passBlock = document.getElementById('passwordChangeBlock');
+        
+        if (passBlock.classList.contains('active')) {
+            // Скрываем форму смены пароля, показываем вход
+            passBlock.classList.remove('active');
+            loginBlock.style.display = 'block';
+        } else {
+            // Показываем форму смены пароля, скрываем вход
+            passBlock.classList.add('active');
+            loginBlock.style.display = 'none';
+        }
+    }
+
+    // ============================================================
+    // 2. АВТОРИЗАЦИЯ
+    // ============================================================
     async function employeeLogin() {
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
+        const errorDiv = document.getElementById('login-error');
         
         if (!username || !password) {
-            showError('Введите логин и пароль');
+            showError(errorDiv, 'Введите логин и пароль');
             return;
         }
         
         try {
             const response = await fetch('/api/login/', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({username: username, password: password})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, password: password })
             });
             const data = await response.json();
             
             if (data.success) {
                 localStorage.setItem('user_role', data.role);
                 localStorage.setItem('user_name', data.username);
+                
                 if (data.role === 'admin') {
                     window.location.href = '/admin-panel/';
                 } else if (data.role === 'waiter') {
@@ -102,66 +168,87 @@
                     window.location.href = '/';
                 }
             } else {
-                showError(data.error || 'Неверный логин или пароль');
+                showError(errorDiv, data.error || 'Неверный логин или пароль');
             }
         } catch (error) {
-            showError('Ошибка соединения с сервером');
+            showError(errorDiv, 'Ошибка соединения с сервером');
         }
     }
-    
-    function showError(message) {
-        const errorDiv = document.getElementById('login-error');
-        errorDiv.innerHTML = message;
-        errorDiv.style.display = 'block';
+
+    function showError(element, message) {
+        element.innerHTML = message;
+        element.style.display = 'block';
         setTimeout(() => {
-            errorDiv.style.display = 'none';
-        }, 3000);
+            element.style.display = 'none';
+        }, 5000);
     }
 
-    let cpModal = null;
-    function openChangePassword() {
-        document.getElementById('cp-error').style.display = 'none';
-        document.getElementById('cp-success').style.display = 'none';
-        const uname = document.getElementById('login-username').value;
-        if (uname) document.getElementById('cp-username').value = uname;
-        cpModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
-        cpModal.show();
-    }
-
-    async function doChangePassword() {
-        const username = document.getElementById('cp-username').value.trim();
-        const oldPass  = document.getElementById('cp-old').value.trim();
-        const newPass  = document.getElementById('cp-new').value.trim();
-        const errBox   = document.getElementById('cp-error');
-        const okBox    = document.getElementById('cp-success');
-        errBox.style.display = 'none';
-        okBox.style.display = 'none';
-
-        if (!username || !oldPass || !newPass) {
-            errBox.innerText = 'Заполните все поля';
-            errBox.style.display = 'block';
+    // ============================================================
+    // 3. СМЕНА ПАРОЛЯ (отправка на /api/change-password/)
+    // ============================================================
+    async function changePassword() {
+        const username = document.getElementById('change-username').value;
+        const oldPass = document.getElementById('change-old-password').value;
+        const newPass = document.getElementById('change-new-password').value;
+        const confirmPass = document.getElementById('change-confirm-password').value;
+        
+        const errorDiv = document.getElementById('pass-error');
+        const successDiv = document.getElementById('pass-success');
+        
+        // Скрываем старые сообщения
+        errorDiv.style.display = 'none';
+        successDiv.style.display = 'none';
+        
+        // Валидация
+        if (!username || !oldPass || !newPass || !confirmPass) {
+            showError(errorDiv, 'Заполните все поля');
             return;
         }
+        
+        if (newPass.length < 6) {
+            showError(errorDiv, 'Новый пароль должен содержать минимум 6 символов');
+            return;
+        }
+        
+        if (newPass !== confirmPass) {
+            showError(errorDiv, 'Пароли не совпадают');
+            return;
+        }
+        
         try {
-            const resp = await fetch('/api/change-password/', {
+            const response = await fetch('/api/change-password/', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({username: username, old_password: oldPass, new_password: newPass})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: username,
+                    old_password: oldPass,
+                    new_password: newPass
+                })
             });
-            const data = await resp.json();
+            const data = await response.json();
+            
             if (data.success) {
-                okBox.innerText = data.message || 'Пароль успешно изменён';
-                okBox.style.display = 'block';
-                document.getElementById('cp-old').value = '';
-                document.getElementById('cp-new').value = '';
+                successDiv.innerHTML = 'Пароль успешно изменён! Теперь войдите с новым паролем.';
+                successDiv.style.display = 'block';
+                
+                // Очищаем поля
+                document.getElementById('change-old-password').value = '';
+                document.getElementById('change-new-password').value = '';
+                document.getElementById('change-confirm-password').value = '';
+                
+                // Через 2 секунды переключаемся обратно на форму входа
+                setTimeout(() => {
+                    togglePasswordForm();
+                    document.getElementById('login-password').value = '';
+                    successDiv.style.display = 'none';
+                }, 2500);
             } else {
-                errBox.innerText = data.error || 'Не удалось сменить пароль';
-                errBox.style.display = 'block';
+                showError(errorDiv, data.error || 'Ошибка смены пароля');
             }
-        } catch (e) {
-            errBox.innerText = 'Ошибка соединения с сервером';
-            errBox.style.display = 'block';
+        } catch (error) {
+            showError(errorDiv, 'Ошибка соединения с сервером');
         }
     }
 </script>
+
 {% endblock %}
