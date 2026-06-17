@@ -1,203 +1,129 @@
 {% extends 'base.html' %}
-{# Страница резервного копирования базы данных.
-   Оформлена в едином стиле с панелью администратора: «герой»-шапка,
-   разделы-карточки, золотые акценты темы. #}
 
 {% block title %}Резервное копирование{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* ---- Шапка раздела ---- */
-    .bk-hero {
-        background: linear-gradient(135deg, rgba(255,215,0,0.12) 0%, rgba(26,26,74,0.6) 100%);
-        border: 1px solid rgba(255,215,0,0.25);
-        border-radius: 20px;
-        padding: 24px 28px;
-        margin-bottom: 28px;
-        display: flex;
-        align-items: center;
-        gap: 18px;
-    }
-    .bk-hero-icon {
-        width: 60px; height: 60px;
-        background: linear-gradient(135deg, #ffd700, #ff9500);
-        border-radius: 16px;
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
-        font-size: 26px; color: #1a1a4a;
-        box-shadow: 0 8px 24px rgba(255,215,0,0.3);
-    }
-    .bk-hero h1 { color: #ffd700; font-size: 1.6rem; font-weight: 700; margin: 0 0 4px 0; }
-    .bk-hero p  { color: rgba(255,255,255,0.6); margin: 0; font-size: 0.92rem; }
-
-    /* ---- Заголовок раздела ---- */
-    .bk-section-title {
-        color: rgba(255,255,255,0.5);
-        font-size: 11px; font-weight: 700; letter-spacing: 2px;
-        text-transform: uppercase; margin-bottom: 12px; padding-left: 4px;
-    }
-
-    /* ---- Карточка-блок ---- */
-    .bk-card {
-        background: rgba(30,30,75,0.55);
+    .backup-block {
+        background: rgba(30,30,70,0.5);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
         border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px;
-        padding: 22px 24px;
-        margin-bottom: 22px;
     }
-    .bk-card h4 { color: #fff; font-size: 1.05rem; font-weight: 600; margin: 0 0 6px 0; }
-    .bk-card p.hint { color: rgba(255,255,255,0.55); font-size: 0.88rem; margin-bottom: 16px; line-height: 1.5; }
-
-    /* ---- Кнопки действий ---- */
-    .bk-action-btn {
-        border: none; cursor: pointer;
-        border-radius: 12px; padding: 10px 22px;
-        font-weight: 700; font-size: 14px;
-        transition: transform 0.12s ease, background 0.12s ease;
-    }
-    .bk-action-btn:hover { transform: translateY(-1px); }
-    .bk-primary { background: #ffd700; color: #1a1a4a; }
-    .bk-primary:hover { background: #e6c200; }
-    .bk-secondary { background: rgba(100,100,150,0.5); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
-    .bk-secondary:hover { background: rgba(120,120,170,0.7); }
-
-    .bk-note-input, .bk-file-input {
-        background: rgba(20,20,50,0.85); color: #fff;
-        border: 1px solid rgba(255,215,0,0.3); border-radius: 12px;
-        padding: 10px 14px; margin-right: 10px; margin-bottom: 8px;
-        font-size: 14px;
-    }
-    .bk-note-input { width: 320px; max-width: 100%; }
-
-    /* ---- Таблица копий ---- */
-    .bk-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-    .bk-table th {
+    .backup-block h4 { color: #ffd700; margin-bottom: 12px; }
+    .backup-block p.hint { color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 14px; }
+    .backup-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+    .backup-table th {
         background: rgba(26,26,74,0.9); color: #ffd700; padding: 12px 14px;
-        text-align: left; font-weight: 600; white-space: nowrap; font-size: 13px;
+        text-align: left; font-weight: 600; white-space: nowrap;
     }
-    .bk-table th:first-child { border-top-left-radius: 12px; }
-    .bk-table th:last-child  { border-top-right-radius: 12px; }
-    .bk-table td {
-        background: rgba(40,40,90,0.4); color: #fff; padding: 12px 14px;
-        border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; font-size: 14px;
+    .backup-table td {
+        background: rgba(40,40,90,0.4); color: #fff; padding: 11px 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle;
     }
-    .bk-table tr:hover td { background: rgba(60,60,110,0.55); }
-
+    .backup-table tr:hover td { background: rgba(60,60,110,0.55); }
     .b-btn {
-        display: inline-block; padding: 6px 14px; border-radius: 14px;
-        font-size: 12px; font-weight: 600; text-decoration: none; margin: 2px 3px 2px 0;
+        display: inline-block; padding: 5px 14px; border-radius: 18px;
+        font-size: 12px; font-weight: 600; text-decoration: none; margin: 2px 0;
         border: 1px solid transparent; cursor: pointer;
     }
-    .b-download { background: rgba(90,110,180,0.55); color: #dbe3ff; border-color: rgba(100,120,200,0.5); }
-    .b-download:hover { background: rgba(90,110,180,0.9); color: #fff; }
-    .b-restore { background: rgba(50,150,90,0.5); color: #d6ffe4; border-color: rgba(70,160,100,0.5); }
-    .b-restore:hover { background: rgba(50,170,100,0.9); color: #fff; }
-    .b-delete { background: rgba(170,60,60,0.5); color: #ffd2d2; border-color: rgba(190,70,70,0.5); }
-    .b-delete:hover { background: rgba(200,60,60,0.9); color: #fff; }
-    .b-legacy { color: rgba(255,255,255,0.4); font-size: 12px; }
-    .tag-json { color: #7ee59a; font-weight: 600; }
-    .tag-sql  { color: #ffcf6b; font-weight: 600; }
-    .bk-empty { text-align: center; padding: 26px; color: rgba(255,255,255,0.45); }
-
-    /* ---- Плашки сообщений ---- */
-    .bk-msg { padding: 11px 16px; border-radius: 12px; margin-bottom: 10px; font-size: 14px; }
-    .bk-msg.success { background: rgba(40,167,69,0.18); border: 1px solid #28a745; color: #7ee59a; }
-    .bk-msg.error   { background: rgba(220,53,69,0.18); border: 1px solid #dc3545; color: #ff9aa2; }
-    .bk-msg.info    { background: rgba(23,162,184,0.18); border: 1px solid #17a2b8; color: #8ee0ec; }
-    .bk-msg.warning { background: rgba(255,193,7,0.18); border: 1px solid #ffc107; color: #ffe08a; }
+    .b-download { background: rgba(90,110,180,0.6); color: #d8e0ff; border-color: rgba(100,120,200,0.5); }
+    .b-download:hover { background: rgba(90,110,180,0.9); color:#fff; }
+    .b-restore { background: rgba(60,130,90,0.6); color: #d6ffe4; border-color: rgba(70,150,100,0.5); }
+    .b-restore:hover { background: rgba(60,150,100,0.9); color:#fff; }
+    .b-delete { background: rgba(150,60,60,0.6); color: #ffd2d2; border-color: rgba(170,70,70,0.5); }
+    .b-delete:hover { background: rgba(190,60,60,0.9); color:#fff; }
+    .b-legacy { color: rgba(255,255,255,0.45); font-size: 12px; }
+    .file-input {
+        background: rgba(20,20,50,0.85); color:#fff; border:1px solid rgba(255,215,0,0.3);
+        border-radius: 10px; padding: 8px 10px; margin-right: 8px;
+    }
+    .msg { padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; }
+    .msg.success { background: rgba(40,167,69,0.18); border:1px solid #28a745; color:#7ee59a; }
+    .msg.error   { background: rgba(220,53,69,0.18); border:1px solid #dc3545; color:#ff9aa2; }
+    .msg.info    { background: rgba(23,162,184,0.18); border:1px solid #17a2b8; color:#8ee0ec; }
+    .tag-json { color:#7ee59a; } .tag-sql { color:#ffcf6b; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="fade-in">
+    <div class="card">
+        <div class="card-header"><h4 class="mb-0">Резервное копирование базы данных</h4></div>
+        <div class="card-body">
 
-    <!-- Шапка раздела -->
-    <div class="bk-hero">
-        <div class="bk-hero-icon"><i class="fas fa-database"></i></div>
-        <div>
-            <h1>Резервное копирование</h1>
-            <p>Создание, загрузка и восстановление снимков базы данных ресторана</p>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="msg {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="backup-block">
+                <h4>Создать резервную копию</h4>
+                <p class="hint">Сохраняет текущее состояние данных (категории, блюда, столы, заказы, чеки, журналы)
+                   прямо в базе. Копия хранится постоянно и всегда доступна в списке ниже.</p>
+                <form method="post" action="{% url 'backup:backup_create' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">Создать копию</button>
+                </form>
+            </div>
+
+            <div class="backup-block">
+                <h4>Загрузить копию из файла</h4>
+                <p class="hint">Если у вас остался скачанный ранее файл копии (.json), его можно вернуть в список.</p>
+                <form method="post" action="{% url 'backup:backup_upload' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="file" name="backup_file" accept=".json,.sql" class="file-input">
+                    <button type="submit" class="btn btn-secondary">Загрузить</button>
+                </form>
+            </div>
+
+            <div class="backup-block">
+                <h4>Список резервных копий</h4>
+                <table class="backup-table">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Дата</th>
+                            <th>Записей</th>
+                            <th>Размер</th>
+                            <th>Формат</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in backups %}
+                        <tr>
+                            <td>{{ b.name }}</td>
+                            <td>{{ b.created_at|date:"d.m.Y H:i" }}</td>
+                            <td>{{ b.records_count }}</td>
+                            <td>{{ b.size_kb }} KB</td>
+                            <td>
+                                {% if b.fmt == 'json' %}<span class="tag-json">json</span>
+                                {% else %}<span class="tag-sql">sql</span>{% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'backup:backup_download' b.pk %}" class="b-btn b-download">Скачать</a>
+                                {% if b.is_restorable %}
+                                <a href="{% url 'backup:backup_restore' b.pk %}" class="b-btn b-restore"
+                                   onclick="return confirm('Восстановить базу из этой копии? Текущие данные будут заменены снимком из копии.')">Восстановить</a>
+                                {% else %}
+                                <span class="b-legacy">восстановление недоступно</span>
+                                {% endif %}
+                                <a href="{% url 'backup:backup_delete' b.pk %}" class="b-btn b-delete"
+                                   onclick="return confirm('Удалить эту копию?')">Удалить</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" style="text-align:center; padding:20px;">Пока нет резервных копий</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
         </div>
     </div>
-
-    {# Сообщения относятся только к действиям самого раздела (создание,
-       удаление, восстановление копии). Сообщения админки сюда больше не попадают,
-       так как потребляются на странице списка. #}
-    {% if messages %}
-        {% for message in messages %}
-            <div class="bk-msg {{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
-
-    <!-- Действия -->
-    <p class="bk-section-title">Действия</p>
-
-    <div class="bk-card">
-        <h4><i class="fas fa-plus-circle" style="color:#ffd700;margin-right:8px;"></i>Создать резервную копию</h4>
-        <p class="hint">Сохраняет текущее состояние данных (категории, блюда, столы, заказы, чеки, журналы)
-           прямо в базе данных. Копия хранится постоянно и всегда доступна в списке ниже.</p>
-        <form method="post" action="{% url 'backup:backup_create' %}">
-            {% csrf_token %}
-            <input type="text" name="note" class="bk-note-input" placeholder="Комментарий к копии (необязательно)">
-            <button type="submit" class="bk-action-btn bk-primary">Создать копию</button>
-        </form>
-    </div>
-
-    <div class="bk-card">
-        <h4><i class="fas fa-upload" style="color:#6ab0ff;margin-right:8px;"></i>Загрузить копию из файла</h4>
-        <p class="hint">Если у вас остался скачанный ранее файл копии (.json), его можно вернуть в список
-           и затем восстановить из него базу.</p>
-        <form method="post" action="{% url 'backup:backup_upload' %}" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="file" name="backup_file" accept=".json,.sql" class="bk-file-input">
-            <button type="submit" class="bk-action-btn bk-secondary">Загрузить</button>
-        </form>
-    </div>
-
-    <!-- Список копий -->
-    <p class="bk-section-title">Сохранённые копии</p>
-
-    <div class="bk-card">
-        <table class="bk-table">
-            <thead>
-                <tr>
-                    <th>Название</th>
-                    <th>Дата</th>
-                    <th>Записей</th>
-                    <th>Размер</th>
-                    <th>Формат</th>
-                    <th>Действия</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for b in backups %}
-                <tr>
-                    <td>{{ b.name }}</td>
-                    <td>{{ b.created_at|date:"d.m.Y H:i" }}</td>
-                    <td>{{ b.records_count }}</td>
-                    <td>{{ b.size_kb }} KB</td>
-                    <td>
-                        {% if b.fmt == 'json' %}<span class="tag-json">json</span>
-                        {% else %}<span class="tag-sql">sql</span>{% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'backup:backup_download' b.pk %}" class="b-btn b-download">Скачать</a>
-                        {% if b.is_restorable %}
-                        <a href="{% url 'backup:backup_restore' b.pk %}" class="b-btn b-restore"
-                           onclick="return confirm('Восстановить базу из этой копии? Текущие данные будут заменены снимком из копии.')">Восстановить</a>
-                        {% else %}
-                        <span class="b-legacy">восстановление недоступно</span>
-                        {% endif %}
-                        <a href="{% url 'backup:backup_delete' b.pk %}" class="b-btn b-delete"
-                           onclick="return confirm('Удалить эту копию?')">Удалить</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="6" class="bk-empty">Пока нет резервных копий</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
 </div>
 {% endblock %}

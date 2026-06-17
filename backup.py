@@ -1,5 +1,3 @@
-"""Простое локальное резервное копирование файла SQLite (db.sqlite3) в папку backups/.
-Используется при локальной разработке; в продакшене копии хранятся в БД (см. backup_views.py)."""
 import os
 import shutil
 from datetime import datetime

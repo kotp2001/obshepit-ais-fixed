@@ -1,4 +1,3 @@
-"""Разовая команда: копирует файл db.sqlite3 в папку backups/ с отметкой времени."""
 import os
 import shutil
 from datetime import datetime

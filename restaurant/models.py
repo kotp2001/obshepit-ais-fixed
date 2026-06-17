@@ -1,15 +1,7 @@
-"""Модели данных АИС «Общепит».
-
-Здесь описаны все таблицы базы данных: меню (категории и блюда), столы,
-заказы и их позиции, пользователи и роли (Profile), журналы (действий и ТО),
-чеки, попытки входа и резервные копии. verbose_name у полей задаёт русские
-подписи, которые отображаются в админке.
-"""
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-# Категория меню (например «Супы», «Напитки»). Группирует блюда.
 class Category(models.Model):
     name  = models.CharField(max_length=100, verbose_name='Название')
     icon  = models.CharField(max_length=50, blank=True, verbose_name='Иконка')
@@ -23,7 +15,6 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-# Блюдо меню: название, цена, категория, доступность, вес и калорийность.
 class Dish(models.Model):
     name        = models.CharField(max_length=200, verbose_name='Название')
     description = models.TextField(blank=True, verbose_name='Описание')
@@ -41,7 +32,6 @@ class Dish(models.Model):
     def __str__(self):
         return f'{self.name} - {self.price} ₽'
 
-# Стол в зале: номер, число мест и статус (свободен/занят/забронирован).
 class Table(models.Model):
     STATUS_CHOICES = [('free','Свободен'),('occupied','Занят'),('reserved','Забронирован')]
     number     = models.IntegerField(unique=True, verbose_name='Номер стола')
@@ -57,7 +47,6 @@ class Table(models.Model):
     def __str__(self):
         return f'Стол {self.number} ({self.seats} мест)'
 
-# Заказ: к какому столу, кто официант, статус, сумма, способ оплаты, время.
 class Order(models.Model):
     STATUS_CHOICES = [
         ('new','Новый'),('cooking','Готовится'),
@@ -86,7 +75,6 @@ class Order(models.Model):
     def __str__(self):
         return f'Заказ #{self.id} - Стол {self.table.number}'
 
-# Позиция заказа: конкретное блюдо, количество, цена и статус приготовления.
 class OrderItem(models.Model):
     STATUS_CHOICES = [
         ('pending','В очереди'),('cooking','Готовится'),
@@ -107,7 +95,6 @@ class OrderItem(models.Model):
     def __str__(self):
         return f'{self.dish.name} x{self.quantity}'
 
-# Запись журнала технического обслуживания (ТО): дата, что сделано, кем.
 class MaintenanceLog(models.Model):
     date           = models.DateField(verbose_name='Дата')
     work_performed = models.TextField(verbose_name='Проведенная работа')
@@ -123,7 +110,6 @@ class MaintenanceLog(models.Model):
     def __str__(self):
         return f'{self.date} - {self.work_performed[:50]}'
 
-# Профиль пользователя: связывает учётную запись с ролью (админ/официант/повар).
 class Profile(models.Model):
     ROLE_CHOICES = [('admin','Администратор'),('waiter','Официант'),('chef','Повар')]
     user     = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -137,7 +123,6 @@ class Profile(models.Model):
     def __str__(self):
         return f'{self.user.username} - {self.get_role_display()}'
 
-# Журнал действий: фиксирует входы, создание/оплату заказов и пр. для аудита.
 class ActionLog(models.Model):
     ACTION_CHOICES = [
         ('login',          'Вход в систему'),
@@ -166,7 +151,6 @@ class ActionLog(models.Model):
         u = self.user.username if self.user else 'Аноним'
         return f'{self.timestamp.strftime("%d.%m.%Y %H:%M")} — {u} — {self.get_action_display()}'
 
-# Кассовый чек по заказу: PDF-файл, сумма и способ оплаты.
 class Receipt(models.Model):
     order          = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='receipt', verbose_name='Заказ')
     pdf_file       = models.FileField(upload_to='receipts/', blank=True, null=True, verbose_name='PDF файл')
@@ -182,7 +166,6 @@ class Receipt(models.Model):
     def __str__(self):
         return f'Чек #{self.order.id} — {self.total} ₽'
 
-# Учёт неудачных попыток входа для блокировки подбора пароля.
 class LoginAttempt(models.Model):
     username    = models.CharField(max_length=150, verbose_name='Логин')
     ip_address  = models.GenericIPAddressField(null=True, blank=True, verbose_name='IP')
@@ -199,7 +182,6 @@ class LoginAttempt(models.Model):
         return f'{self.username} — {self.attempts} попыток'
 
 
-# Резервная копия данных, хранящаяся прямо в БД (JSON-снимок). См. backup_views.py.
 class DatabaseBackup(models.Model):
     """Резервная копия операционных данных, хранится прямо в БД (а не в файловой
     системе) — поэтому копии не пропадают при перезапуске/передеплое на Render."""
