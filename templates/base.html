@@ -5,28 +5,30 @@
     подключает общие CSS/JS-ресурсы. Все остальные шаблоны наследуют этот.
 -->
 
+<{# templates/base.html — базовый шаблон для всех страниц #}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Заголовок страницы: основное название + блок для переопределения в дочерних шаблонах -->
     <title>АИС Общепит - {% block title %}Ресторан{% endblock %}</title>
-    <!-- Подключение Bootstrap 5 и Font Awesome для стилей и иконок -->
+    
+    {# Подключение внешних библиотек #}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Блок для дополнительных CSS-стилей из дочерних шаблонов -->
+    
+    {# Блок для дополнительных стилей (используется в дочерних шаблонах) — ТОЛЬКО ОДИН РАЗ #}
     {% block extra_css %}{% endblock %}
+    
     <style>
-        /* ---- Глобальные стили ---- */
-        /* Сброс отступов и установка базовых параметров */
+        /* ---- Сброс отступов и базовые настройки ---- */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        /* Основной фон страницы — градиент с фиксацией (чтобы не прокручивался) */
+        /* Основной фон страницы — градиент, фиксированный */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%);
@@ -36,7 +38,7 @@
             padding-bottom: 100px;   /* отступ под фиксированный подвал */
         }
 
-        /* ---- Фиксированная шапка (navbar) ---- */
+        /* ---- Фиксированная шапка ---- */
         .navbar {
             position: fixed;
             top: 0;
@@ -48,14 +50,13 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
             z-index: 1030;
         }
-        /* Контейнер шапки: элементы распределены по краям */
         .navbar .container {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        /* ---- Фиксированный подвал (футер) ---- */
+        /* ---- Фиксированный подвал ---- */
         .footer {
             position: fixed;
             bottom: 0;
@@ -81,7 +82,6 @@
         }
 
         /* ---- Кнопки навигации ---- */
-        /* Кнопка выхода — красная, с закруглениями */
         .btn-logout {
             background: #dc3545;
             color: white;
@@ -100,7 +100,6 @@
             transform: translateY(1px);
         }
 
-        /* Кнопка "Главное меню" — золотая, доступна только администратору */
         .main-menu-btn {
             background: #ffd700;
             color: #1a1a4a;
@@ -119,7 +118,7 @@
             text-decoration: none;
         }
 
-        /* ---- Общие стили для карточек, кнопок, форм ---- */
+        /* ---- Общие стили для карточек, кнопок, полей ввода ---- */
         .card {
             background: rgba(30,30,70,0.6);
             backdrop-filter: blur(10px);
@@ -138,7 +137,6 @@
             padding: 20px;
         }
 
-        /* Базовые стили для кнопок разных цветов */
         .btn {
             border-radius: 25px;
             padding: 8px 20px;
@@ -160,7 +158,6 @@
         .btn-danger:hover { background: #c82333; transform: translateY(-1px); }
         .btn-secondary { background: rgba(100,100,140,0.8); color: white; }
 
-        /* Поля ввода в тёмной теме */
         .form-control {
             background: rgba(50,50,100,0.8);
             border: 1px solid rgba(255,255,255,0.2);
@@ -176,7 +173,6 @@
             box-shadow: 0 0 5px rgba(255,215,0,0.3);
         }
 
-        /* Модальные окна с полупрозрачным фоном */
         .modal-content {
             background: rgba(20,20,60,0.95) !important;
             backdrop-filter: blur(10px);
@@ -186,19 +182,19 @@
         .modal-body { color: white; }
         .modal-body .form-label { color: white; }
 
-        /* Анимация появления элементов */
+        /* Анимация появления */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .fade-in { animation: fadeIn 0.4s ease forwards; }
 
-        /* Кастомизация скроллбара */
+        /* Скроллбар */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: rgba(30,30,70,0.5); border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #ffd700; border-radius: 10px; }
 
-        /* ---- Фиксированное звёздное небо (фон) ---- */
+        /* ---- Звёздное небо (фиксированное) ---- */
         .stars {
             position: fixed;
             top: 0;
@@ -220,29 +216,25 @@
             50% { opacity: 1; transform: scale(1.2); }
         }
     </style>
-    <!-- Дополнительные стили из дочерних шаблонов (если есть) -->
-    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Звёздное небо (генерируется JavaScript внизу) -->
+    <!-- Звёздное небо -->
     <div class="stars" id="stars"></div>
 
     <!-- Фиксированная шапка -->
     <nav class="navbar">
         <div class="container">
-            <!-- Кнопка "Главное меню" видна только администратору (проверка через JavaScript) -->
             <a href="/admin-panel/" id="mainMenuBtn" class="main-menu-btn" style="display: none;">Главное меню</a>
-            <!-- Кнопка выхода видна всем авторизованным пользователям -->
             <button class="btn-logout" onclick="logout()" id="logout-btn" style="display: none;">Выйти</button>
         </div>
     </nav>
 
-    <!-- Основной контент – заполняется в дочерних шаблонах -->
+    <!-- Основное содержимое -->
     <div class="container py-4">
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Фиксированный подвал (футер) -->
+    <!-- Фиксированный подвал -->
     <div class="footer">
         <div class="container">
             <p class="mb-0">АИС "Общепит", дипломный проект, Дубровин К.С., гр. ИС-61</p>
@@ -253,10 +245,10 @@
         </div>
     </div>
 
-    <!-- Подключение Bootstrap JS (необходим для работы модальных окон и выпадающих меню) -->
+    <!-- Подключение Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Функция генерации звёздного неба (200 звёзд с разными размерами и задержками)
+        // Генерация звёзд
         function createStars() {
             const starsContainer = document.getElementById('stars');
             for (let i = 0; i < 200; i++) {
@@ -273,14 +265,13 @@
         }
         createStars();
 
-        // Проверка авторизации: отображение кнопок выхода и главного меню
+        // Проверка авторизации и отображение кнопок
         function checkAuth() {
             const role = localStorage.getItem('user_role');
             const logoutBtn = document.getElementById('logout-btn');
             const mainMenuBtn = document.getElementById('mainMenuBtn');
             if (role) {
                 logoutBtn.style.display = 'block';
-                // Кнопка "Главное меню" показывается только для администратора
                 if (role === 'admin') {
                     mainMenuBtn.style.display = 'inline-block';
                 } else {
@@ -289,17 +280,16 @@
             }
         }
 
-        // Функция выхода из системы (удаление данных из localStorage и редирект)
         function logout() {
             localStorage.removeItem('user_role');
             localStorage.removeItem('user_name');
             window.location.href = '/';
         }
 
-        // Вызов проверки авторизации при загрузке страницы
         checkAuth();
     </script>
-    <!-- Блок для дополнительных JavaScript-скриптов из дочерних шаблонов -->
+    
+    {# Блок для дополнительных JavaScript-скриптов (используется в дочерних шаблонах) #}
     {% block extra_js %}{% endblock %}
 </body>
 </html>
