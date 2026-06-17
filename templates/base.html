@@ -1,86 +1,120 @@
-<!--
-    Базовый шаблон для всех страниц АИС «Общепит».
-    Содержит фиксированные шапку и подвал, звёздное небо,
-    а также управление авторизацией и навигацией.
--->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>АИС Общепит - {% block title %}Ресторан{% endblock %}</title>
-    <!-- Подключаем Bootstrap 5 и Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Сброс отступов и глобальные настройки */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
-        /* Основной фон – градиент от тёмно-синего к фиолетовому */
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%);
-            background-attachment: fixed; /* Фон не прокручивается */
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
             overflow-x: hidden;
-            padding-top: 70px;      /* Отступ под фиксированную шапку */
-            padding-bottom: 100px;   /* Отступ под фиксированный подвал */
+            padding-top: 70px;      /* отступ для фиксированной шапки */
+            padding-bottom: 100px;  /* отступ для фиксированного футера */
         }
-
-        /* ---- Фиксированная шапка (navbar) ---- */
-        .navbar {
+        
+        /* Звёздное небо */
+        .stars {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+        
+        /* ===== ВЕРХНЯЯ ПЛАШКА (НАВИГАЦИЯ) — ФИКСИРОВАННАЯ ===== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
             background: rgba(20,20,50,0.95);
-            backdrop-filter: blur(10px); /* Эффект стекла */
+            backdrop-filter: blur(10px);
             padding: 12px 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
-            z-index: 1030;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
+        
         .navbar .container {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
-        /* ---- Фиксированный подвал (футер) ---- */
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(20,20,50,0.95);
-            backdrop-filter: blur(10px);
-            padding: 15px;
-            text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            z-index: 1030;
-        }
-        .footer a {
+        
+        .navbar-brand {
+            font-size: 1.4rem;
+            font-weight: bold;
             color: #ffd700 !important;
+        }
+        
+        .navbar-brand i {
+            margin-right: 8px;
+        }
+        
+        /* Кнопка "Главное меню" */
+        .main-menu-btn {
+            background: #ffd700;
+            color: #1a1a4a;
+            padding: 6px 15px;
+            border-radius: 20px;
             text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.1s ease;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
         }
-        .footer a:hover {
-            text-decoration: underline;
+        .main-menu-btn:hover {
+            background: #e6c200;
+            transform: translateY(-1px);
+            color: #1a1a4a;
         }
-        .footer p {
-            color: #ffd700;
-            margin-bottom: 0;
+        .main-menu-btn:active {
+            transform: translateY(1px);
         }
-
-        /* ---- Кнопки в шапке ---- */
+        
         .btn-logout {
             background: #dc3545;
             color: white;
             border: none;
             padding: 6px 16px;
             border-radius: 20px;
-            font-size: 14px;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: transform 0.1s ease;
         }
@@ -91,33 +125,15 @@
         .btn-logout:active {
             transform: translateY(1px);
         }
-
-        /* Кнопка "Главное меню" – золотая, видна только администратору */
-        .main-menu-btn {
-            background: #ffd700;
-            color: #1a1a4a;
-            padding: 6px 15px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 14px;
-            transition: all 0.1s ease;
-            display: inline-block;
-        }
-        .main-menu-btn:hover {
-            background: #e6c200;
-            transform: translateY(-1px);
-            color: #1a1a4a;
-            text-decoration: none;
-        }
-
-        /* ---- Общие стили для карточек, кнопок, форм ---- */
+        
+        /* ===== КАРТОЧКИ ===== */
         .card {
             background: rgba(30,30,70,0.6);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 15px;
             overflow: hidden;
+            color: white;
         }
         .card-header {
             background: rgba(20,20,50,0.8);
@@ -129,7 +145,8 @@
             color: white;
             padding: 20px;
         }
-
+        
+        /* ===== КНОПКИ ===== */
         .btn {
             border-radius: 25px;
             padding: 8px 20px;
@@ -177,7 +194,8 @@
             background: rgba(100,100,140,0.8);
             color: white;
         }
-
+        
+        /* ===== ФОРМЫ ===== */
         .form-control {
             background: rgba(50,50,100,0.8);
             border: 1px solid rgba(255,255,255,0.2);
@@ -192,8 +210,35 @@
             outline: none;
             box-shadow: 0 0 5px rgba(255,215,0,0.3);
         }
-
-        /* Модальные окна – тёмный фон с размытием */
+        .form-label {
+            color: #ffd700;
+        }
+        
+        /* ===== НИЖНЯЯ ПЛАШКА (ФУТЕР) — ФИКСИРОВАННАЯ ===== */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            background: rgba(20,20,50,0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 0;
+            text-align: center;
+            color: #ffd700;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        }
+        .footer a {
+            color: #ffd700;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* ===== МОДАЛЬНЫЕ ОКНА ===== */
         .modal-content {
             background: rgba(20,20,60,0.95) !important;
             backdrop-filter: blur(10px);
@@ -208,8 +253,7 @@
         .modal-body .form-label {
             color: white;
         }
-
-        /* Анимация появления */
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -217,8 +261,7 @@
         .fade-in {
             animation: fadeIn 0.4s ease forwards;
         }
-
-        /* Стилизация скроллбара */
+        
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -230,68 +273,43 @@
             background: #ffd700;
             border-radius: 10px;
         }
-
-        /* ---- Фиксированное звёздное небо (фон) ---- */
-        .stars {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            opacity: 0;
-            animation: twinkle 3s ease-in-out infinite;
-        }
-        @keyframes twinkle {
-            0%, 100% { opacity: 0; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.2); }
-        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Фон со звёздами -->
     <div class="stars" id="stars"></div>
-
-    <!-- Фиксированная шапка -->
+    
     <nav class="navbar">
         <div class="container">
-            <!-- Кнопка "Главное меню" – показывается только администратору через JS -->
-            <a href="/admin-panel/" id="mainMenuBtn" class="main-menu-btn" style="display: none;">Главное меню</a>
-            <!-- Кнопка "Выйти" – для всех авторизованных -->
-            <button class="btn-logout" onclick="logout()" id="logout-btn" style="display: none;">Выйти</button>
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-utensils"></i> АИС Общепит
+            </a>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <!-- Кнопка "Главное меню" -->
+                <a href="/admin-panel/" class="main-menu-btn">Главное меню</a>
+                <button class="btn-logout" onclick="logout()" id="logout-btn" style="display: none;">Выйти</button>
+            </div>
         </div>
     </nav>
 
-    <!-- Основной контент – блок, который будет заменяться в дочерних шаблонах -->
     <div class="container py-4">
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Фиксированный подвал -->
     <div class="footer">
         <div class="container">
             <p class="mb-0">АИС "Общепит", дипломный проект, Дубровин К.С., гр. ИС-61</p>
-            <p class="mb-0 mt-1" style="font-size: 11px;">
-                <!-- Ссылка на руководство пользователя -->
+            <p class="mb-0 mt-1" style="font-size: 0.8rem;">
                 <a href="/help/">Руководство пользователя</a> |
-                <!-- Ссылка на форму обратной связи -->
+                <a href="/docs/">Регламенты</a> |
+                <a href="/maintenance-log/">Журнал ТО</a> |
                 <a href="https://forms.yandex.ru/u/69f11c7990fa7b3c1459172e" target="_blank">Обратная связь</a>
-                <!-- Удалены ссылки на "Регламенты" и "Журнал ТО" согласно требованию -->
             </p>
         </div>
     </div>
 
-    <!-- Подключаем Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Генерация звёздного неба
         function createStars() {
             const starsContainer = document.getElementById('stars');
             for (let i = 0; i < 200; i++) {
@@ -307,29 +325,21 @@
             }
         }
         createStars();
-
-        // Проверка авторизации: отображение кнопок
+        
         function checkAuth() {
             const role = localStorage.getItem('user_role');
             const logoutBtn = document.getElementById('logout-btn');
-            const mainMenuBtn = document.getElementById('mainMenuBtn');
             if (role) {
                 logoutBtn.style.display = 'block';
-                if (role === 'admin') {
-                    mainMenuBtn.style.display = 'inline-block';
-                } else {
-                    mainMenuBtn.style.display = 'none';
-                }
             }
         }
-
-        // Функция выхода – очищает localStorage и перенаправляет на главную
+        
         function logout() {
             localStorage.removeItem('user_role');
             localStorage.removeItem('user_name');
             window.location.href = '/';
         }
-
+        
         checkAuth();
     </script>
     {% block extra_js %}{% endblock %}
