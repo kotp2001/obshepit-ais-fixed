@@ -199,6 +199,39 @@ document.addEventListener('DOMContentLoaded', function() {
     .vTextField, .vLargeTextField, .vURLField, .vIntegerField {
         width: 100%;
     }
+
+    /* ===== ИСПРАВЛЕНИЕ «БЕЛЫХ КВАДРАТОВ» =====
+       Общее правило выше задаёт всем input width:100% и фон, из-за чего
+       чекбоксы и радиокнопки растягивались в большие белые прямоугольники.
+       Здесь возвращаем им нормальный вид: компактный размер, без фона-растяжки,
+       с золотым акцентом темы. */
+    .admin-change-form input[type="checkbox"],
+    .admin-change-form input[type="radio"] {
+        width: 18px !important;
+        height: 18px !important;
+        max-width: 18px !important;
+        min-width: 18px !important;
+        margin: 0 8px 0 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border-radius: 4px !important;
+        vertical-align: middle;
+        accent-color: #ffd700;          /* галочка/точка в цвет темы */
+        cursor: pointer;
+    }
+    /* Чекбокс и подпись к нему в одну строку */
+    .admin-change-form .checkbox-row label {
+        display: inline-block;
+        margin-bottom: 0;
+    }
+
+    /* Нативные иконки выбора даты/времени на тёмном фоне отображаем в тёмной
+       схеме, иначе значок календаря/часов выглядит как белый квадрат. */
+    .admin-change-form input[type="date"],
+    .admin-change-form input[type="time"],
+    .admin-change-form input[type="datetime-local"] {
+        color-scheme: dark;
+    }
 </style>
 {% endblock %}
 

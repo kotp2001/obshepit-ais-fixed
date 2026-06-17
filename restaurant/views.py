@@ -1,3 +1,12 @@
+"""Представления (views) АИС «Общепит».
+
+Файл содержит:
+  * страницы-обёртки (render шаблонов: вход, зал официанта, кухня, отчёты, админ-панель);
+  * REST-подобные API-эндпоинты (JSON) для фронтенда: вход, меню, столы, заказы,
+    оплата, чеки, отчёты, журнал действий, смена пароля, разблокировка;
+  * вспомогательные функции (IP клиента, запись в журнал действий, генерация чека).
+Большинство API-функций помечены @csrf_exempt, т.к. вызываются из JS через fetch.
+"""
 import os
 import base64
 import subprocess
@@ -25,11 +34,13 @@ from .models import (
 # ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 # ------------------------------------------------------------
 def get_client_ip(request):
+    # Определяет IP клиента (учитывает заголовок прокси X-Forwarded-For)
     xff = request.META.get('HTTP_X_FORWARDED_FOR')
     return xff.split(',')[0].strip() if xff else request.META.get('REMOTE_ADDR', '127.0.0.1')
 
 
 def log_action(request, action, description=''):
+    # Записывает действие пользователя в журнал ActionLog (молча игнорирует сбои)
     try:
         user = request.user if request.user.is_authenticated else None
         ActionLog.objects.create(
@@ -133,6 +144,7 @@ def _run_pg_dump(backup_file_path):
 # ------------------------------------------------------------
 # СТРАНИЦЫ
 # ------------------------------------------------------------
+# --- Страницы (отрисовка HTML-шаблонов) ---
 def landing(request): return render(request, 'landing.html')
 def admin_panel(request): return render(request, 'admin_panel.html')
 def waiter_hall(request): return render(request, 'waiter_hall.html')
@@ -149,6 +161,7 @@ def maintenance_log_page(request): return render(request, 'maintenance_log.html'
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_login(request):
+    # Вход сотрудника. Считает неудачные попытки и блокирует на 15 минут после 5 неудач.
     try:
         body = json.loads(request.body)
         username = body.get('username', '').strip()
@@ -244,6 +257,7 @@ def api_staff(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_create_order(request):
+    # Создание заказа из интерфейса официанта: создаёт заказ, позиции, считает сумму, занимает стол.
     try:
         body = json.loads(request.body)
         table_id = body.get('table_id')
@@ -377,6 +391,7 @@ def api_take_order(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_pay_order(request):
+    # Оплата заказа: фиксирует способ оплаты, статус «оплачен» и освобождает стол.
     try:
         data = json.loads(request.body)
         order = Order.objects.get(id=data.get('order_id'))
@@ -601,6 +616,7 @@ def api_unblock_user(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_change_password(request):
+    # Смена пароля по текущему паролю (используется модалкой на странице входа).
     try:
         body = json.loads(request.body)
         username = body.get('username', '').strip()

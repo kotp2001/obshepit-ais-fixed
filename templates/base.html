@@ -285,8 +285,10 @@
                 <i class="fas fa-utensils"></i> АИС Общепит
             </a>
             <div style="display: flex; align-items: center; gap: 10px;">
-                <!-- Кнопка "Главное меню" -->
-                <a href="/admin-panel/" class="main-menu-btn">Главное меню</a>
+                <!-- Кнопка «Главное меню» скрыта по умолчанию и появляется только
+                     после входа в систему (когда в localStorage есть роль).
+                     Поэтому на странице входа её не видно. -->
+                <a href="/admin-panel/" class="main-menu-btn" id="main-menu-btn" style="display: none;">Главное меню</a>
                 <button class="btn-logout" onclick="logout()" id="logout-btn" style="display: none;">Выйти</button>
             </div>
         </div>
@@ -299,10 +301,10 @@
     <div class="footer">
         <div class="container">
             <p class="mb-0">АИС "Общепит", дипломный проект, Дубровин К.С., гр. ИС-61</p>
+            <!-- В нижней панели оставлены только руководство и обратная связь.
+                 Ссылки «Регламенты» и «Журнал ТО» убраны по требованию. -->
             <p class="mb-0 mt-1" style="font-size: 0.8rem;">
                 <a href="/help/">Руководство пользователя</a> |
-                <a href="/docs/">Регламенты</a> |
-                <a href="/maintenance-log/">Журнал ТО</a> |
                 <a href="https://forms.yandex.ru/u/69f11c7990fa7b3c1459172e" target="_blank">Обратная связь</a>
             </p>
         </div>
@@ -327,10 +329,15 @@
         createStars();
         
         function checkAuth() {
+            // После входа в localStorage появляется роль пользователя — тогда
+            // показываем кнопки «Главное меню» и «Выйти». До входа (страница входа)
+            // обе кнопки скрыты.
             const role = localStorage.getItem('user_role');
             const logoutBtn = document.getElementById('logout-btn');
+            const menuBtn = document.getElementById('main-menu-btn');
             if (role) {
-                logoutBtn.style.display = 'block';
+                if (logoutBtn) logoutBtn.style.display = 'block';
+                if (menuBtn) menuBtn.style.display = 'inline-block';
             }
         }
         

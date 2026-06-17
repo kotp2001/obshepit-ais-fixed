@@ -1,3 +1,4 @@
+"""Печатает базу db.sqlite3 в виде строки base64 — чтобы скачать БД с удалённого сервера через логи."""
 import os
 import sqlite3
 import base64

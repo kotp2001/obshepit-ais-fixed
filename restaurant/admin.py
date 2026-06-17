@@ -1,3 +1,9 @@
+# ==========================================================================
+#  restaurant/admin.py
+#  Настройка административной панели Django для всех моделей системы.
+#  Здесь задаётся, какие поля показывать в списках, какие формы использовать,
+#  какие проверки выполнять при сохранении и какие действия скрыть.
+# ==========================================================================
 from django.contrib import admin
 from django import forms
 from datetime import datetime
@@ -6,36 +12,38 @@ from django.contrib.auth.models import User
 from .models import Category, Dish, Table, Order, OrderItem, MaintenanceLog, Profile, ActionLog, Receipt, LoginAttempt
 
 
-# ===== ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ =====
-
+# ===== ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ (роль сотрудника) =====
+# Профиль выводится «встроенно» (inline) прямо на странице пользователя.
 class ProfileInline(admin.StackedInline):
     model = Profile
     can_delete = False
     verbose_name_plural = 'Профиль и роль'
-    fields = ('role', 'pin_code')
+    # В форме создания/редактирования пользователя оставляем ТОЛЬКО роль.
+    # Пин-код убран по требованию: при создании сотрудника достаточно
+    # логина, пароля, подтверждения пароля и роли.
+    fields = ('role',)
     extra = 0
 
 
-# ===== ПОЛЬЗОВАТЕЛИ (РУССКИЕ ЗАГОЛОВКИ, БЕЗ list_editable) =====
-
+# ===== ПОЛЬЗОВАТЕЛИ (русские заголовки, без массовых действий) =====
 class CustomUserAdmin(UserAdmin):
-    inlines = [ProfileInline]
-    # Столбец get_role убран по требованию
+    inlines = [ProfileInline]                      # к пользователю прикрепляем профиль с ролью
+    # Колонки в списке сотрудников
     list_display = ['id', 'username', 'is_staff', 'is_active']
     list_display_links = ['id', 'username']
-    list_filter = []
-    search_fields = ['username', 'email']
-    actions = None
+    list_filter = []                               # фильтры справа не показываем
+    search_fields = ['username', 'email']          # строка поиска ищет по логину и email
+    actions = None                                 # убираем выпадающее меню массовых действий
 
+    # Поля на странице РЕДАКТИРОВАНИЯ существующего пользователя
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Личные данные', {'fields': ('first_name', 'last_name', 'email')}),
         ('Права доступа', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Важные даты', {'fields': ('last_login', 'date_joined')}),
     )
-    # 'role' убрано из add_fieldsets — это поле модели Profile, а не User,
-    # из-за чего страница добавления пользователя падала с FieldError.
-    # Роль задаётся в блоке «Профиль и роль» на странице редактирования.
+    # Поля на странице СОЗДАНИЯ нового пользователя: логин + пароль + подтверждение.
+    # Роль добавляется через встроенный профиль (ProfileInline) ниже на той же странице.
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
@@ -44,40 +52,42 @@ class CustomUserAdmin(UserAdmin):
     )
 
 
+# Перерегистрируем модель User со своими настройками
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 
 
-# ===== КАТЕГОРИИ (УБРАНА ИКОНКА) =====
-
+# ===== КАТЕГОРИИ БЛЮД =====
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'order']
-    list_display_links = ['id', 'name']
-    search_fields = ['name']
-    ordering = ['order']
-    # Только название и порядок (иконку не показываем и не редактируем)
-    fields = ['name', 'order']
+    list_display = ['id', 'name', 'order']         # столбцы списка
+    list_display_links = ['id', 'name']            # кликабельные ячейки (переход в карточку)
+    search_fields = ['name']                       # поиск по названию
+    ordering = ['order']                           # сортировка по полю «порядок»
+    fields = ['name', 'order']                     # в форме только название и порядок (иконку не редактируем)
     actions = None
 
 
 # ===== БЛЮДА =====
-
 @admin.register(Dish)
 class DishAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'category', 'price', 'is_available']
     list_display_links = ['id', 'name']
-    list_editable = ['price', 'is_available']
+    list_editable = ['price', 'is_available']      # цену и доступность можно править прямо в списке
     search_fields = ['name']
     fields = ['name', 'category', 'price', 'is_available']
     actions = None
 
 
-# ===== СТОЛЫ (ИСПРАВЛЕНЫ СТАТУСЫ) =====
-
+# ===== СТОЛЫ =====
 class TableAdminForm(forms.ModelForm):
-    # Номер стола вводится только вручную (без «ползунка»/стрелок),
-    # не может быть меньше 1 и не может повторяться.
+    """Форма стола с проверками ввода.
+
+    * Номер стола — только ручной ввод (без стрелок-«ползунка»), не меньше 1, без повторов.
+    * Количество мест — целое число СТРОГО больше 0 (не меньше 0 и не равно 0).
+    """
+
+    # Поле «Номер стола»: текстовое поле с числовой клавиатурой на телефоне.
     number = forms.IntegerField(
         min_value=1,
         label='Номер стола',
@@ -94,11 +104,28 @@ class TableAdminForm(forms.ModelForm):
         },
     )
 
+    # Поле «Количество мест»: минимум 1 (стол без мест не имеет смысла).
+    seats = forms.IntegerField(
+        min_value=1,
+        label='Количество мест',
+        widget=forms.NumberInput(attrs={
+            'min': 1,
+            'step': 1,
+            'placeholder': 'Например, 4',
+        }),
+        error_messages={
+            'min_value': 'Количество мест должно быть больше 0.',
+            'invalid': 'Введите количество мест числом.',
+            'required': 'Укажите количество мест.',
+        },
+    )
+
     class Meta:
         model = Table
         fields = ['number', 'seats', 'status']
 
     def clean_number(self):
+        # Проверяем номер стола: >= 1 и уникальность.
         number = self.cleaned_data.get('number')
         if number is None:
             return number
@@ -106,15 +133,24 @@ class TableAdminForm(forms.ModelForm):
             raise forms.ValidationError('Номер стола не может быть меньше 1.')
         qs = Table.objects.filter(number=number)
         if self.instance and self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
+            qs = qs.exclude(pk=self.instance.pk)     # при редактировании не считаем сам себя
         if qs.exists():
             raise forms.ValidationError(f'Стол №{number} уже существует, выберите другой номер.')
         return number
 
+    def clean_seats(self):
+        # Проверяем количество мест: не пустое, не меньше 0 и не равно 0 (то есть >= 1).
+        seats = self.cleaned_data.get('seats')
+        if seats is None:
+            raise forms.ValidationError('Укажите количество мест.')
+        if seats <= 0:
+            raise forms.ValidationError('Количество мест должно быть больше 0.')
+        return seats
+
 
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
-    form = TableAdminForm
+    form = TableAdminForm                          # используем форму с проверками выше
     list_display = ['number', 'seats', 'get_status_display']
     list_display_links = ['number']
     ordering = ['number']
@@ -122,27 +158,32 @@ class TableAdmin(admin.ModelAdmin):
     actions = None
 
     def get_status_display(self, obj):
-        # Используем встроенный метод модели
+        # Человекочитаемый статус стола (Свободен / Занят / Забронирован)
         return obj.get_status_display()
     get_status_display.short_description = 'Статус'
 
 
-# ===== ПОЗИЦИИ ЗАКАЗА (ИНЛАЙН) =====
-
+# ===== ПОЗИЦИИ ЗАКАЗА (встроенный список внутри заказа) =====
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
+    # ВАЖНО: 'get_status_display' — это метод, а не поле модели. Чтобы Django
+    # не падал с ошибкой «Unknown field(s) (get_status_display)» при открытии
+    # страницы добавления заказа, метод обязательно указывается в readonly_fields.
     fields = ['dish', 'quantity', 'price', 'get_status_display']
-    readonly_fields = []
+    readonly_fields = ['get_status_display']
     show_change_link = True
     can_delete = True
 
     def get_status_display(self, obj):
+        # Статус позиции заказа (В очереди / Готовится / Готов / Подано)
         return obj.get_status_display()
     get_status_display.short_description = 'Статус'
 
 
+# ===== ФОРМА ЗАКАЗА =====
 class OrderAdminForm(forms.ModelForm):
+    # Дата и время создания вводятся двумя полями (дата + время).
     created_at = forms.SplitDateTimeField(
         widget=forms.SplitDateTimeWidget(
             date_attrs={'type': 'date'},
@@ -158,6 +199,7 @@ class OrderAdminForm(forms.ModelForm):
         fields = '__all__'
 
     def clean_created_at(self):
+        # Если дату не указали — подставляем текущий момент.
         val = self.cleaned_data.get('created_at')
         if not val:
             return datetime.now()
@@ -165,27 +207,21 @@ class OrderAdminForm(forms.ModelForm):
 
 
 # ===== ЗАКАЗЫ =====
-
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     form = OrderAdminForm
-    # Только: ID, цена, стол, тип оплаты, дата
-    list_display = [
-        'id',
-        'get_price',
-        'get_table_display',
-        'get_payment_display',
-        'get_date',
-    ]
+    # В списке заказов показываем: ID, цену, стол, тип оплаты, дату.
+    list_display = ['id', 'get_price', 'get_table_display', 'get_payment_display', 'get_date']
     list_display_links = ['id']
     list_editable = []
     search_fields = ['id', 'table__number']
-    date_hierarchy = 'created_at'
-    inlines = [OrderItemInline]
+    date_hierarchy = 'created_at'                   # навигация по датам сверху
+    inlines = [OrderItemInline]                    # позиции заказа редактируются на той же странице
     readonly_fields = []
     fields = ['table', 'waiter', 'created_at', 'status', 'payment_method', 'guest_count']
     actions = None
 
+    # --- вычисляемые столбцы для списка ---
     def get_price(self, obj):
         return f'{obj.total_amount} ₽'
     get_price.short_description = 'Цена'
@@ -215,6 +251,7 @@ class OrderAdmin(admin.ModelAdmin):
     get_payment_display.short_description = 'Тип оплаты'
 
     def get_changeform_initial_data(self, request):
+        # Предзаполняем поле даты/времени текущим моментом при создании заказа.
         from datetime import datetime
         initial = super().get_changeform_initial_data(request)
         now = datetime.now()
@@ -223,6 +260,7 @@ class OrderAdmin(admin.ModelAdmin):
         return initial
 
     def save_model(self, request, obj, form, change):
+        # При сохранении: если дата пустая — ставим сейчас; если официант не задан — текущий пользователь.
         from datetime import datetime
         if obj.created_at is None:
             obj.created_at = datetime.now()
@@ -231,6 +269,7 @@ class OrderAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
     def save_related(self, request, form, formsets, change):
+        # После сохранения позиций пересчитываем общую сумму заказа.
         super().save_related(request, form, formsets, change)
         order = form.instance
         total = sum((i.price or 0) * (i.quantity or 0) for i in order.items.all())
@@ -239,8 +278,7 @@ class OrderAdmin(admin.ModelAdmin):
             order.save(update_fields=['total_amount'])
 
 
-# ===== ПОЗИЦИИ ЗАКАЗА (ОТДЕЛЬНО) =====
-
+# ===== ПОЗИЦИИ ЗАКАЗА (как отдельный раздел) =====
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ['id', 'order', 'dish', 'quantity', 'price', 'get_status_display']
@@ -256,7 +294,6 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 
 # ===== ЖУРНАЛ ТО =====
-
 @admin.register(MaintenanceLog)
 class MaintenanceLogAdmin(admin.ModelAdmin):
     list_display = ['id', 'date', 'work_performed', 'performed_by', 'created_at']
@@ -268,16 +305,16 @@ class MaintenanceLogAdmin(admin.ModelAdmin):
     actions = None
 
 
-# ===== КАСТОМИЗАЦИЯ DJANGO ADMIN =====
+# ===== ОБЩИЕ НАДПИСИ АДМИНКИ =====
 admin.site.site_header = 'АИС «Общепит»'
 admin.site.site_title = 'АИС Общепит'
 admin.site.index_title = 'Панель управления'
 
 
-# ===== ЖУРНАЛ ДЕЙСТВИЙ =====
+# ===== ЖУРНАЛ ДЕЙСТВИЙ (только чтение) =====
 @admin.register(ActionLog)
 class ActionLogAdmin(admin.ModelAdmin):
-    # Только: ID, время, пользователь, действие, IP-адрес
+    # Показываем: ID, время, пользователь, действие, IP-адрес.
     list_display = ['id', 'timestamp', 'user', 'action', 'ip_address']
     list_display_links = ['id']
     list_filter = []
@@ -285,8 +322,9 @@ class ActionLogAdmin(admin.ModelAdmin):
     readonly_fields = ['user', 'action', 'description', 'ip_address', 'timestamp']
     ordering = ['-timestamp']
     actions = None
-    list_per_page = 100  # листаем по 100 записей на страницу
+    list_per_page = 100                            # 100 записей на страницу
 
+    # Журнал нельзя редактировать или добавлять вручную — только просматривать и чистить.
     def has_add_permission(self, request):
         return False
 
@@ -305,7 +343,7 @@ class ActionLogAdmin(admin.ModelAdmin):
         return HttpResponseRedirect('../')
 
 
-# ===== ЧЕКИ =====
+# ===== ЧЕКИ (только чтение) =====
 @admin.register(Receipt)
 class ReceiptAdmin(admin.ModelAdmin):
     list_display = ['id', 'order', 'total', 'payment_method', 'created_at']
@@ -319,7 +357,7 @@ class ReceiptAdmin(admin.ModelAdmin):
         return False
 
 
-# ===== ПОПЫТКИ ВХОДА =====
+# ===== ПОПЫТКИ ВХОДА (для блокировки подбора пароля) =====
 @admin.register(LoginAttempt)
 class LoginAttemptAdmin(admin.ModelAdmin):
     list_display = ['username', 'ip_address', 'attempts', 'blocked_until', 'last_attempt', 'is_blocked']
@@ -328,9 +366,10 @@ class LoginAttemptAdmin(admin.ModelAdmin):
     search_fields = ['username', 'ip_address']
     readonly_fields = ['username', 'ip_address', 'last_attempt']
     ordering = ['-last_attempt']
-    actions = ['unblock_users']
+    actions = ['unblock_users']                     # единственное оставленное действие — разблокировка
 
     def is_blocked(self, obj):
+        # Зелёная галочка/крест: заблокирован ли вход прямо сейчас.
         from django.utils import timezone
         return bool(obj.blocked_until and obj.blocked_until > timezone.now())
     is_blocked.boolean = True
@@ -338,5 +377,6 @@ class LoginAttemptAdmin(admin.ModelAdmin):
 
     @admin.action(description='Снять блокировку (сбросить 15-минутное ожидание)')
     def unblock_users(self, request, queryset):
+        # Обнуляем счётчик попыток и снимаем блокировку у выбранных записей.
         updated = queryset.update(attempts=0, blocked_until=None)
         self.message_user(request, f'Разблокировано пользователей: {updated}.')

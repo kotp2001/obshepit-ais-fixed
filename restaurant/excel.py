@@ -1,3 +1,10 @@
+"""Экспорт отчётов в Excel (.xlsx) с помощью библиотеки openpyxl.
+
+Содержит две выгрузки:
+  * export_orders_excel  — список оплаченных заказов за выбранный период;
+  * export_popular_excel — рейтинг популярных блюд (продажи и выручка).
+Период берётся из GET-параметров запроса (день/неделя/месяц/произвольный).
+"""
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill
 from django.http import HttpResponse
@@ -5,6 +12,7 @@ from .models import Order
 from datetime import datetime, timedelta
 from collections import defaultdict
 
+# Единый стиль оформления шапки таблиц Excel (тёмный фон, золотой жирный шрифт)
 HEADER_FILL  = PatternFill(start_color="1a1a4a", end_color="1a1a4a", fill_type="solid")
 HEADER_FONT  = Font(bold=True, color="FFD700")
 CENTER       = Alignment(horizontal='center', vertical='center')
@@ -28,6 +36,7 @@ def _parse_period(request):
         return today - timedelta(days=7), today, 'неделя'
 
 def _style_header(ws, headers):
+    """Оформляет первую строку листа как шапку таблицы."""
     for col, h in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=h)
         cell.font      = HEADER_FONT
@@ -35,6 +44,7 @@ def _style_header(ws, headers):
         cell.alignment = CENTER
 
 def export_orders_excel(request):
+    # Формируем .xlsx со всеми оплаченными заказами за выбранный период.
     start_date, end_date, label = _parse_period(request)
 
     orders = Order.objects.filter(
@@ -69,6 +79,7 @@ def export_orders_excel(request):
     return response
 
 def export_popular_excel(request):
+    # Считаем, сколько раз и на какую сумму продано каждое блюдо, и сортируем по популярности.
     start_date, end_date, label = _parse_period(request)
 
     orders = Order.objects.filter(
