@@ -1,14 +1,27 @@
+<!--
+    Файл: templates/kitchen.html
+    Назначение: страница для повара — отображение активных заказов и управление
+    их статусами. Расширяет базовый шаблон base.html.
+    Содержит динамическую загрузку заказов через JavaScript (polling).
+-->
+
 {% extends 'base.html' %}
 {% block title %}Кухня - Повар{% endblock %}
+
 {% block content %}
+
+<!-- Основная карточка кухни -->
 <div class="card">
     <div class="card-header">
+        <!-- Заголовок и кнопка обновления -->
         <div class="d-flex justify-content-between align-items-center">
-<div class="d-flex align-items-center gap-2" id="kitchen-header"><h4 class="mb-0" style="color:#ffd700;">Кухня — рабочее место повара</h4></div>
-            <button class="btn btn-warning btn-sm" id="refresh-orders">Обновить</button>
+            <h4 class="mb-0">Кухня — рабочее место повара</h4>
+            <button class="btn btn-warning btn-sm" onclick="loadOrders()">Обновить</button>
         </div>
     </div>
+    <!-- Контейнер для списка заказов (динамически заполняется через JS) -->
     <div class="card-body" id="orders-container">
+        <!-- Сообщение-заглушка при загрузке -->
         <div class="text-center py-5">
             <div class="spinner-border text-light" role="status"></div>
             <p class="mt-2">Загрузка заказов...</p>
@@ -16,24 +29,23 @@
     </div>
 </div>
 
+<!-- ============================================================ -->
+<!-- Блок JavaScript: логика работы кухни                          -->
+<!-- ============================================================ -->
 <script>
-
-
-
-    function addHours(timeStr, hours) {
-        if (!timeStr || !timeStr.includes(':')) return timeStr;
-        const [h, m] = timeStr.split(':').map(Number);
-        const total = h + hours;
-        const newH = total % 24;
-        return String(newH).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-    }
-
+    // Функция загрузки активных заказов с сервера
     async function loadOrders() {
         try {
+            // Отправка GET-запроса на API для получения активных заказов
             const response = await fetch('/api/orders/active/');
             const data = await response.json();
+            
+            // Если заказы успешно получены
             if (data.success) {
+                // Фильтруем заказы, исключая уже готовые и оплаченные
                 const activeOrders = data.data.filter(order => order.status !== 'ready' && order.status !== 'paid');
+                
+                // Если активных заказов нет – показываем соответствующее сообщение
                 if (activeOrders.length === 0) {
                     document.getElementById('orders-container').innerHTML = `
                         <div class="alert alert-success text-center" style="background: rgba(40,90,40,0.6); border: none; color: #ffd700;">
@@ -43,6 +55,8 @@
                     `;
                     return;
                 }
+                
+                // Генерация HTML-карточек для каждого активного заказа
                 let html = '<div class="row">';
                 for (const order of activeOrders) {
                     html += `
@@ -53,14 +67,19 @@
                                         <h5 class="mb-0" style="color: #ffd700;">Заказ номер ${order.id}</h5>
                                         <span class="badge bg-light text-dark">Стол ${order.table_number}</span>
                                     </div>
-                                    <small style="color: white;">Создан: ${addHours(order.created_at, 2)}</small>
-                                    <small style="color: rgba(255,255,255,0.7); display:block;">Официант: ${order.waiter_name || 'Не указан'}${order.waiter_role ? ' (' + order.waiter_role + ')' : ''}</small>
+                                    <small>Создан: ${order.created_at}</small>
                                 </div>
                                 <div class="card-body">
                                     <ul class="list-group list-group-flush" style="background: transparent;">
                     `;
+                    
+                    // Перебор позиций заказа
                     for (const item of order.items) {
-                        let statusText = '', statusColor = '', buttonHtml = '';
+                        let statusText = '';
+                        let statusColor = '';
+                        let buttonHtml = '';
+                        
+                        // Определение статуса блюда и соответствующих кнопок
                         if (item.status === 'pending') {
                             statusText = 'Ожидает';
                             statusColor = '#17a2b8';
@@ -74,6 +93,7 @@
                             statusColor = '#28a745';
                             buttonHtml = `<span class="badge bg-success">Готов</span>`;
                         }
+                        
                         html += `
                             <li class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(50,50,100,0.5); color: white; border-bottom: 1px solid rgba(255,255,255,0.1);">
                                 <div>
@@ -87,6 +107,8 @@
                             </li>
                         `;
                     }
+                    
+                    // Кнопка "Заказ готов" – появляется, если все блюда имеют статус 'ready'
                     const allReady = order.items.every(item => item.status === 'ready');
                     let readyButton = '';
                     if (allReady && order.status !== 'ready') {
@@ -94,6 +116,7 @@
                     } else if (order.status === 'ready') {
                         readyButton = `<span class="badge bg-success w-100 mt-3" style="padding: 10px;">ЗАКАЗ ГОТОВ</span>`;
                     }
+                    
                     html += `
                                     </ul>
                                     ${readyButton}
@@ -106,10 +129,12 @@
                 document.getElementById('orders-container').innerHTML = html;
             }
         } catch (error) {
+            // Обработка ошибок: вывод сообщения об ошибке в интерфейс
             document.getElementById('orders-container').innerHTML = '<p class="text-center text-danger">Ошибка загрузки заказов</p>';
         }
     }
-
+    
+    // Функция обновления статуса конкретного блюда (позиции заказа)
     async function updateItemStatus(itemId, status) {
         try {
             await fetch('/api/orders/update-item/', {
@@ -117,12 +142,14 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({item_id: itemId, status: status})
             });
+            // После обновления перезагружаем список заказов
             loadOrders();
         } catch (error) {
             alert('Ошибка: ' + error);
         }
     }
-
+    
+    // Функция отметки всего заказа как готового
     async function markOrderReady(orderId) {
         try {
             await fetch('/api/orders/mark-ready/', {
@@ -130,14 +157,17 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({order_id: orderId})
             });
+            // После отметки перезагружаем список заказов
             loadOrders();
         } catch (error) {
             alert('Ошибка: ' + error);
         }
     }
-
-    document.getElementById('refresh-orders').addEventListener('click', loadOrders);
+    
+    // Первоначальная загрузка заказов при открытии страницы
     loadOrders();
+    // Автоматическое обновление каждые 5 секунд (polling)
     setInterval(loadOrders, 5000);
 </script>
+
 {% endblock %}
