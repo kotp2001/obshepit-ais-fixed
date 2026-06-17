@@ -1,3 +1,8 @@
+"""Главный файл настроек Django-проекта АИС «Общепит».
+
+Здесь подключены приложения, middleware, база данных (PostgreSQL через DATABASE_URL
+либо локальный SQLite), язык/часовой пояс, статика и параметры входа.
+"""
 import os
 from pathlib import Path
 

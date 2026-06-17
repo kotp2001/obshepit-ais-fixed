@@ -1,3 +1,4 @@
+{# Шаблон отрисовки группы полей формы в админке (учитывает чекбоксы и поля только для чтения). Шаблон расширяет base.html и наследует общий стиль сайта. #}
 <fieldset class="module aligned {{ fieldset.classes }}">
     {% if fieldset.name %}<h2>{{ fieldset.name }}</h2>{% endif %}
     {% if fieldset.description %}

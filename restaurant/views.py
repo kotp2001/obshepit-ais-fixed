@@ -1,7 +1,16 @@
+"""
+restaurant/views.py
+Все функции-обработчики (контроллеры) АИС «Общепит».
+
+Здесь описаны:
+- страницы для рендеринга HTML (landing, waiter_hall, kitchen, reports, admin_panel, документация)
+- API-эндпоинты, возвращающие JSON (авторизация, данные меню, заказы, отчёты, журналы)
+- вспомогательные функции (логгирование, генерация чеков, загрузка бэкапов в GitHub)
+"""
+
 import os
 import base64
 import subprocess
-import shutil
 from datetime import datetime, timedelta
 from decimal import Decimal
 import json
@@ -13,35 +22,49 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.utils.dateparse import parse_datetime
+from django.utils import timezone
 from django.conf import settings
 
 from .models import (
-    Category, Dish, Table, Order, OrderItem,
-    MaintenanceLog, Profile, ActionLog, Receipt, LoginAttempt
+    Category, Dish, Table, Order, OrderItem, MaintenanceLog,
+    Profile, ActionLog, Receipt, LoginAttempt
 )
 
 
-# ------------------------------------------------------------
+# ================================================================
 # ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-# ------------------------------------------------------------
+# ================================================================
+
 def get_client_ip(request):
+    """Получает реальный IP-адрес клиента, даже за прокси."""
     xff = request.META.get('HTTP_X_FORWARDED_FOR')
-    return xff.split(',')[0].strip() if xff else request.META.get('REMOTE_ADDR', '127.0.0.1')
+    if xff:
+        return xff.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '127.0.0.1')
 
 
 def log_action(request, action, description=''):
+    """
+    Записывает действие пользователя в журнал (ActionLog).
+    Используется для аудита.
+    """
     try:
         user = request.user if request.user.is_authenticated else None
         ActionLog.objects.create(
-            user=user, action=action,
-            description=description, ip_address=get_client_ip(request)
+            user=user,
+            action=action,
+            description=description,
+            ip_address=get_client_ip(request)
         )
     except Exception:
         pass
 
 
 def generate_receipt_pdf(order):
-    """Генерация простого HTML-based чека (сохраняем как текстовый файл)"""
+    """
+    Генерирует текстовый файл чека и сохраняет его в модели Receipt.
+    В реальном проекте здесь может быть генерация PDF через ReportLab.
+    """
     try:
         payment_labels = {'cash': 'Наличные', 'card': 'Карта', 'qr': 'QR-код'}
         items_text = '\n'.join(
@@ -79,7 +102,10 @@ def generate_receipt_pdf(order):
 
 
 def upload_backup_to_github(file_path, filename):
-    """Загружает файл бекапа в приватный репозиторий GitHub"""
+    """
+    Загружает файл бэкапа в приватный репозиторий на GitHub.
+    Использует переменные окружения GITHUB_TOKEN и GITHUB_BACKUP_REPO.
+    """
     token = os.environ.get('GITHUB_TOKEN')
     repo_name = os.environ.get('GITHUB_BACKUP_REPO')
     if not token or not repo_name:
@@ -96,7 +122,7 @@ def upload_backup_to_github(file_path, filename):
     try:
         repo.create_file(remote_path, f"Auto backup {filename}", content, branch="main")
         print(f"✅ Uploaded {filename} to GitHub")
-    except Exception as e:
+    except Exception:
         try:
             contents = repo.get_contents(remote_path, ref="main")
             repo.update_file(contents.path, f"Update backup {filename}", content, contents.sha, branch="main")
@@ -107,109 +133,132 @@ def upload_backup_to_github(file_path, filename):
     return True
 
 
-def _run_pg_dump(backup_file_path):
-    """Выполняет pg_dump и возвращает (success, output/error)"""
-    db = settings.DATABASES['default']
-    if 'HOST' not in db or not db.get('HOST'):
-        return False, "PostgreSQL не настроен (HOST отсутствует)"
+# ================================================================
+# СТРАНИЦЫ (HTML)
+# ================================================================
 
-    env = os.environ.copy()
-    env['PGPASSWORD'] = db.get('PASSWORD', '')
-    cmd = [
-        'pg_dump', '-h', db['HOST'], '-p', str(db.get('PORT') or '5432'),
-        '-U', db['USER'], '-d', db['NAME'], '-f', backup_file_path, '--no-password'
-    ]
-    result = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=60)
-    if result.returncode == 0:
-        with open(backup_file_path, 'r', encoding='utf-8', errors='replace') as f:
-            lines = f.readlines()
-        with open(backup_file_path, 'w', encoding='utf-8') as f:
-            f.writelines(l for l in lines if not l.startswith('\\'))
-        return True, None
-    else:
-        return False, result.stderr[:300]
+def landing(request):
+    """Стартовая страница входа (только для сотрудников)."""
+    return render(request, 'landing.html')
 
 
-# ------------------------------------------------------------
-# СТРАНИЦЫ
-# ------------------------------------------------------------
-def landing(request): return render(request, 'landing.html')
-def admin_panel(request): return render(request, 'admin_panel.html')
-def waiter_hall(request): return render(request, 'waiter_hall.html')
-def kitchen_view(request): return render(request, 'kitchen.html')
-def reports_view(request): return render(request, 'reports.html')
-def help_page(request): return render(request, 'help.html')
-def docs_page(request): return render(request, 'docs.html')
-def maintenance_log_page(request): return render(request, 'maintenance_log.html')
+def admin_panel(request):
+    """Панель администратора (кастомная страница с ссылками на разделы)."""
+    return render(request, 'admin_panel.html')
 
 
-# ------------------------------------------------------------
-# АВТОРИЗАЦИЯ
-# ------------------------------------------------------------
+def waiter_hall(request):
+    """Зал ресторана — интерфейс официанта."""
+    return render(request, 'waiter_hall.html')
+
+
+def kitchen_view(request):
+    """Кухня — интерфейс повара."""
+    return render(request, 'kitchen.html')
+
+
+def reports_view(request):
+    """Страница отчётов (только для администратора)."""
+    return render(request, 'reports.html')
+
+
+def help_page(request):
+    """Руководство пользователя."""
+    return render(request, 'help.html')
+
+
+def docs_page(request):
+    """Регламенты (техобслуживание, бэкап, восстановление)."""
+    return render(request, 'docs.html')
+
+
+def maintenance_log_page(request):
+    """Страница журнала технического обслуживания."""
+    return render(request, 'maintenance_log.html')
+
+
+# ================================================================
+# API АВТОРИЗАЦИИ
+# ================================================================
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_login(request):
+    """
+    Вход пользователя по логину/паролю.
+    Учитывает блокировку после 5 неудачных попыток.
+    """
     try:
         body = json.loads(request.body)
         username = body.get('username', '').strip()
         password = body.get('password', '').strip()
         ip = get_client_ip(request)
 
-        try:
-            attempt = LoginAttempt.objects.get(username=username, ip_address=ip)
-            if attempt.blocked_until and datetime.now() < attempt.blocked_until:
-                remaining = int((attempt.blocked_until - datetime.now()).total_seconds() / 60) + 1
-                return JsonResponse({
-                    'success': False,
-                    'error': f'Слишком много попыток. Попробуйте через {remaining} мин.',
-                    'blocked': True
-                })
-        except LoginAttempt.DoesNotExist:
-            attempt = None
+        # Проверяем, есть ли запись о попытках для этого пользователя с этого IP
+        attempt, created = LoginAttempt.objects.get_or_create(
+            username=username,
+            ip_address=ip,
+            defaults={'attempts': 0, 'blocked_until': None}
+        )
+
+        # Если заблокирован — сообщаем остаток времени
+        now = timezone.now()
+        if attempt.blocked_until and attempt.blocked_until > now:
+            remaining = int((attempt.blocked_until - now).total_seconds() / 60) + 1
+            return JsonResponse({
+                'success': False,
+                'error': f'Слишком много попыток. Попробуйте через {remaining} мин.',
+                'blocked': True
+            })
 
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
             login(request, user)
-            if attempt:
-                attempt.attempts = 0
-                attempt.blocked_until = None
-                attempt.save()
+            # Сбрасываем счётчик при успешном входе
+            attempt.attempts = 0
+            attempt.blocked_until = None
+            attempt.save()
+
+            # Определяем роль пользователя
             role = 'staff'
             if user.is_superuser:
                 role = 'admin'
             elif hasattr(user, 'profile') and user.profile.role:
                 role = user.profile.role
+
             log_action(request, 'login', f'Вход: {username} (роль: {role})')
             return JsonResponse({'success': True, 'role': role, 'username': user.username})
         else:
-            MAX_ATTEMPTS = 5
-            BLOCK_MINUTES = 15
-            if attempt:
-                attempt.attempts += 1
-                if attempt.attempts >= MAX_ATTEMPTS:
-                    attempt.blocked_until = datetime.now() + timedelta(minutes=BLOCK_MINUTES)
-                attempt.save()
-            else:
-                LoginAttempt.objects.create(username=username, ip_address=ip, attempts=1)
-            remaining_attempts = MAX_ATTEMPTS - (attempt.attempts if attempt else 1)
+            # Неудачная попытка — увеличиваем счётчик
+            attempt.attempts += 1
+            if attempt.attempts >= 5:
+                attempt.blocked_until = now + timedelta(minutes=15)
+            attempt.save()
+            remaining_attempts = 5 - attempt.attempts
             msg = 'Неверный логин или пароль.'
             if remaining_attempts > 0:
                 msg += f' Осталось попыток: {remaining_attempts}'
             return JsonResponse({'success': False, 'error': msg})
+
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
 
-# ------------------------------------------------------------
-# ДАННЫЕ
-# ------------------------------------------------------------
+# ================================================================
+# API ДАННЫЕ (меню, столы)
+# ================================================================
+
 @require_http_methods(["GET"])
 def api_dishes(request):
+    """Возвращает список доступных блюд с их категориями."""
     dishes = Dish.objects.filter(is_available=True).select_related('category')
     data = [{
-        'id': d.id, 'name': d.name, 'description': d.description,
-        'price': float(d.price), 'category': d.category.name,
+        'id': d.id,
+        'name': d.name,
+        'description': d.description,
+        'price': float(d.price),
+        'category': d.category.name,
         'category_id': d.category.id,
     } for d in dishes]
     return JsonResponse({'success': True, 'data': data})
@@ -217,12 +266,14 @@ def api_dishes(request):
 
 @require_http_methods(["GET"])
 def api_categories(request):
+    """Возвращает список всех категорий меню."""
     cats = Category.objects.all().order_by('order')
     return JsonResponse({'success': True, 'data': [{'id': c.id, 'name': c.name, 'icon': c.icon} for c in cats]})
 
 
 @require_http_methods(["GET"])
 def api_tables(request):
+    """Возвращает список столов с их статусами."""
     try:
         tables = Table.objects.all().order_by('number')
         data = [{'id': t.id, 'number': t.number, 'seats': t.seats, 'status': t.status} for t in tables]
@@ -233,17 +284,22 @@ def api_tables(request):
 
 @require_http_methods(["GET"])
 def api_staff(request):
+    """Возвращает количество активных сотрудников."""
     from django.contrib.auth.models import User
     count = User.objects.filter(is_active=True).count()
     return JsonResponse({'success': True, 'count': count})
 
 
-# ------------------------------------------------------------
-# ЗАКАЗЫ
-# ------------------------------------------------------------
+# ================================================================
+# API ЗАКАЗЫ
+# ================================================================
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_create_order(request):
+    """
+    Создаёт новый заказ: проверяет стол, добавляет позиции, обновляет статус стола.
+    """
     try:
         body = json.loads(request.body)
         table_id = body.get('table_id')
@@ -253,16 +309,19 @@ def api_create_order(request):
 
         table = Table.objects.get(id=table_id)
 
+        # Определяем время создания заказа (приоритет: переданное клиентом или текущее)
         if client_time:
             parsed = parse_datetime(client_time)
-            if parsed is not None:
-                current_time = parsed.astimezone().replace(tzinfo=None) if parsed.tzinfo else parsed
-            else:
-                current_time = datetime.now()
+            current_time = parsed if parsed else timezone.now()
         else:
-            current_time = datetime.now()
+            current_time = timezone.now()
 
-        order = Order(table=table, status='new', guest_count=guest_count, created_at=current_time)
+        order = Order.objects.create(
+            table=table,
+            status='new',
+            guest_count=guest_count,
+            created_at=current_time,
+        )
         if request.user.is_authenticated:
             order.waiter = request.user
         order.save()
@@ -271,8 +330,11 @@ def api_create_order(request):
         for item in items:
             dish = Dish.objects.get(id=item['dish_id'])
             OrderItem.objects.create(
-                order=order, dish=dish,
-                quantity=item['quantity'], price=dish.price, status='pending'
+                order=order,
+                dish=dish,
+                quantity=item['quantity'],
+                price=dish.price,
+                status='pending'
             )
             total += dish.price * item['quantity']
 
@@ -281,8 +343,7 @@ def api_create_order(request):
         table.status = 'occupied'
         table.save()
 
-        log_action(request, 'create_order',
-                   f'Заказ #{order.id}, стол {table.number}, сумма {float(total):.2f} руб.')
+        log_action(request, 'create_order', f'Заказ #{order.id}, стол {table.number}, сумма {float(total):.2f} руб.')
         return JsonResponse({'success': True, 'order_id': order.id, 'total': float(total)})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
@@ -290,48 +351,54 @@ def api_create_order(request):
 
 @require_http_methods(["GET"])
 def api_active_orders(request):
+    """
+    Возвращает активные заказы (new, cooking, ready) с их позициями и статусами блюд.
+    Время отображается в часовом поясе Москвы (МСК+2).
+    """
     orders = Order.objects.filter(
         status__in=['new', 'cooking', 'ready']
     ).select_related('table').prefetch_related('items__dish')
+
     data = []
     for order in orders:
-        items = [{'id': i.id, 'dish_name': i.dish.name, 'quantity': i.quantity, 'status': i.status}
-                 for i in order.items.all()]
-        waiter_name = 'Не указан'
-        waiter_role = ''
-        if order.waiter:
-            try:
-                if order.waiter.is_superuser:
-                    waiter_name = 'admin'
-                    waiter_role = 'Администратор'
-                else:
-                    waiter_name = order.waiter.first_name or order.waiter.username
-                    try:
-                        waiter_role = order.waiter.profile.get_role_display()
-                    except Exception:
-                        waiter_role = ''
-            except Exception:
-                waiter_name = order.waiter.username
+        # Используем timezone.localtime, чтобы привести время к текущему часовому поясу (МСК)
+        created_time = timezone.localtime(order.created_at).strftime('%H:%M') if order.created_at else ''
+
+        items = []
+        for item in order.items.all():
+            status_choices = dict(OrderItem.STATUS_CHOICES)
+            items.append({
+                'id': item.id,
+                'dish_name': item.dish.name,
+                'quantity': item.quantity,
+                'status': item.status,
+                'status_display': status_choices.get(item.status, item.status),
+            })
+
         data.append({
             'id': order.id,
             'table_number': order.table.number,
-            'created_at': (order.created_at + timedelta(hours=0)).strftime('%H:%M') if order.created_at else '',
+            'created_at': created_time,
             'status': order.status,
+            'status_display': order.get_status_display(),
             'items': items,
-            'waiter_name': waiter_name,
-            'waiter_role': waiter_role,
         })
+
     return JsonResponse({'success': True, 'data': data})
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_update_item_status(request):
+    """Обновляет статус конкретной позиции заказа (pending → cooking → ready)."""
     try:
         body = json.loads(request.body)
         item = OrderItem.objects.get(id=body.get('item_id'))
-        item.status = body.get('status')
+        new_status = body.get('status')
+        item.status = new_status
         item.save()
+
+        # Обновляем статус всего заказа, если все позиции готовы
         order = item.order
         all_items = order.items.all()
         if all(i.status == 'ready' for i in all_items):
@@ -339,8 +406,8 @@ def api_update_item_status(request):
         elif any(i.status in ['pending', 'cooking'] for i in all_items):
             order.status = 'cooking'
         order.save()
-        log_action(request, 'update_item',
-                   f'Блюдо {item.dish.name} → {item.status}, заказ #{order.id}')
+
+        log_action(request, 'update_item', f'Блюдо {item.dish.name} → {new_status}, заказ #{order.id}')
         return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
@@ -349,11 +416,12 @@ def api_update_item_status(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_mark_order_ready(request):
+    """Отмечает заказ как полностью готовый (кнопка «Заказ готов» на кухне)."""
     try:
         body = json.loads(request.body)
         order = Order.objects.get(id=body.get('order_id'))
         order.status = 'ready'
-        order.ready_at = datetime.now()
+        order.ready_at = timezone.now()
         order.save()
         log_action(request, 'mark_ready', f'Заказ #{order.id} готов')
         return JsonResponse({'success': True})
@@ -364,10 +432,11 @@ def api_mark_order_ready(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_take_order(request):
+    """Официант забирает готовый заказ (переводит в статус 'served')."""
     try:
         body = json.loads(request.body)
         order = Order.objects.get(id=body.get('order_id'))
-        order.status = 'ready'   # на самом деле 'served'? оставляем как было
+        order.status = 'served'
         order.save()
         return JsonResponse({'success': True})
     except Exception as e:
@@ -377,6 +446,7 @@ def api_take_order(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_pay_order(request):
+    """Оплата заказа: меняет статус, сохраняет способ оплаты, освобождает стол."""
     try:
         data = json.loads(request.body)
         order = Order.objects.get(id=data.get('order_id'))
@@ -387,10 +457,13 @@ def api_pay_order(request):
         order.save()
         order.table.status = 'free'
         order.table.save()
+
+        # Генерируем чек
         try:
             generate_receipt_pdf(order)
-        except:
+        except Exception:
             pass
+
         log_action(request, 'pay_order', f'Заказ #{order.id}, {float(order.total_amount):.2f} руб., {order.payment_method}')
         return JsonResponse({'success': True})
     except Order.DoesNotExist:
@@ -401,22 +474,27 @@ def api_pay_order(request):
 
 @require_http_methods(["GET"])
 def api_order_receipt(request, order_id):
+    """Возвращает данные для отображения чека."""
     try:
         order = Order.objects.get(id=order_id)
-        items = [{'name': i.dish.name, 'quantity': i.quantity,
-                  'price': float(i.price), 'total': float(i.price * i.quantity)}
-                 for i in order.items.all()]
-        payment_label = {'cash': 'Наличные', 'card': 'Карта', 'qr': 'QR-код'}.get(
-            order.payment_method, 'Не оплачен')
+        items = [{
+            'name': i.dish.name,
+            'quantity': i.quantity,
+            'price': float(i.price),
+            'total': float(i.price * i.quantity)
+        } for i in order.items.all()]
+
+        payment_label = dict(Order.PAYMENT_CHOICES).get(order.payment_method, 'Не оплачен')
         receipt_url = None
         try:
             receipt_url = f'/receipts/{order.receipt.id}/download/'
         except Exception:
             pass
+
         return JsonResponse({'success': True, 'data': {
             'order_id': order.id,
             'table_number': order.table.number,
-            'created_at': order.created_at.strftime('%d.%m.%Y %H:%M') if order.created_at else '',
+            'created_at': timezone.localtime(order.created_at).strftime('%d.%m.%Y %H:%M') if order.created_at else '',
             'items': items,
             'total': float(order.total_amount),
             'payment_method': payment_label,
@@ -426,27 +504,17 @@ def api_order_receipt(request, order_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 
-@require_http_methods(["GET"])
-def download_receipt(request, receipt_id):
-    try:
-        receipt = Receipt.objects.get(id=receipt_id)
-        if receipt.pdf_file:
-            fpath = os.path.join('media', receipt.pdf_file.name)
-            if os.path.exists(fpath):
-                return FileResponse(open(fpath, 'rb'), as_attachment=True,
-                                    filename=f'receipt_{receipt.order.id}.txt')
-        raise Http404("Чек не найден")
-    except Receipt.DoesNotExist:
-        raise Http404("Чек не найден")
+# ================================================================
+# API ОТЧЁТЫ
+# ================================================================
 
-
-# ------------------------------------------------------------
-# ОТЧЁТЫ
-# ------------------------------------------------------------
 @require_http_methods(["GET"])
 def api_reports(request):
+    """
+    Возвращает статистику по продажам за выбранный период (day, week, month, custom).
+    """
     period = request.GET.get('period', 'week')
-    today = datetime.now().date()
+    today = timezone.now().date()
 
     if period == 'day':
         start_date = end_date = today
@@ -458,7 +526,7 @@ def api_reports(request):
         dt = request.GET.get('date_to')
         start_date = datetime.strptime(df, '%Y-%m-%d').date() if df else today - timedelta(days=7)
         end_date = datetime.strptime(dt, '%Y-%m-%d').date() if dt else today
-    else:
+    else:  # week by default
         start_date = today - timedelta(days=7)
         end_date = today
 
@@ -472,17 +540,21 @@ def api_reports(request):
     total_orders = orders.count()
     avg_check = total_revenue / total_orders if total_orders else 0
 
+    # Подсчёт продаж по блюдам
     dish_data = {}
     for order in orders:
         for item in order.items.all():
-            n = item.dish.name
-            if n not in dish_data:
-                dish_data[n] = {'count': 0, 'price': float(item.price)}
-            dish_data[n]['count'] += item.quantity
+            name = item.dish.name
+            if name not in dish_data:
+                dish_data[name] = {'count': 0, 'price': float(item.price)}
+            dish_data[name]['count'] += item.quantity
 
-    popular_dishes = [{'name': n, 'count': d['count'], 'price': d['price']}
-                      for n, d in sorted(dish_data.items(), key=lambda x: -x[1]['count'])[:5]]
+    popular_dishes = [
+        {'name': n, 'count': d['count'], 'price': d['price']}
+        for n, d in sorted(dish_data.items(), key=lambda x: -x[1]['count'])[:5]
+    ]
 
+    # Данные для графика по дням
     daily_data = []
     for i in range((end_date - start_date).days + 1):
         day = start_date + timedelta(days=i)
@@ -503,89 +575,49 @@ def api_reports(request):
     }})
 
 
-# ------------------------------------------------------------
-# ЖУРНАЛ ТО
-# ------------------------------------------------------------
+# ================================================================
+# API ЖУРНАЛ ТО
+# ================================================================
+
 @require_http_methods(["GET"])
 def api_maintenance_logs(request):
+    """Возвращает записи журнала технического обслуживания."""
     logs = MaintenanceLog.objects.all().order_by('-date')
-    data = [{'id': l.id, 'date': l.date.strftime('%Y-%m-%d'),
-             'work_performed': l.work_performed,
-             'performed_by': l.performed_by, 'signature': l.signature}
-            for l in logs]
+    data = [{
+        'id': l.id,
+        'date': l.date.strftime('%Y-%m-%d'),
+        'work_performed': l.work_performed,
+        'performed_by': l.performed_by,
+        'signature': l.signature or ''
+    } for l in logs]
     return JsonResponse({'success': True, 'data': data})
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_maintenance_logs_add(request):
+    """Добавляет новую запись в журнал ТО."""
     try:
         body = json.loads(request.body)
         log = MaintenanceLog.objects.create(
-            date=body.get('date'), work_performed=body.get('work_performed'),
-            performed_by=body.get('performed_by'), signature=body.get('signature', '')
+            date=body.get('date'),
+            work_performed=body.get('work_performed'),
+            performed_by=body.get('performed_by'),
+            signature=body.get('signature', '')
         )
         return JsonResponse({'success': True, 'id': log.id})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
 
-# ------------------------------------------------------------
-# ЖУРНАЛ ДЕЙСТВИЙ (API)
-# ------------------------------------------------------------
-@require_http_methods(["GET"])
-def api_action_logs(request):
-    logs = ActionLog.objects.select_related('user').order_by('-timestamp')[:50]
-    data = [{
-        'id': l.id,
-        'user': l.user.username if l.user else 'Аноним',
-        'action': l.get_action_display(),
-        'description': l.description,
-        'ip': l.ip_address or '',
-        'timestamp': l.timestamp.strftime('%d.%m.%Y %H:%M:%S'),
-    } for l in logs]
-    return JsonResponse({'success': True, 'data': data})
+# ================================================================
+# API УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ
+# ================================================================
 
-
-# ------------------------------------------------------------
-# АВТО-БЭКАП + ЗАГРУЗКА В GITHUB
-# ------------------------------------------------------------
-@require_http_methods(["GET", "POST"])
-def auto_backup_trigger(request):
-    secret = os.environ.get('BACKUP_SECRET_KEY', 'obshepit-backup-2026')
-    if request.GET.get('key') != secret:
-        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
-
-    backup_dir = '/tmp/backups'
-    os.makedirs(backup_dir, exist_ok=True)
-
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    backup_file = os.path.join(backup_dir, f'auto_backup_{timestamp}.sql')
-
-    success, err = _run_pg_dump(backup_file)
-    if not success:
-        return JsonResponse({'success': False, 'error': err})
-
-    upload_backup_to_github(backup_file, f'auto_backup_{timestamp}.sql')
-
-    cutoff = datetime.now() - timedelta(days=30)
-    for fname in os.listdir(backup_dir):
-        fpath = os.path.join(backup_dir, fname)
-        if os.path.isfile(fpath):
-            mtime = datetime.fromtimestamp(os.path.getmtime(fpath))
-            if mtime < cutoff:
-                os.remove(fpath)
-
-    log_action(request, 'create_backup', f'Авто-бэкап: auto_backup_{timestamp}.sql')
-    return JsonResponse({'success': True, 'file': f'auto_backup_{timestamp}.sql'})
-
-
-# ------------------------------------------------------------
-# РАЗБЛОКИРОВКА И СМЕНА ПАРОЛЯ
-# ------------------------------------------------------------
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_unblock_user(request):
+    """Разблокирует пользователя (админ)."""
     try:
         if not request.user.is_authenticated or not request.user.is_superuser:
             return JsonResponse({'success': False, 'error': 'Нет прав'}, status=403)
@@ -601,6 +633,7 @@ def api_unblock_user(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_change_password(request):
+    """Меняет пароль текущего пользователя (требуется старый пароль)."""
     try:
         body = json.loads(request.body)
         username = body.get('username', '').strip()
@@ -625,9 +658,10 @@ def api_change_password(request):
 
 @require_http_methods(["GET"])
 def api_blocked_users(request):
+    """Возвращает список заблокированных пользователей (для администратора)."""
     if not request.user.is_authenticated or not request.user.is_superuser:
         return JsonResponse({'success': False, 'error': 'Нет прав'}, status=403)
-    now = datetime.now()
+    now = timezone.now()
     blocked = LoginAttempt.objects.filter(blocked_until__gt=now)
     data = [{
         'username': b.username,
@@ -638,219 +672,119 @@ def api_blocked_users(request):
     return JsonResponse({'success': True, 'data': data})
 
 
-# ------------------------------------------------------------
-# РЕЗЕРВНОЕ КОПИРОВАНИЕ (РУЧНОЕ) + ЗАГРУЗКА В GITHUB
-# ------------------------------------------------------------
-@login_required(login_url="/")
-def admin_backup(request):
-    if not (request.user.is_staff or request.user.is_superuser):
-        return redirect('/')
+# ================================================================
+# API ЖУРНАЛ ДЕЙСТВИЙ (АУДИТ)
+# ================================================================
+
+@require_http_methods(["GET"])
+def api_action_logs(request):
+    """Возвращает последние 50 записей журнала действий."""
+    logs = ActionLog.objects.select_related('user').order_by('-timestamp')[:50]
+    data = [{
+        'id': l.id,
+        'user': l.user.username if l.user else 'Аноним',
+        'action': l.get_action_display(),
+        'description': l.description,
+        'ip': l.ip_address or '',
+        'timestamp': l.timestamp.strftime('%d.%m.%Y %H:%M:%S'),
+    } for l in logs]
+    return JsonResponse({'success': True, 'data': data})
+
+
+# ================================================================
+# API СКАЧИВАНИЕ ЧЕКА
+# ================================================================
+
+@require_http_methods(["GET"])
+def download_receipt(request, receipt_id):
+    """Скачивает файл чека (текстовый)."""
+    try:
+        receipt = Receipt.objects.get(id=receipt_id)
+        if receipt.pdf_file:
+            fpath = os.path.join('media', receipt.pdf_file.name)
+            if os.path.exists(fpath):
+                return FileResponse(open(fpath, 'rb'), as_attachment=True,
+                                    filename=f'receipt_{receipt.order.id}.txt')
+        raise Http404("Чек не найден")
+    except Receipt.DoesNotExist:
+        raise Http404("Чек не найден")
+
+
+# ================================================================
+# АВТО-БЭКАП (триггер от cron-job.org)
+# ================================================================
+
+@require_http_methods(["GET", "POST"])
+def auto_backup_trigger(request):
+    """
+    Создаёт резервную копию БД (pg_dump) и загружает её в GitHub.
+    Вызывается по расписанию через cron-job.org.
+    """
+    secret = os.environ.get('BACKUP_SECRET_KEY', 'obshepit-backup-2026')
+    if request.GET.get('key') != secret:
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
 
     backup_dir = '/tmp/backups'
     os.makedirs(backup_dir, exist_ok=True)
 
-    if request.method == 'POST':
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        backup_file = os.path.join(backup_dir, f'backup_{timestamp}.sql')
-        success, err = _run_pg_dump(backup_file)
-        if not success:
-            return HttpResponse(f'Ошибка создания бэкапа: {err}', status=500)
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    backup_file = os.path.join(backup_dir, f'auto_backup_{timestamp}.sql')
 
-        upload_backup_to_github(backup_file, f'backup_{timestamp}.sql')
-        log_action(request, 'create_backup', f'Ручной бэкап: backup_{timestamp}.sql')
-        return redirect('/backup/')
+    db = settings.DATABASES['default']
+    env = os.environ.copy()
+    env['PGPASSWORD'] = db.get('PASSWORD', '')
 
-    backups = []
-    for fname in sorted(os.listdir(backup_dir), reverse=True):
-        fpath = os.path.join(backup_dir, fname)
-        if os.path.isfile(fpath) and fname.endswith('.sql'):
-            stat = os.stat(fpath)
-            backups.append({
-                'name': fname,
-                'date': datetime.fromtimestamp(stat.st_mtime).strftime('%d.%m.%Y %H:%M'),
-                'size': round(stat.st_size / 1024, 1)
-            })
-    return render(request, 'backup.html', {'backups': backups})
-
-
-@login_required(login_url="/")
-def admin_backup_download(request, filename):
-    backup_dir = '/tmp/backups'
-    safe_name = os.path.basename(filename)
-    file_path = os.path.join(backup_dir, safe_name)
-    if not os.path.exists(file_path):
-        raise Http404("Файл не найден")
-    with open(file_path, 'rb') as f:
-        resp = HttpResponse(f.read(), content_type='application/octet-stream')
-        resp['Content-Disposition'] = f'attachment; filename="{safe_name}"'
-        return resp
-
-
-@login_required(login_url="/")
-def admin_backup_delete(request, filename):
-    backup_dir = '/tmp/backups'
-    safe_name = os.path.basename(filename)
-    file_path = os.path.join(backup_dir, safe_name)
-    if os.path.exists(file_path):
-        os.remove(file_path)
-    return redirect('/backup/')
-
-
-@login_required(login_url="/")
-def admin_backup_restore(request, filename):
-    backup_dir = '/tmp/backups'
-    safe_name = os.path.basename(filename)
-    file_path = os.path.join(backup_dir, safe_name)
-    if not os.path.exists(file_path):
-        raise Http404("Файл не найден")
     try:
-        db = settings.DATABASES['default']
-        env = os.environ.copy()
-        env['PGPASSWORD'] = db.get('PASSWORD', '')
         result = subprocess.run([
-            'psql', '-h', db['HOST'], '-p', str(db.get('PORT') or '5432'),
-            '-U', db['USER'], '-d', db['NAME'], '-f', file_path, '--no-password'
-        ], env=env, capture_output=True, text=True, timeout=120)
+            'pg_dump', '-h', db['HOST'], '-p', str(db.get('PORT', 5432)),
+            '-U', db['USER'], '-d', db['NAME'], '-f', backup_file, '--no-password'
+        ], env=env, capture_output=True, text=True, timeout=60)
         if result.returncode != 0:
-            return HttpResponse(f'Ошибка восстановления: {result.stderr[:500]}', status=500)
-        return redirect('/backup/')
+            return JsonResponse({'success': False, 'error': result.stderr[:300]})
     except Exception as e:
-        return HttpResponse(f'Ошибка: {str(e)}', status=500)
+        return JsonResponse({'success': False, 'error': str(e)})
+
+    # Загружаем в GitHub
+    upload_backup_to_github(backup_file, f'auto_backup_{timestamp}.sql')
+
+    # Удаляем локальные файлы старше 30 дней
+    cutoff = timezone.now() - timedelta(days=30)
+    for fname in os.listdir(backup_dir):
+        fpath = os.path.join(backup_dir, fname)
+        if os.path.isfile(fpath):
+            mtime = datetime.fromtimestamp(os.path.getmtime(fpath)).replace(tzinfo=timezone.utc)
+            if mtime < cutoff:
+                os.remove(fpath)
+
+    log_action(request, 'create_backup', f'Авто-бэкап: auto_backup_{timestamp}.sql')
+    return JsonResponse({'success': True, 'file': f'auto_backup_{timestamp}.sql'})
 
 
-# ------------------------------------------------------------
-# ПРОСТАЯ ОПЛАТА (ЗАПАСНОЙ ВАРИАНТ)
-# ------------------------------------------------------------
+# ================================================================
+# ЗАПАСНОЙ ЭНДПОИНТ ОПЛАТЫ (упрощённая версия)
+# ================================================================
+
 @csrf_exempt
 def api_pay_fixed(request):
+    """Упрощённая оплата (используется как fallback)."""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Only POST allowed'}, status=405)
     try:
         data = json.loads(request.body)
-        order_id = data.get('order_id')
-        payment_method = data.get('payment_method')
-        if not order_id:
-            return JsonResponse({'success': False, 'error': 'Не указан ID заказа'})
-        order = Order.objects.get(id=order_id)
+        order = Order.objects.get(id=data.get('order_id'))
         if order.status == 'paid':
             return JsonResponse({'success': False, 'error': 'Заказ уже оплачен'})
         order.status = 'paid'
-        order.payment_method = payment_method
+        order.payment_method = data.get('payment_method')
         order.save()
         order.table.status = 'free'
         order.table.save()
         try:
             generate_receipt_pdf(order)
-        except:
+        except Exception:
             pass
         return JsonResponse({'success': True, 'order_id': order.id})
     except Order.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Заказ не найден'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-
-# ------------------------------------------------------------
-# НОВЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С БЭКАПАМИ (ПОСТОЯННОЕ ХРАНЕНИЕ)
-# ------------------------------------------------------------
-BACKUP_DIR = os.path.join(settings.BASE_DIR, 'backups')
-
-def ensure_backup_dir():
-    if not os.path.exists(BACKUP_DIR):
-        os.makedirs(BACKUP_DIR)
-
-@login_required
-def backup_list(request):
-    """Список всех резервных копий"""
-    ensure_backup_dir()
-    backups = []
-    for fname in sorted(os.listdir(BACKUP_DIR), reverse=True):
-        if fname.endswith('.sql'):
-            fpath = os.path.join(BACKUP_DIR, fname)
-            stat = os.stat(fpath)
-            backups.append({
-                'name': fname,
-                'date': datetime.fromtimestamp(stat.st_mtime).strftime('%d.%m.%Y %H:%M'),
-                'size': round(stat.st_size / 1024, 1)
-            })
-    return render(request, 'backup_list.html', {'backups': backups})
-
-@login_required
-def backup_create(request):
-    """Создание новой резервной копии"""
-    if request.method != 'POST':
-        return redirect('backup:backup_list')
-    
-    ensure_backup_dir()
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f'backup_{timestamp}.sql'
-    filepath = os.path.join(BACKUP_DIR, filename)
-    
-    db = settings.DATABASES['default']
-    env = os.environ.copy()
-    env['PGPASSWORD'] = db.get('PASSWORD', '')
-    
-    result = subprocess.run([
-        'pg_dump', '-h', db['HOST'], '-p', str(db.get('PORT') or '5432'),
-        '-U', db['USER'], '-d', db['NAME'], '-f', filepath, '--no-password'
-    ], env=env, capture_output=True, text=True, timeout=60)
-    
-    if result.returncode == 0:
-        with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
-            lines = f.readlines()
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.writelines(l for l in lines if not l.startswith('\\'))
-        
-        upload_backup_to_github(filepath, filename)
-        log_action(request, 'create_backup', f'Ручной бэкап: {filename}')
-    else:
-        return HttpResponse(f'Ошибка создания бэкапа: {result.stderr[:300]}', status=500)
-    
-    return redirect('backup:backup_list')
-
-@login_required
-def backup_download(request, filename):
-    """Скачать резервную копию"""
-    ensure_backup_dir()
-    safe_name = os.path.basename(filename)
-    filepath = os.path.join(BACKUP_DIR, safe_name)
-    if not os.path.exists(filepath):
-        raise Http404("Файл не найден")
-    with open(filepath, 'rb') as f:
-        resp = HttpResponse(f.read(), content_type='application/octet-stream')
-        resp['Content-Disposition'] = f'attachment; filename="{safe_name}"'
-        return resp
-
-@login_required
-def backup_restore(request, filename):
-    """Восстановить из резервной копии"""
-    ensure_backup_dir()
-    safe_name = os.path.basename(filename)
-    filepath = os.path.join(BACKUP_DIR, safe_name)
-    if not os.path.exists(filepath):
-        raise Http404("Файл не найден")
-    
-    db = settings.DATABASES['default']
-    env = os.environ.copy()
-    env['PGPASSWORD'] = db.get('PASSWORD', '')
-    
-    result = subprocess.run([
-        'psql', '-h', db['HOST'], '-p', str(db.get('PORT') or '5432'),
-        '-U', db['USER'], '-d', db['NAME'], '-f', filepath, '--no-password'
-    ], env=env, capture_output=True, text=True, timeout=120)
-    
-    if result.returncode != 0:
-        return HttpResponse(f'Ошибка восстановления: {result.stderr[:500]}', status=500)
-    
-    log_action(request, 'restore_backup', f'Восстановление из: {filename}')
-    return redirect('backup:backup_list')
-
-@login_required
-def backup_delete(request, filename):
-    """Удалить резервную копию"""
-    ensure_backup_dir()
-    safe_name = os.path.basename(filename)
-    filepath = os.path.join(BACKUP_DIR, safe_name)
-    if os.path.exists(filepath):
-        os.remove(filepath)
-    return redirect('backup:backup_list')

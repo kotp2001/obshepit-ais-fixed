@@ -1,3 +1,4 @@
+{# Руководство пользователя АИС «Общепит» (назначение, роли, работа официанта/повара/админа). Шаблон расширяет base.html и наследует общий стиль сайта. #}
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Руководство пользователя{% endblock %}
@@ -18,11 +19,6 @@
             <h4 style="color: #ffd700; margin-top: 20px;">1. Назначение системы</h4>
             <p>АИС "Общепит" предназначена для автоматизации учёта заказов на предприятиях общественного питания (кафе, рестораны, столовые). Доступ только для сотрудников: администраторов, официантов и поваров.</p>
             
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/system_architecture.png" alt="Архитектура системы" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 1 - Архитектура АИС "Общепит"</p>
-            </div>
-            
             <!-- 3. Авторизация -->
             <h4 style="color: #ffd700; margin-top: 30px;">2. Авторизация в системе</h4>
             <p>Для входа в систему:</p>
@@ -30,11 +26,6 @@
                 <li>Откройте главную страницу сайта</li>
                 <li>Введите логин и пароль</li>
             </ol>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/login_screen.png" alt="Страница авторизации" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 2 - Страница авторизации</p>
-            </div>
             
             <table class="table table-dark table-bordered" style="margin-top: 10px;">
                 <thead>
@@ -54,11 +45,6 @@
             <!-- 4. Работа официанта -->
             <h4 style="color: #ffd700; margin-top: 30px;">3. Работа официанта</h4>
             
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/waiter_hall.png" alt="Зал ресторана" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 3 - Схема зала ресторана</p>
-            </div>
-            
             <h5>3.1. Приём заказа</h5>
             <ol>
                 <li>Войдите в систему как официант</li>
@@ -68,11 +54,6 @@
                 <li>Нажмите "Оформить заказ"</li>
             </ol>
             
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/create_order.png" alt="Создание заказа" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 4 - Создание заказа</p>
-            </div>
-            
             <h5>3.2. Оплата и чек</h5>
             <ol>
                 <li>Когда заказ готов, нажмите "Забрать заказ"</li>
@@ -80,18 +61,8 @@
                 <li>Нажмите "Оплатить"</li>
             </ol>
             
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/payment.png" alt="Оплата заказа" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 5 - Выбор способа оплаты</p>
-            </div>
-            
             <!-- 5. Работа повара -->
             <h4 style="color: #ffd700; margin-top: 30px;">4. Работа повара</h4>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/kitchen_panel.png" alt="Панель повара" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 6 - Панель повара</p>
-            </div>
             
             <ol>
                 <li>Войдите в систему как повар</li>
@@ -103,11 +74,6 @@
             
             <!-- 6. Работа администратора -->
             <h4 style="color: #ffd700; margin-top: 30px;">5. Работа администратора</h4>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/admin_panel.png" alt="Панель администратора" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 7 - Панель администратора</p>
-            </div>
             
             <ol>
                 <li>Войдите в систему как администратор</li>
@@ -122,11 +88,6 @@
                     </ul>
                 </li>
             </ol>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="/static/images/reports.png" alt="Отчёты" style="max-width: 100%; border-radius: 10px; border: 1px solid #ffd700;" onerror="this.style.display='none'">
-                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Рисунок 8 - Страница отчётов</p>
-            </div>
         </div>
     </div>
 </div>
