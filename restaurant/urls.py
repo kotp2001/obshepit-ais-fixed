@@ -1,4 +1,3 @@
-# Маршруты приложения: страницы сотрудников и все JSON-API (вход, меню, заказы, отчёты, чеки).
 from django.urls import path, include
 from . import views
 from .excel import export_orders_excel, export_popular_excel

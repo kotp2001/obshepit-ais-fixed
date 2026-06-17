@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-"""Точка входа для команд Django (runserver, migrate, createsuperuser и т.д.).
-Утилита командной строки управления проектом."""
 import os
 import sys
 

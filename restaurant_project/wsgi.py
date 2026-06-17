@@ -1,5 +1,3 @@
-"""WSGI-конфигурация проекта.
-Именно через объект application веб-сервер (gunicorn) запускает Django."""
 import os
 from django.core.wsgi import get_wsgi_application
 

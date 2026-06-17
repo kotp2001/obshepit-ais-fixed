@@ -1,4 +1,3 @@
-# Корневые маршруты проекта: админка (/admin/), резервные копии (/backup/) и приложение (/).
 from django.contrib import admin
 from django.urls import path, include
 

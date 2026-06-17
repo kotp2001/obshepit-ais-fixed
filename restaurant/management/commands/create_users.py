@@ -3,8 +3,6 @@ from django.contrib.auth.models import User
 from restaurant.models import Profile
 
 class Command(BaseCommand):
-    # Команда создаёт трёх демонстрационных пользователей с разными ролями
-    # (администратор, официант, повар). Запускается командой: manage.py create_users
     help = 'Создание пользователей с ролями'
 
     def handle(self, *args, **options):
